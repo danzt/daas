@@ -2,18 +2,49 @@ package http
 
 import (
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 // NewRouter creates a new Echo instance with standard middleware configured
 // and all routes registered.
 func NewRouter() *echo.Echo {
 	e := echo.New()
+	e.HideBanner = true
+
+	// Structured JSON logger (zerolog) — outputs to stdout
+	logger := zerolog.New(os.Stdout).With().Timestamp().Logger()
 
 	// Middleware
-	e.Use(middleware.Logger())
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogStatus:   true,
+		LogURI:      true,
+		LogMethod:   true,
+		LogLatency:  true,
+		LogRemoteIP: true,
+		LogError:    true,
+		HandleError: true,
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			event := logger.Info()
+			if v.Error != nil {
+				event = log.Error().Err(v.Error)
+			}
+			event.
+				Str("method", v.Method).
+				Str("uri", v.URI).
+				Int("status", v.Status).
+				Dur("latency", v.Latency).
+				Str("remote_ip", v.RemoteIP).
+				Time("time", time.Now()).
+				Msg("request")
+			return nil
+		},
+	}))
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins: []string{"*"},
