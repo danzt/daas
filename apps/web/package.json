@@ -2,12 +2,26 @@
   "name": "@daas/web",
   "version": "0.0.1",
   "private": true,
-  "type": "module",
   "scripts": {
     "dev": "nuxt dev",
     "build": "nuxt build",
+    "generate": "nuxt generate",
     "preview": "nuxt preview",
     "lint": "eslint .",
-    "test": "vitest run"
+    "typecheck": "nuxt typecheck"
+  },
+  "dependencies": {
+    "@pinia/nuxt": "^0.9.0",
+    "lucide-vue-next": "^0.525.0",
+    "pinia": "^2.3.0",
+    "vue": "^3.5.0"
+  },
+  "devDependencies": {
+    "@daas/config": "workspace:*",
+    "@nuxt/eslint": "^1.0.0",
+    "@nuxtjs/tailwindcss": "^6.13.0",
+    "nuxt": "^3.16.0",
+    "shadcn-nuxt": "^0.11.0",
+    "typescript": "^5.7.0"
   }
 }

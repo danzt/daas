@@ -1,0 +1,16 @@
+{
+  "extends": "@daas/config/tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "~/*": ["./*"],
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    ".nuxt/nuxt.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.vue"
+  ],
+  "exclude": ["node_modules", "dist", ".nuxt", ".output"]
+}
