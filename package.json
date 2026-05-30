@@ -12,6 +12,7 @@
   "devDependencies": {
     "@daas/config": "workspace:*",
     "lefthook": "^1.11.0",
+    "prettier": "^3.3.0",
     "typescript": "^5.5.0"
   },
   "engines": {
