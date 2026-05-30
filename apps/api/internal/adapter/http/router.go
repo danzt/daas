@@ -101,9 +101,10 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen
 	invoiceHandler := handler.NewInvoiceHandler(cfg.Pool)
 	fiscalInvoiceHandler := handler.NewFiscalInvoiceHandler(cfg.Pool)
 	supplierHandler := handler.NewSupplierHandler(cfg.Pool)
+	reportHandler := handler.NewReportHandler(cfg.Pool)
 
 	// Routes
-	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler, fiscalInvoiceHandler, supplierHandler)
+	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler, fiscalInvoiceHandler, supplierHandler, reportHandler)
 
 	return e
 }
@@ -122,6 +123,7 @@ func registerRoutes(
 	invoiceHandler *handler.InvoiceHandler,
 	fiscalInvoiceHandler *handler.FiscalInvoiceHandler,
 	supplierHandler *handler.SupplierHandler,
+	reportHandler *handler.ReportHandler,
 ) {
 	// Health check — unauthenticated
 	e.GET("/health", healthHandler)
