@@ -151,7 +151,7 @@ onMounted(() => {
           <h1 class="text-2xl font-bold font-heading text-text-brand">
             Categorías
           </h1>
-          <p class="text-gray-500 text-sm">
+          <p class="text-muted-foreground text-sm">
             Organizá tus productos por categorías
           </p>
         </div>
@@ -159,7 +159,7 @@ onMounted(() => {
       <div class="flex items-center gap-3">
         <NuxtLink
           to="/products"
-          class="h-10 px-4 flex items-center text-sm font-semibold text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all duration-200 cursor-pointer"
+          class="h-10 px-4 flex items-center text-sm font-semibold text-muted-foreground border rounded-lg hover:bg-muted transition-all duration-200 cursor-pointer"
         >
           Ver productos
         </NuxtLink>
@@ -176,11 +176,9 @@ onMounted(() => {
     </div>
 
     <!-- Content card -->
-    <div class="bg-white rounded-xl border border-gray-100 shadow-sm">
+    <div class="bg-card rounded-xl border shadow-sm">
       <!-- Table header -->
-      <div
-        class="px-6 py-4 border-b border-gray-100 flex items-center justify-between"
-      >
+      <div class="px-6 py-4 border-b flex items-center justify-between">
         <h2 class="text-base font-bold font-heading text-text-brand">
           {{ categories.length }} categoría{{
             categories.length !== 1 ? "s" : ""
@@ -193,17 +191,17 @@ onMounted(() => {
         <div
           v-for="n in 4"
           :key="n"
-          class="h-12 animate-pulse bg-gray-100 rounded-lg"
+          class="h-12 animate-pulse bg-muted rounded-lg"
         />
       </div>
 
       <!-- Error state -->
       <div v-else-if="loadError" class="px-6 py-12 text-center">
-        <AlertTriangle class="w-10 h-10 text-red-400 mx-auto mb-3" />
-        <p class="text-red-600 font-medium">{{ loadError }}</p>
+        <AlertTriangle class="w-10 h-10 text-destructive mx-auto mb-3" />
+        <p class="text-destructive font-medium">{{ loadError }}</p>
         <button
           type="button"
-          class="mt-4 h-9 px-4 border border-gray-200 text-sm font-semibold text-gray-600 rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200"
+          class="mt-4 h-9 px-4 border text-sm font-semibold text-muted-foreground rounded-lg hover:bg-muted cursor-pointer transition-all duration-200"
           @click="fetchCategories"
         >
           Reintentar
@@ -212,11 +210,11 @@ onMounted(() => {
 
       <!-- Empty state -->
       <div v-else-if="categories.length === 0" class="px-6 py-16 text-center">
-        <FolderOpen class="w-12 h-12 text-gray-200 mx-auto mb-4" />
-        <h3 class="text-base font-semibold text-gray-600 mb-1">
+        <FolderOpen class="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
+        <h3 class="text-base font-semibold text-muted-foreground mb-1">
           Sin categorías aún
         </h3>
-        <p class="text-sm text-gray-400 mb-5">
+        <p class="text-sm text-muted-foreground mb-5">
           Creá tu primera categoría para organizar los productos
         </p>
         <button
@@ -232,11 +230,11 @@ onMounted(() => {
 
       <!-- List -->
       <div v-else>
-        <div class="divide-y divide-gray-50">
+        <div class="divide-y divide-border">
           <div
             v-for="cat in categories"
             :key="cat.id"
-            class="flex items-center justify-between px-6 py-4 hover:bg-gray-50/50 transition-colors duration-150"
+            class="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-colors duration-150"
           >
             <div class="flex items-center gap-3">
               <div
@@ -248,7 +246,7 @@ onMounted(() => {
                 <p class="text-sm font-semibold text-text-brand">
                   {{ cat.name }}
                 </p>
-                <p class="text-xs text-gray-400 font-mono mt-0.5">
+                <p class="text-xs text-muted-foreground font-mono mt-0.5">
                   {{ cat.id.slice(0, 8) }}...
                 </p>
               </div>
@@ -260,7 +258,7 @@ onMounted(() => {
               <button
                 type="button"
                 title="Editar"
-                class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-primary hover:bg-primary/10 transition-all duration-200 cursor-pointer"
+                class="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200 cursor-pointer"
                 @click="openEdit(cat)"
               >
                 <Pencil class="w-4 h-4" />
@@ -273,7 +271,7 @@ onMounted(() => {
                   v-if="confirmDeleteId === cat.id"
                   class="flex items-center gap-1.5"
                 >
-                  <span class="text-xs text-red-600 font-semibold"
+                  <span class="text-xs text-destructive font-semibold"
                     >¿Confirmás?</span
                   >
                   <button
@@ -290,7 +288,7 @@ onMounted(() => {
                   </button>
                   <button
                     type="button"
-                    class="h-7 px-2.5 border border-gray-200 text-gray-600 text-xs font-semibold rounded-md hover:bg-gray-50 cursor-pointer transition-all duration-200"
+                    class="h-7 px-2.5 border text-muted-foreground text-xs font-semibold rounded-md hover:bg-muted cursor-pointer transition-all duration-200"
                     @click="confirmDeleteId = null"
                   >
                     No
@@ -302,7 +300,7 @@ onMounted(() => {
                   v-else
                   type="button"
                   title="Eliminar"
-                  class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200 cursor-pointer"
+                  class="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-all duration-200 cursor-pointer"
                   @click="confirmDeleteId = cat.id"
                 >
                   <Trash2 class="w-4 h-4" />
@@ -332,18 +330,16 @@ onMounted(() => {
         >
           <div class="absolute inset-0 bg-black/50" @click="closeDialog" />
           <div
-            class="relative z-10 w-full max-w-sm bg-white rounded-xl shadow-xl"
+            class="relative z-10 w-full max-w-sm bg-card rounded-xl shadow-xl"
           >
             <!-- Header -->
-            <div
-              class="flex items-center justify-between px-6 py-5 border-b border-gray-100"
-            >
+            <div class="flex items-center justify-between px-6 py-5 border-b">
               <h2 class="text-xl font-bold font-heading text-text-brand">
                 {{ dialogTitle }}
               </h2>
               <button
                 type="button"
-                class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all duration-200 cursor-pointer"
+                class="p-1.5 rounded-lg text-muted-foreground hover:text-[hsl(var(--foreground))] hover:bg-muted transition-all duration-200 cursor-pointer"
                 @click="closeDialog"
               >
                 <X class="w-5 h-5" />
@@ -365,7 +361,7 @@ onMounted(() => {
                   for="cat-name"
                   class="block text-sm font-semibold text-text-brand mb-1.5"
                 >
-                  Nombre <span class="text-red-500">*</span>
+                  Nombre <span class="text-destructive">*</span>
                 </label>
                 <input
                   id="cat-name"
@@ -373,27 +369,25 @@ onMounted(() => {
                   type="text"
                   placeholder="Ej: Alimentos, Bebidas, Electrónica..."
                   :class="[
-                    'w-full h-11 px-4 border rounded-lg text-base transition-all duration-200',
-                    'focus:outline-none focus:ring-2 placeholder:text-gray-400',
+                    'w-full h-11 px-4 border rounded-lg text-base transition-all duration-200 bg-card',
+                    'focus:outline-none focus:ring-2 placeholder:text-muted-foreground',
                     nameError
                       ? 'border-red-400 focus:border-red-400 focus:ring-red-200'
-                      : 'border-gray-200 focus:border-primary focus:ring-primary/20',
+                      : 'focus:border-primary focus:ring-primary/20',
                   ]"
                   @keyup.enter="saveCategory"
                 />
-                <p v-if="nameError" class="mt-1 text-xs text-red-500">
+                <p v-if="nameError" class="mt-1 text-xs text-destructive">
                   {{ nameError }}
                 </p>
               </div>
             </div>
 
             <!-- Footer -->
-            <div
-              class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3"
-            >
+            <div class="px-6 py-4 border-t flex items-center justify-end gap-3">
               <button
                 type="button"
-                class="h-10 px-5 border border-gray-200 text-gray-600 text-sm font-semibold rounded-lg hover:bg-gray-50 transition-all duration-200 cursor-pointer"
+                class="h-10 px-5 border text-muted-foreground text-sm font-semibold rounded-lg hover:bg-muted transition-all duration-200 cursor-pointer"
                 @click="closeDialog"
               >
                 Cancelar
