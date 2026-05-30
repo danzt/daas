@@ -34,7 +34,7 @@ func NewRouter() *echo.Echo {
 
 // NewRouterWithConfig builds the router with explicit dependencies.
 // Used in production (from main.go) and in integration tests.
-func NewRouterWithConfig(cfg RouterConfig) *echo.Echo {
+func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen
 	e := echo.New()
 	e.HideBanner = true
 
@@ -94,9 +94,11 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo {
 	authHandler := handler.NewAuthHandler(cfg.SupabaseURL)
 	userHandler := handler.NewUserHandler(cfg.Pool, cfg.SupabaseURL, cfg.ServiceRoleKey)
 	integrationHandler := handler.NewIntegrationHandler(cfg.Pool)
+	meHandler := handler.NewMeHandler(cfg.Pool)
+	productHandler := handler.NewProductHandler(cfg.Pool)
 
 	// Routes
-	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler)
+	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler)
 
 	return e
 }
@@ -109,6 +111,8 @@ func registerRoutes(
 	authHandler *handler.AuthHandler,
 	userHandler *handler.UserHandler,
 	integrationHandler *handler.IntegrationHandler,
+	meHandler *handler.MeHandler,
+	productHandler *handler.ProductHandler,
 ) {
 	// Health check — unauthenticated
 	e.GET("/health", healthHandler)
@@ -129,11 +133,24 @@ func registerRoutes(
 	}
 
 	api := e.Group("/api/v1", apiMiddlewares...)
+
+	// Tenant
+	api.GET("/tenants/me", meHandler.GetMe)
 	api.GET("/users", userHandler.List)
 	api.POST("/users/invite", userHandler.Invite, mw.OwnerGuard())
 	api.PATCH("/users/:id", userHandler.UpdateActive, mw.OwnerGuard())
 	api.PUT("/tenant/integrations/fiscal", integrationHandler.UpsertFiscal, mw.OwnerGuard())
 	api.GET("/tenant/integrations/fiscal", integrationHandler.GetFiscal)
+
+	// Products — NOTE: /products/categories must be registered BEFORE /products/:id
+	// so Echo's router doesn't match "categories" as a UUID parameter.
+	api.GET("/products/categories", productHandler.ListCategories)
+	api.POST("/products/categories", productHandler.CreateCategory)
+	api.GET("/products", productHandler.ListProducts)
+	api.POST("/products", productHandler.CreateProduct)
+	api.GET("/products/:id", productHandler.GetProduct)
+	api.PUT("/products/:id", productHandler.UpdateProduct)
+	api.DELETE("/products/:id", productHandler.DeleteProduct)
 }
 
 // healthHandler responds with a simple status OK payload.
