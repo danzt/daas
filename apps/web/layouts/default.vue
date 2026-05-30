@@ -104,7 +104,18 @@ const navGroups: NavGroup[] = [
   {
     id: "reports",
     label: "Análisis",
-    items: [{ label: "Reportes", icon: BarChart2, to: "/reports" }],
+    items: [
+      {
+        label: "Reportes",
+        icon: BarChart2,
+        to: "/reports",
+        children: [
+          { label: "Ventas", to: "/reports" },
+          { label: "Inventario", to: "/reports?tab=inventory" },
+          { label: "Compras", to: "/reports?tab=purchases" },
+        ],
+      },
+    ],
   },
 ];
 
