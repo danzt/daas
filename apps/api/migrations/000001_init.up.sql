@@ -1,0 +1,7 @@
+-- Initial migration placeholder
+-- Sprint 0 foundation: schema will be built incrementally per sprint
+-- S1: tenants, tenant_users, tenant_integrations
+-- S2: products, product_categories
+-- S3: product_stock, inventory_movements
+-- S4: internal_invoices, suppliers, purchase_orders
+-- S5: fiscal_invoices, sales
