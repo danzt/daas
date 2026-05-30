@@ -6,10 +6,12 @@
     "dev": "pnpm --filter web dev",
     "build": "pnpm --filter web build && pnpm --filter landing build",
     "lint": "pnpm --recursive run lint",
-    "test": "pnpm --recursive run test"
+    "test": "pnpm --recursive run test",
+    "prepare": "lefthook install"
   },
   "devDependencies": {
     "@daas/config": "workspace:*",
+    "lefthook": "^1.11.0",
     "typescript": "^5.5.0"
   },
   "engines": {

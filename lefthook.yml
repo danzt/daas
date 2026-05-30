@@ -1,0 +1,22 @@
+pre-commit:
+  parallel: true
+  commands:
+    gofmt:
+      glob: "apps/api/**/*.go"
+      run: gofmt -l -w {staged_files}
+      stage_fixed: true
+
+    golangci-lint:
+      glob: "apps/api/**/*.go"
+      run: cd apps/api && golangci-lint run {staged_files}
+
+    eslint:
+      glob: "apps/web/**/*.{ts,vue}"
+      run: pnpm --filter @daas/web lint --fix {staged_files}
+      stage_fixed: true
+
+    prettier:
+      glob: "**/*.{ts,vue,json,md}"
+      exclude: "pnpm-lock.yaml"
+      run: pnpm exec prettier --write {staged_files}
+      stage_fixed: true
