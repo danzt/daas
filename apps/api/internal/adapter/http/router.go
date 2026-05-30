@@ -98,9 +98,10 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen
 	meHandler := handler.NewMeHandler(cfg.Pool)
 	productHandler := handler.NewProductHandler(cfg.Pool)
 	inventoryHandler := handler.NewInventoryHandler(cfg.Pool)
+	invoiceHandler := handler.NewInvoiceHandler(cfg.Pool)
 
 	// Routes
-	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler)
+	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler)
 
 	return e
 }
@@ -116,6 +117,7 @@ func registerRoutes(
 	meHandler *handler.MeHandler,
 	productHandler *handler.ProductHandler,
 	inventoryHandler *handler.InventoryHandler,
+	invoiceHandler *handler.InvoiceHandler,
 ) {
 	// Health check — unauthenticated
 	e.GET("/health", healthHandler)
@@ -162,6 +164,13 @@ func registerRoutes(
 	api.GET("/inventory/movements", inventoryHandler.ListMovements)
 	api.GET("/inventory/movements/:id", inventoryHandler.GetMovement)
 	api.POST("/inventory/adjustments", inventoryHandler.CreateAdjustment)
+
+	// Internal invoices — action routes registered before /:id to avoid conflicts
+	api.POST("/invoices/internal", invoiceHandler.Create)
+	api.GET("/invoices/internal", invoiceHandler.List)
+	api.GET("/invoices/internal/:id", invoiceHandler.GetByID)
+	api.POST("/invoices/internal/:id/issue", invoiceHandler.Issue)
+	api.POST("/invoices/internal/:id/cancel", invoiceHandler.Cancel)
 }
 
 // healthHandler responds with a simple status OK payload.
