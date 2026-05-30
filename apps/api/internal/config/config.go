@@ -7,12 +7,13 @@ import (
 // Config holds all application configuration read from environment variables.
 // No hardcoded values — all settings come from the environment at runtime.
 type Config struct {
-	Port                      string
-	SupabaseURL               string
-	SupabaseAnonKey           string
-	JWTSecret                 string
-	DatabaseURL               string
-	IntegrationEncryptionKey  string
+	Port                     string
+	SupabaseURL              string
+	SupabaseAnonKey          string
+	SupabaseServiceRoleKey   string
+	JWTSecret                string
+	DatabaseURL              string
+	IntegrationEncryptionKey string
 }
 
 // Load reads configuration from environment variables.
@@ -22,6 +23,7 @@ func Load() *Config {
 		Port:                     getEnv("PORT", "8080"),
 		SupabaseURL:              getEnv("SUPABASE_URL", ""),
 		SupabaseAnonKey:          getEnv("SUPABASE_ANON_KEY", ""),
+		SupabaseServiceRoleKey:   getEnv("SUPABASE_SERVICE_ROLE_KEY", ""),
 		JWTSecret:                getEnv("JWT_SECRET", ""),
 		DatabaseURL:              getEnv("DATABASE_URL", ""),
 		IntegrationEncryptionKey: getEnv("INTEGRATION_ENCRYPTION_KEY", ""),

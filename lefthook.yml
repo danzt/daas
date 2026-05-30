@@ -8,7 +8,7 @@ pre-commit:
 
     golangci-lint:
       glob: "apps/api/**/*.go"
-      run: cd apps/api && golangci-lint run {staged_files}
+      run: cd apps/api && golangci-lint run ./...
 
     eslint:
       glob: "apps/web/**/*.{ts,vue}"
