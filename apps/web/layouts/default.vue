@@ -89,7 +89,17 @@ const navGroups: NavGroup[] = [
   {
     id: "ops",
     label: "Operaciones",
-    items: [{ label: "Proveedores", icon: Truck, to: "/suppliers" }],
+    items: [
+      {
+        label: "Proveedores",
+        icon: Truck,
+        to: "/suppliers",
+        children: [
+          { label: "Lista de proveedores", to: "/suppliers" },
+          { label: "Órdenes de compra", to: "/suppliers/purchase-orders" },
+        ],
+      },
+    ],
   },
   {
     id: "reports",
