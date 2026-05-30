@@ -79,19 +79,43 @@ const navGroups: NavGroup[] = [
         label: "Facturas",
         icon: FileText,
         to: "/invoices",
-        children: [{ label: "Facturas internas", to: "/invoices" }],
+        children: [
+          { label: "Facturas internas", to: "/invoices" },
+          { label: "Facturas fiscales", to: "/invoices/fiscal" },
+        ],
       },
     ],
   },
   {
     id: "ops",
     label: "Operaciones",
-    items: [{ label: "Proveedores", icon: Truck, to: "/suppliers" }],
+    items: [
+      {
+        label: "Proveedores",
+        icon: Truck,
+        to: "/suppliers",
+        children: [
+          { label: "Lista de proveedores", to: "/suppliers" },
+          { label: "Órdenes de compra", to: "/suppliers/purchase-orders" },
+        ],
+      },
+    ],
   },
   {
     id: "reports",
     label: "Análisis",
-    items: [{ label: "Reportes", icon: BarChart2, to: "/reports" }],
+    items: [
+      {
+        label: "Reportes",
+        icon: BarChart2,
+        to: "/reports",
+        children: [
+          { label: "Ventas", to: "/reports" },
+          { label: "Inventario", to: "/reports?tab=inventory" },
+          { label: "Compras", to: "/reports?tab=purchases" },
+        ],
+      },
+    ],
   },
 ];
 
