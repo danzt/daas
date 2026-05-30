@@ -99,9 +99,11 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen
 	productHandler := handler.NewProductHandler(cfg.Pool)
 	inventoryHandler := handler.NewInventoryHandler(cfg.Pool)
 	invoiceHandler := handler.NewInvoiceHandler(cfg.Pool)
+	fiscalInvoiceHandler := handler.NewFiscalInvoiceHandler(cfg.Pool)
+	supplierHandler := handler.NewSupplierHandler(cfg.Pool)
 
 	// Routes
-	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler)
+	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler, fiscalInvoiceHandler, supplierHandler)
 
 	return e
 }
@@ -118,6 +120,8 @@ func registerRoutes(
 	productHandler *handler.ProductHandler,
 	inventoryHandler *handler.InventoryHandler,
 	invoiceHandler *handler.InvoiceHandler,
+	fiscalInvoiceHandler *handler.FiscalInvoiceHandler,
+	supplierHandler *handler.SupplierHandler,
 ) {
 	// Health check — unauthenticated
 	e.GET("/health", healthHandler)
@@ -171,6 +175,28 @@ func registerRoutes(
 	api.GET("/invoices/internal/:id", invoiceHandler.GetByID)
 	api.POST("/invoices/internal/:id/issue", invoiceHandler.Issue)
 	api.POST("/invoices/internal/:id/cancel", invoiceHandler.Cancel)
+
+	// Fiscal invoices (SENIAT) — same ordering convention
+	api.POST("/invoices/fiscal", fiscalInvoiceHandler.Create)
+	api.GET("/invoices/fiscal", fiscalInvoiceHandler.List)
+	api.GET("/invoices/fiscal/:id", fiscalInvoiceHandler.GetByID)
+	api.POST("/invoices/fiscal/:id/issue", fiscalInvoiceHandler.Issue)
+	api.POST("/invoices/fiscal/:id/cancel", fiscalInvoiceHandler.Cancel)
+	api.POST("/invoices/fiscal/:id/retry", fiscalInvoiceHandler.Retry)
+
+	// Suppliers
+	api.GET("/suppliers", supplierHandler.ListSuppliers)
+	api.POST("/suppliers", supplierHandler.CreateSupplier)
+	api.GET("/suppliers/:id", supplierHandler.GetSupplier)
+	api.PUT("/suppliers/:id", supplierHandler.UpdateSupplier)
+
+	// Purchase Orders
+	api.GET("/purchase-orders", supplierHandler.ListPOs)
+	api.POST("/purchase-orders", supplierHandler.CreatePO)
+	api.GET("/purchase-orders/:id", supplierHandler.GetPO)
+	api.POST("/purchase-orders/:id/order", supplierHandler.OrderPO)
+	api.POST("/purchase-orders/:id/receive", supplierHandler.ReceivePO)
+	api.POST("/purchase-orders/:id/cancel", supplierHandler.CancelPO)
 }
 
 // healthHandler responds with a simple status OK payload.
