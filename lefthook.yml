@@ -12,7 +12,7 @@ pre-commit:
 
     eslint:
       glob: "apps/web/**/*.{ts,vue}"
-      run: pnpm --filter @daas/web lint --fix {staged_files}
+      run: cd apps/web && npx eslint --fix $(echo "{staged_files}" | tr ' ' '\n' | sed 's|apps/web/||g' | tr '\n' ' ')
       stage_fixed: true
 
     prettier:
