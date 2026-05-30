@@ -100,9 +100,10 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen
 	inventoryHandler := handler.NewInventoryHandler(cfg.Pool)
 	invoiceHandler := handler.NewInvoiceHandler(cfg.Pool)
 	fiscalInvoiceHandler := handler.NewFiscalInvoiceHandler(cfg.Pool)
+	reportHandler := handler.NewReportHandler(cfg.Pool)
 
 	// Routes
-	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler, fiscalInvoiceHandler)
+	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler, fiscalInvoiceHandler, reportHandler)
 
 	return e
 }
@@ -120,6 +121,7 @@ func registerRoutes(
 	inventoryHandler *handler.InventoryHandler,
 	invoiceHandler *handler.InvoiceHandler,
 	fiscalInvoiceHandler *handler.FiscalInvoiceHandler,
+	reportHandler *handler.ReportHandler,
 ) {
 	// Health check — unauthenticated
 	e.GET("/health", healthHandler)
@@ -181,6 +183,11 @@ func registerRoutes(
 	api.POST("/invoices/fiscal/:id/issue", fiscalInvoiceHandler.Issue)
 	api.POST("/invoices/fiscal/:id/cancel", fiscalInvoiceHandler.Cancel)
 	api.POST("/invoices/fiscal/:id/retry", fiscalInvoiceHandler.Retry)
+
+	// Reports
+	api.GET("/reports/sales", reportHandler.SalesReport)
+	api.GET("/reports/inventory", reportHandler.InventoryReport)
+	api.GET("/reports/purchases", reportHandler.PurchaseReport)
 }
 
 // healthHandler responds with a simple status OK payload.

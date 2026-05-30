@@ -1,0 +1,227 @@
+package app
+
+import (
+	"context"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/danzt/daas/api/internal/domain/report"
+)
+
+// ReportService generates read-only aggregates from existing data.
+type ReportService struct {
+	pool *pgxpool.Pool
+}
+
+func NewReportService(pool *pgxpool.Pool) *ReportService {
+	return &ReportService{pool: pool}
+}
+
+// SalesReport returns sales aggregates for the given period.
+func (s *ReportService) SalesReport(ctx context.Context, tenantID uuid.UUID, dr report.DateRange) (*report.SalesSummary, error) {
+	sum := &report.SalesSummary{
+		From:        dr.From,
+		To:          dr.To,
+		ByDay:       []report.DayRevenue{},
+		TopProducts: []report.ProductRevenue{},
+	}
+
+	// Total revenue + counts from internal invoices
+	var internalRevenue float64
+	var internalCount int
+	err := s.pool.QueryRow(ctx,
+		`SELECT COALESCE(SUM(total),0), COUNT(*)
+		 FROM internal_invoices
+		 WHERE tenant_id=$1 AND status='issued'
+		   AND issued_at >= $2 AND issued_at <= $3`,
+		tenantID, dr.From, dr.To,
+	).Scan(&internalRevenue, &internalCount)
+	if err != nil {
+		return nil, err
+	}
+
+	// Total revenue + counts from fiscal invoices
+	var fiscalRevenue float64
+	var fiscalCount int
+	err = s.pool.QueryRow(ctx,
+		`SELECT COALESCE(SUM(total),0), COUNT(*)
+		 FROM fiscal_invoices
+		 WHERE tenant_id=$1 AND status='issued'
+		   AND issued_at >= $2 AND issued_at <= $3`,
+		tenantID, dr.From, dr.To,
+	).Scan(&fiscalRevenue, &fiscalCount)
+	if err != nil {
+		return nil, err
+	}
+
+	sum.TotalRevenue = internalRevenue + fiscalRevenue
+	sum.InternalCount = internalCount
+	sum.FiscalCount = fiscalCount
+	sum.TotalInvoices = internalCount + fiscalCount
+
+	// Revenue by day (union of both invoice types)
+	rows, err := s.pool.Query(ctx,
+		`SELECT DATE(issued_at) AS day, SUM(total) AS revenue, COUNT(*) AS cnt
+		 FROM (
+		   SELECT issued_at, total FROM internal_invoices
+		   WHERE tenant_id=$1 AND status='issued' AND issued_at>=$2 AND issued_at<=$3
+		   UNION ALL
+		   SELECT issued_at, total FROM fiscal_invoices
+		   WHERE tenant_id=$1 AND status='issued' AND issued_at>=$2 AND issued_at<=$3
+		 ) sub
+		 GROUP BY day
+		 ORDER BY day`,
+		tenantID, dr.From, dr.To,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var d report.DayRevenue
+		var day time.Time
+		if err := rows.Scan(&day, &d.Revenue, &d.Count); err != nil {
+			return nil, err
+		}
+		d.Date = day
+		sum.ByDay = append(sum.ByDay, d)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	// Top 10 products by revenue (internal invoices only — fiscal lines reference same products)
+	prows, err := s.pool.Query(ctx,
+		`SELECT l.product_id::text, COALESCE(p.name,'Unknown'), SUM(l.quantity), SUM(l.subtotal)
+		 FROM internal_invoice_lines l
+		 JOIN internal_invoices i ON i.id = l.invoice_id
+		 LEFT JOIN products p ON p.id = l.product_id
+		 WHERE i.tenant_id=$1 AND i.status='issued'
+		   AND i.issued_at>=$2 AND i.issued_at<=$3
+		 GROUP BY l.product_id, p.name
+		 ORDER BY SUM(l.subtotal) DESC
+		 LIMIT 10`,
+		tenantID, dr.From, dr.To,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer prows.Close()
+	for prows.Next() {
+		var pr report.ProductRevenue
+		if err := prows.Scan(&pr.ProductID, &pr.ProductName, &pr.TotalSold, &pr.Revenue); err != nil {
+			return nil, err
+		}
+		sum.TopProducts = append(sum.TopProducts, pr)
+	}
+	if err := prows.Err(); err != nil {
+		return nil, err
+	}
+
+	return sum, nil
+}
+
+// InventorySnapshot returns the current stock state for all tenant products.
+func (s *ReportService) InventorySnapshot(ctx context.Context, tenantID uuid.UUID) (*report.InventorySnapshot, error) {
+	snap := &report.InventorySnapshot{
+		GeneratedAt: time.Now().UTC(),
+		Items:       []report.StockItem{},
+	}
+
+	rows, err := s.pool.Query(ctx,
+		`SELECT p.id::text, p.name, COALESCE(p.sku,''),
+		        COALESCE(c.name,''), COALESCE(ps.quantity_on_hand,0),
+		        p.is_fiscal, p.active
+		 FROM products p
+		 LEFT JOIN product_stock ps ON ps.product_id = p.id
+		 LEFT JOIN product_categories c ON c.id = p.category_id
+		 WHERE p.tenant_id = $1
+		 ORDER BY p.name`,
+		tenantID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var item report.StockItem
+		if err := rows.Scan(
+			&item.ProductID, &item.ProductName, &item.SKU,
+			&item.CategoryName, &item.QuantityOnHand,
+			&item.IsFiscal, &item.Active,
+		); err != nil {
+			return nil, err
+		}
+		snap.Items = append(snap.Items, item)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	snap.TotalProducts = len(snap.Items)
+	for _, it := range snap.Items {
+		if it.QuantityOnHand == 0 {
+			snap.OutOfStockCount++
+		} else if it.QuantityOnHand < 5 {
+			snap.LowStockCount++
+		}
+	}
+
+	return snap, nil
+}
+
+// PurchaseReport returns purchase order aggregates for the given period.
+func (s *ReportService) PurchaseReport(ctx context.Context, tenantID uuid.UUID, dr report.DateRange) (*report.PurchaseSummary, error) {
+	sum := &report.PurchaseSummary{
+		From:       dr.From,
+		To:         dr.To,
+		BySupplier: []report.SupplierSpend{},
+	}
+
+	// Totals
+	err := s.pool.QueryRow(ctx,
+		`SELECT COALESCE(SUM(total),0), COUNT(*),
+		        COUNT(*) FILTER (WHERE status='received')
+		 FROM purchase_orders
+		 WHERE tenant_id=$1
+		   AND created_at>=$2 AND created_at<=$3
+		   AND status != 'cancelled'`,
+		tenantID, dr.From, dr.To,
+	).Scan(&sum.TotalSpend, &sum.TotalOrders, &sum.ReceivedOrders)
+	if err != nil {
+		return nil, err
+	}
+
+	// By supplier
+	rows, err := s.pool.Query(ctx,
+		`SELECT po.supplier_id::text, COALESCE(s.name,'Unknown'),
+		        SUM(po.total), COUNT(*)
+		 FROM purchase_orders po
+		 LEFT JOIN suppliers s ON s.id = po.supplier_id
+		 WHERE po.tenant_id=$1
+		   AND po.created_at>=$2 AND po.created_at<=$3
+		   AND po.status != 'cancelled'
+		 GROUP BY po.supplier_id, s.name
+		 ORDER BY SUM(po.total) DESC`,
+		tenantID, dr.From, dr.To,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var sp report.SupplierSpend
+		if err := rows.Scan(&sp.SupplierID, &sp.SupplierName, &sp.TotalSpend, &sp.OrderCount); err != nil {
+			return nil, err
+		}
+		sum.BySupplier = append(sum.BySupplier, sp)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return sum, nil
+}
