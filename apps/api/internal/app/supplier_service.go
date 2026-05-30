@@ -339,9 +339,9 @@ func (s *SupplierService) ReceivePO(ctx context.Context, tenantID, poID uuid.UUI
 		movID := uuid.New()
 		_, err = tx.Exec(ctx,
 			`INSERT INTO inventory_movements
-			    (id, tenant_id, product_id, movement_type, quantity, reference_id, notes, created_by)
-			 VALUES ($1,$2,$3,'purchase',$4,$5,$6,$7)`,
-			movID, tenantID, line.ProductID, line.QuantityOrdered, poID,
+			    (id, tenant_id, product_id, type, quantity, unit_cost, reference_type, reference_id, notes, created_by)
+			 VALUES ($1,$2,$3,'entry',$4,$5,'purchase_order',$6,$7,$8)`,
+			movID, tenantID, line.ProductID, line.QuantityOrdered, line.UnitCost, poID,
 			fmt.Sprintf("Recepción OC — %s", po.SupplierID), userID,
 		)
 		if err != nil {
@@ -349,10 +349,10 @@ func (s *SupplierService) ReceivePO(ctx context.Context, tenantID, poID uuid.UUI
 		}
 		// Update stock
 		_, err = tx.Exec(ctx,
-			`INSERT INTO inventory_stock (tenant_id, product_id, quantity_on_hand, last_updated_at)
+			`INSERT INTO product_stock (tenant_id, product_id, quantity_on_hand, last_updated_at)
 			 VALUES ($1,$2,$3,NOW())
-			 ON CONFLICT (tenant_id, product_id)
-			 DO UPDATE SET quantity_on_hand = inventory_stock.quantity_on_hand + $3, last_updated_at=NOW()`,
+			 ON CONFLICT (product_id)
+			 DO UPDATE SET quantity_on_hand = product_stock.quantity_on_hand + $3, last_updated_at=NOW()`,
 			tenantID, line.ProductID, line.QuantityOrdered,
 		)
 		if err != nil {
