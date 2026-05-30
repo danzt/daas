@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"encoding/csv"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -84,4 +86,110 @@ func (h *ReportHandler) PurchaseReport(c echo.Context) error {
 		return WriteProblem(c, http.StatusInternalServerError, "internal-error", err.Error())
 	}
 	return c.JSON(http.StatusOK, result)
+}
+
+// ─── CSV Export handlers ──────────────────────────────────────────────────────
+
+func writeCSV(c echo.Context, filename string, header []string, rows [][]string) error {
+	c.Response().Header().Set("Content-Type", "text/csv; charset=utf-8")
+	c.Response().Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, filename))
+	c.Response().WriteHeader(http.StatusOK)
+
+	w := csv.NewWriter(c.Response().Writer)
+	if err := w.Write(header); err != nil {
+		return err
+	}
+	for _, row := range rows {
+		if err := w.Write(row); err != nil {
+			return err
+		}
+	}
+	w.Flush()
+	return w.Error()
+}
+
+// ExportSalesCSV godoc
+// GET /api/v1/reports/sales/export?from=YYYY-MM-DD&to=YYYY-MM-DD
+func (h *ReportHandler) ExportSalesCSV(c echo.Context) error {
+	tenantID, err := getTenantID(c)
+	if err != nil {
+		return WriteProblem(c, http.StatusForbidden, "forbidden", "tenant context missing")
+	}
+	dr := parseDateRange(c)
+	result, err := h.svc.SalesReport(c.Request().Context(), tenantID, dr)
+	if err != nil {
+		return WriteProblem(c, http.StatusInternalServerError, "internal-error", err.Error())
+	}
+
+	header := []string{"Fecha", "Ingresos", "Facturas"}
+	rows := make([][]string, 0, len(result.ByDay))
+	for _, d := range result.ByDay {
+		rows = append(rows, []string{
+			d.Date.Format("2006-01-02"),
+			fmt.Sprintf("%.2f", d.Revenue),
+			fmt.Sprintf("%d", d.Count),
+		})
+	}
+
+	filename := fmt.Sprintf("ventas-%s-%s.csv", dr.From.Format("20060102"), dr.To.Format("20060102"))
+	return writeCSV(c, filename, header, rows)
+}
+
+// ExportInventoryCSV godoc
+// GET /api/v1/reports/inventory/export
+func (h *ReportHandler) ExportInventoryCSV(c echo.Context) error {
+	tenantID, err := getTenantID(c)
+	if err != nil {
+		return WriteProblem(c, http.StatusForbidden, "forbidden", "tenant context missing")
+	}
+	result, err := h.svc.InventorySnapshot(c.Request().Context(), tenantID)
+	if err != nil {
+		return WriteProblem(c, http.StatusInternalServerError, "internal-error", err.Error())
+	}
+
+	header := []string{"Producto", "SKU", "Categoría", "Tipo", "Stock"}
+	rows := make([][]string, 0, len(result.Items))
+	for _, item := range result.Items {
+		kind := "Interno"
+		if item.IsFiscal {
+			kind = "Fiscal"
+		}
+		rows = append(rows, []string{
+			item.ProductName,
+			item.SKU,
+			item.CategoryName,
+			kind,
+			fmt.Sprintf("%.3f", item.QuantityOnHand),
+		})
+	}
+
+	filename := fmt.Sprintf("inventario-%s.csv", time.Now().Format("20060102"))
+	return writeCSV(c, filename, header, rows)
+}
+
+// ExportPurchasesCSV godoc
+// GET /api/v1/reports/purchases/export?from=YYYY-MM-DD&to=YYYY-MM-DD
+func (h *ReportHandler) ExportPurchasesCSV(c echo.Context) error {
+	tenantID, err := getTenantID(c)
+	if err != nil {
+		return WriteProblem(c, http.StatusForbidden, "forbidden", "tenant context missing")
+	}
+	dr := parseDateRange(c)
+	result, err := h.svc.PurchaseReport(c.Request().Context(), tenantID, dr)
+	if err != nil {
+		return WriteProblem(c, http.StatusInternalServerError, "internal-error", err.Error())
+	}
+
+	header := []string{"Proveedor", "Órdenes", "Monto total"}
+	rows := make([][]string, 0, len(result.BySupplier))
+	for _, sup := range result.BySupplier {
+		rows = append(rows, []string{
+			sup.SupplierName,
+			fmt.Sprintf("%d", sup.OrderCount),
+			fmt.Sprintf("%.2f", sup.TotalSpend),
+		})
+	}
+
+	filename := fmt.Sprintf("compras-%s-%s.csv", dr.From.Format("20060102"), dr.To.Format("20060102"))
+	return writeCSV(c, filename, header, rows)
 }
