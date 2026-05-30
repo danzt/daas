@@ -97,9 +97,10 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen
 	integrationHandler := handler.NewIntegrationHandler(cfg.Pool)
 	meHandler := handler.NewMeHandler(cfg.Pool)
 	productHandler := handler.NewProductHandler(cfg.Pool)
+	inventoryHandler := handler.NewInventoryHandler(cfg.Pool)
 
 	// Routes
-	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler)
+	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler)
 
 	return e
 }
@@ -114,6 +115,7 @@ func registerRoutes(
 	integrationHandler *handler.IntegrationHandler,
 	meHandler *handler.MeHandler,
 	productHandler *handler.ProductHandler,
+	inventoryHandler *handler.InventoryHandler,
 ) {
 	// Health check — unauthenticated
 	e.GET("/health", healthHandler)
@@ -153,6 +155,13 @@ func registerRoutes(
 	api.GET("/products/:id", productHandler.GetProduct)
 	api.PUT("/products/:id", productHandler.UpdateProduct)
 	api.DELETE("/products/:id", productHandler.DeleteProduct)
+
+	// Inventory
+	api.GET("/inventory/stock", inventoryHandler.ListStock)
+	api.GET("/inventory/stock/:product_id", inventoryHandler.GetProductStock)
+	api.GET("/inventory/movements", inventoryHandler.ListMovements)
+	api.GET("/inventory/movements/:id", inventoryHandler.GetMovement)
+	api.POST("/inventory/adjustments", inventoryHandler.CreateAdjustment)
 }
 
 // healthHandler responds with a simple status OK payload.
