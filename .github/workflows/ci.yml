@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  go-test:
+    name: Go — lint + test
+    runs-on: ubuntu-latest
+    if: |
+      contains(github.event.head_commit.modified, 'apps/api/') ||
+      github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: apps/api/go.sum
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          working-directory: apps/api
+      - name: Run tests
+        working-directory: apps/api
+        run: go test ./...
+
+  vue-test:
+    name: Vue — lint + typecheck + vitest
+    runs-on: ubuntu-latest
+    if: |
+      contains(github.event.head_commit.modified, 'apps/web/') ||
+      contains(github.event.head_commit.modified, 'packages/') ||
+      github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: pnpm --filter @daas/web lint
+      - name: Typecheck
+        run: pnpm --filter @daas/web typecheck
