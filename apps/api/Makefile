@@ -1,4 +1,4 @@
-.PHONY: build run test lint migrate-up migrate-down tidy
+.PHONY: build run test lint migrate-up migrate-down migrate-create tidy sqlc-generate
 
 # Binary output path
 BIN := bin/api
@@ -26,12 +26,24 @@ lint:
 tidy:
 	$(GOCMD) mod tidy
 
+MIGRATE_DIR=migrations
+DATABASE_URL?=$(shell grep DATABASE_URL .env 2>/dev/null | cut -d= -f2)
+
 ## migrate-up: apply all pending migrations
 ## Usage: make migrate-up DATABASE_URL=postgres://...
 migrate-up:
-	migrate -path ./migrations -database "$(DATABASE_URL)" up
+	migrate -path $(MIGRATE_DIR) -database "$(DATABASE_URL)" up
 
 ## migrate-down: roll back the last migration
 ## Usage: make migrate-down DATABASE_URL=postgres://...
 migrate-down:
-	migrate -path ./migrations -database "$(DATABASE_URL)" down 1
+	migrate -path $(MIGRATE_DIR) -database "$(DATABASE_URL)" down 1
+
+## migrate-create: create a new migration
+## Usage: make migrate-create name=create_users
+migrate-create:
+	migrate create -ext sql -dir $(MIGRATE_DIR) -seq $(name)
+
+## sqlc-generate: generate Go code from SQL queries
+sqlc-generate:
+	sqlc generate
