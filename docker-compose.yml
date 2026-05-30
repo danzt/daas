@@ -26,10 +26,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    develop:
-      watch:
-        - action: rebuild
-          path: ./apps/api
 
   web:
     build:
@@ -43,11 +39,6 @@ services:
       - /app/.nuxt
     environment:
       - NODE_ENV=development
-    develop:
-      watch:
-        - action: sync
-          path: ./apps/web
-          target: /app
 
 volumes:
   postgres_data:
