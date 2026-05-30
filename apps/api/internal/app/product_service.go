@@ -349,3 +349,19 @@ func nullableString(s string) *string {
 	}
 	return &s
 }
+
+// DeleteCategory removes a category by ID for the given tenant.
+// Returns pgx.ErrNoRows if the category does not exist or belongs to another tenant.
+func (s *ProductService) DeleteCategory(ctx context.Context, tenantID, id uuid.UUID) error {
+	tag, err := s.pool.Exec(ctx,
+		`DELETE FROM product_categories WHERE id = $1 AND tenant_id = $2`,
+		id, tenantID,
+	)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return pgx.ErrNoRows
+	}
+	return nil
+}

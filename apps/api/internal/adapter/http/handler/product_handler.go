@@ -364,3 +364,22 @@ func (h *ProductHandler) CreateCategory(c echo.Context) error {
 		CreatedAt: cat.CreatedAt.Format(time.RFC3339),
 	})
 }
+
+// DeleteCategory handles DELETE /api/v1/products/categories/:id
+func (h *ProductHandler) DeleteCategory(c echo.Context) error {
+	tenantID, err := getTenantID(c)
+	if err != nil {
+		return WriteProblem(c, http.StatusForbidden, "forbidden", "tenant context missing")
+	}
+
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return WriteProblem(c, http.StatusBadRequest, "bad-request", "invalid category id")
+	}
+
+	if err := h.service.DeleteCategory(c.Request().Context(), tenantID, id); err != nil {
+		return WriteProblem(c, http.StatusInternalServerError, "internal-error", "failed to delete category")
+	}
+
+	return c.NoContent(http.StatusNoContent)
+}

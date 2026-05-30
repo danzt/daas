@@ -93,6 +93,29 @@ export const useAuthStore = defineStore("auth", () => {
     }
   }
 
+  async function fetchTenant(): Promise<void> {
+    if (!accessToken.value) return;
+    try {
+      const config = useRuntimeConfig();
+      const data = await $fetch<{
+        id: string;
+        name: string;
+        country_code: string;
+        fiscal_id?: string;
+      }>(`${config.public.apiBase}/api/v1/tenants/me`, {
+        headers: { Authorization: `Bearer ${accessToken.value}` },
+      });
+      tenant.value = {
+        id: data.id,
+        name: data.name,
+        countryCode: data.country_code,
+        fiscalId: data.fiscal_id,
+      };
+    } catch {
+      // non-fatal — UI degrades gracefully without tenant name
+    }
+  }
+
   async function login(email: string, password: string): Promise<void> {
     const config = useRuntimeConfig();
     const data = await $fetch<{
@@ -110,6 +133,7 @@ export const useAuthStore = defineStore("auth", () => {
       localStorage.setItem(TOKEN_KEY, data.access_token);
     }
     _hydrateFromToken(data.access_token);
+    await fetchTenant();
   }
 
   async function logout(): Promise<void> {
@@ -142,7 +166,6 @@ export const useAuthStore = defineStore("auth", () => {
         body: payload,
       },
     );
-    // auto-login after register
     await login(payload.email, payload.password);
   }
 
@@ -161,6 +184,7 @@ export const useAuthStore = defineStore("auth", () => {
     logout,
     register,
     setTenant,
+    fetchTenant,
     initFromStorage,
   };
 });

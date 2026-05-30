@@ -147,6 +147,7 @@ func registerRoutes(
 	// so Echo's router doesn't match "categories" as a UUID parameter.
 	api.GET("/products/categories", productHandler.ListCategories)
 	api.POST("/products/categories", productHandler.CreateCategory)
+	api.DELETE("/products/categories/:id", productHandler.DeleteCategory, mw.OwnerGuard())
 	api.GET("/products", productHandler.ListProducts)
 	api.POST("/products", productHandler.CreateProduct)
 	api.GET("/products/:id", productHandler.GetProduct)
