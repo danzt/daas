@@ -79,14 +79,27 @@ const navGroups: NavGroup[] = [
         label: "Facturas",
         icon: FileText,
         to: "/invoices",
-        children: [{ label: "Facturas internas", to: "/invoices" }],
+        children: [
+          { label: "Facturas internas", to: "/invoices" },
+          { label: "Facturas fiscales", to: "/invoices/fiscal" },
+        ],
       },
     ],
   },
   {
     id: "ops",
     label: "Operaciones",
-    items: [{ label: "Proveedores", icon: Truck, to: "/suppliers" }],
+    items: [
+      {
+        label: "Proveedores",
+        icon: Truck,
+        to: "/suppliers",
+        children: [
+          { label: "Lista de proveedores", to: "/suppliers" },
+          { label: "Órdenes de compra", to: "/suppliers/purchase-orders" },
+        ],
+      },
+    ],
   },
   {
     id: "reports",
