@@ -74,7 +74,8 @@ func main() {
 
 	router := adapterhttp.NewRouterWithConfig(adapterhttp.RouterConfig{
 		SupabaseURL:    cfg.SupabaseURL,
-		ServiceRoleKey: os.Getenv("SUPABASE_SERVICE_ROLE_KEY"),
+		AnonKey:        cfg.SupabaseAnonKey,
+		ServiceRoleKey: cfg.SupabaseServiceRoleKey,
 		Pool:           pool,
 	})
 

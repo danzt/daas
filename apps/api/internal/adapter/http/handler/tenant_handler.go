@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
+	"github.com/rs/zerolog/log"
 
 	"github.com/danzt/daas/api/internal/app"
 	"github.com/danzt/daas/api/internal/domain/tenant"
@@ -81,6 +82,7 @@ func MapError(c echo.Context, err error) error {
 	case errors.Is(err, tenant.ErrTenantSuspended):
 		return WriteProblem(c, http.StatusForbidden, "tenant-suspended", "tenant account is suspended")
 	default:
+		log.Error().Err(err).Str("path", c.Request().URL.Path).Msg("unhandled service error")
 		return WriteProblem(c, http.StatusInternalServerError, "internal-error", "an unexpected error occurred")
 	}
 }
@@ -88,7 +90,7 @@ func MapError(c echo.Context, err error) error {
 // WriteProblem writes an RFC 7807 Problem Details JSON response.
 // Exported so tests and other handlers can produce consistent error shapes.
 func WriteProblem(c echo.Context, status int, errType, detail string) error {
-	return c.JSON(status, map[string]interface{}{
+	return c.JSON(status, map[string]any{
 		"type":   "https://daas.app/errors/" + errType,
 		"title":  http.StatusText(status),
 		"status": status,

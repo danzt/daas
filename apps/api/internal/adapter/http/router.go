@@ -19,6 +19,7 @@ import (
 // RouterConfig holds dependencies needed to build the Echo router.
 type RouterConfig struct {
 	SupabaseURL    string
+	AnonKey        string
 	ServiceRoleKey string
 	Pool           *pgxpool.Pool
 }
@@ -91,7 +92,7 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen
 	tenantSvc := app.NewTenantService(cfg.Pool, cfg.SupabaseURL, cfg.ServiceRoleKey)
 	tenantHandler := handler.NewTenantHandler(tenantSvc)
 
-	authHandler := handler.NewAuthHandler(cfg.SupabaseURL)
+	authHandler := handler.NewAuthHandler(cfg.SupabaseURL, cfg.AnonKey)
 	userHandler := handler.NewUserHandler(cfg.Pool, cfg.SupabaseURL, cfg.ServiceRoleKey)
 	integrationHandler := handler.NewIntegrationHandler(cfg.Pool)
 	meHandler := handler.NewMeHandler(cfg.Pool)

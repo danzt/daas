@@ -155,8 +155,9 @@ func (s *TenantService) createTenantUserDB(
 
 // supabaseCreateUserRequest is the payload for POST /auth/v1/admin/users.
 type supabaseCreateUserRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	Email        string `json:"email"`
+	Password     string `json:"password"`
+	EmailConfirm bool   `json:"email_confirm"`
 }
 
 // supabaseUserResponse is the response from the Supabase Admin API.
@@ -167,7 +168,7 @@ type supabaseUserResponse struct {
 // createSupabaseUser calls the Supabase Admin API to create an Auth user.
 // Returns the Supabase user UUID string.
 func (s *TenantService) createSupabaseUser(ctx context.Context, email, password string) (uuid.UUID, error) {
-	body := supabaseCreateUserRequest{Email: email, Password: password}
+	body := supabaseCreateUserRequest{Email: email, Password: password, EmailConfirm: true}
 	bodyBytes, err := json.Marshal(body)
 	if err != nil {
 		return uuid.Nil, fmt.Errorf("marshal create user request: %w", err)
@@ -209,7 +210,7 @@ func (s *TenantService) createSupabaseUser(ctx context.Context, email, password 
 
 // supabaseUpdateMetadataRequest is the payload for PATCH /auth/v1/admin/users/{id}.
 type supabaseUpdateMetadataRequest struct {
-	AppMetadata map[string]interface{} `json:"app_metadata"`
+	AppMetadata map[string]any `json:"app_metadata"`
 }
 
 // setTenantMetadata calls PATCH /auth/v1/admin/users/{uid} to set the
@@ -217,7 +218,7 @@ type supabaseUpdateMetadataRequest struct {
 // subsequent JWTs issued by Supabase Auth for this user.
 func (s *TenantService) setTenantMetadata(ctx context.Context, uid uuid.UUID, tenantID uuid.UUID, role string) error {
 	meta := supabaseUpdateMetadataRequest{
-		AppMetadata: map[string]interface{}{
+		AppMetadata: map[string]any{
 			"tenant_id": tenantID.String(),
 			"role":      role,
 		},
@@ -228,7 +229,7 @@ func (s *TenantService) setTenantMetadata(ctx context.Context, uid uuid.UUID, te
 	}
 
 	url := s.supabaseURL + "/auth/v1/admin/users/" + uid.String()
-	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, url, bytes.NewReader(bodyBytes))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, url, bytes.NewReader(bodyBytes))
 	if err != nil {
 		return fmt.Errorf("create metadata patch request: %w", err)
 	}
@@ -243,7 +244,7 @@ func (s *TenantService) setTenantMetadata(ctx context.Context, uid uuid.UUID, te
 	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("supabase admin PATCH returned %d", resp.StatusCode)
+		return fmt.Errorf("supabase admin PUT returned %d", resp.StatusCode)
 	}
 	return nil
 }

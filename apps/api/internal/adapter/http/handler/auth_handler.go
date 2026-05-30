@@ -14,14 +14,16 @@ import (
 // The Go API is stateless — no server-side sessions. Clients hold their JWT.
 type AuthHandler struct {
 	supabaseURL string
+	anonKey     string
 	httpClient  *http.Client
 }
 
 // NewAuthHandler creates an AuthHandler that proxies auth requests to the
 // given Supabase project URL.
-func NewAuthHandler(supabaseURL string) *AuthHandler {
+func NewAuthHandler(supabaseURL, anonKey string) *AuthHandler {
 	return &AuthHandler{
 		supabaseURL: supabaseURL,
+		anonKey:     anonKey,
 		httpClient:  &http.Client{Timeout: 15 * time.Second},
 	}
 }
@@ -62,6 +64,7 @@ func (h *AuthHandler) Login(c echo.Context) error {
 			"failed to create proxy request")
 	}
 	proxyReq.Header.Set("Content-Type", "application/json")
+	proxyReq.Header.Set("apikey", h.anonKey)
 
 	resp, err := h.httpClient.Do(proxyReq)
 	if err != nil {
