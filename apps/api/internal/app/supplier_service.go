@@ -1,0 +1,456 @@
+package app
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/danzt/daas/api/internal/domain/supplier"
+)
+
+// SupplierService handles supplier CRUD and purchase order lifecycle.
+type SupplierService struct {
+	pool *pgxpool.Pool
+}
+
+func NewSupplierService(pool *pgxpool.Pool) *SupplierService {
+	return &SupplierService{pool: pool}
+}
+
+// ═══ Suppliers ════════════════════════════════════════════════════════════════
+
+func (s *SupplierService) CreateSupplier(ctx context.Context, tenantID uuid.UUID, req supplier.CreateSupplierRequest) (*supplier.Supplier, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	sup := &supplier.Supplier{
+		ID:          uuid.New(),
+		TenantID:    tenantID,
+		Name:        req.Name,
+		RIF:         req.RIF,
+		ContactName: req.ContactName,
+		Email:       req.Email,
+		Phone:       req.Phone,
+		Address:     req.Address,
+		Notes:       req.Notes,
+		Active:      true,
+		CreatedAt:   time.Now().UTC(),
+		UpdatedAt:   time.Now().UTC(),
+	}
+	_, err := s.pool.Exec(ctx,
+		`INSERT INTO suppliers
+		    (id, tenant_id, name, rif, contact_name, email, phone, address, notes)
+		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
+		sup.ID, sup.TenantID, sup.Name, sup.RIF, sup.ContactName,
+		sup.Email, sup.Phone, sup.Address, sup.Notes,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("insert supplier: %w", err)
+	}
+	return sup, nil
+}
+
+func (s *SupplierService) ListSuppliers(ctx context.Context, tenantID uuid.UUID, activeOnly bool) ([]*supplier.Supplier, error) {
+	query := `SELECT id, tenant_id, name, rif, contact_name, email, phone, address, notes, active, created_at, updated_at
+	          FROM suppliers WHERE tenant_id=$1`
+	if activeOnly {
+		query += " AND active=true"
+	}
+	query += " ORDER BY name"
+	rows, err := s.pool.Query(ctx, query, tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("list suppliers: %w", err)
+	}
+	defer rows.Close()
+	var result []*supplier.Supplier
+	for rows.Next() {
+		sup, err := scanSupplier(rows)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, sup)
+	}
+	return result, nil
+}
+
+func (s *SupplierService) GetSupplier(ctx context.Context, tenantID, supplierID uuid.UUID) (*supplier.Supplier, error) {
+	sup, err := scanSupplier(s.pool.QueryRow(ctx,
+		`SELECT id, tenant_id, name, rif, contact_name, email, phone, address, notes, active, created_at, updated_at
+		 FROM suppliers WHERE id=$1 AND tenant_id=$2`,
+		supplierID, tenantID,
+	))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, supplier.ErrSupplierNotFound
+		}
+		return nil, fmt.Errorf("get supplier: %w", err)
+	}
+	return sup, nil
+}
+
+func (s *SupplierService) UpdateSupplier(ctx context.Context, tenantID, supplierID uuid.UUID, req supplier.UpdateSupplierRequest) (*supplier.Supplier, error) {
+	sup, err := s.GetSupplier(ctx, tenantID, supplierID)
+	if err != nil {
+		return nil, err
+	}
+	if req.Name != nil {
+		sup.Name = *req.Name
+	}
+	if req.RIF != nil {
+		sup.RIF = *req.RIF
+	}
+	if req.ContactName != nil {
+		sup.ContactName = *req.ContactName
+	}
+	if req.Email != nil {
+		sup.Email = *req.Email
+	}
+	if req.Phone != nil {
+		sup.Phone = *req.Phone
+	}
+	if req.Address != nil {
+		sup.Address = *req.Address
+	}
+	if req.Notes != nil {
+		sup.Notes = *req.Notes
+	}
+	if req.Active != nil {
+		sup.Active = *req.Active
+	}
+	_, err = s.pool.Exec(ctx,
+		`UPDATE suppliers
+		 SET name=$1, rif=$2, contact_name=$3, email=$4, phone=$5, address=$6, notes=$7, active=$8, updated_at=NOW()
+		 WHERE id=$9 AND tenant_id=$10`,
+		sup.Name, sup.RIF, sup.ContactName, sup.Email, sup.Phone,
+		sup.Address, sup.Notes, sup.Active, supplierID, tenantID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("update supplier: %w", err)
+	}
+	sup.UpdatedAt = time.Now().UTC()
+	return sup, nil
+}
+
+// ═══ Purchase Orders ══════════════════════════════════════════════════════════
+
+func (s *SupplierService) CreatePO(ctx context.Context, tenantID uuid.UUID, createdBySupabaseUID string, req supplier.CreatePORequest) (*supplier.PurchaseOrder, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	createdBy, err := s.resolveSupplierUserID(ctx, tenantID, createdBySupabaseUID)
+	if err != nil {
+		return nil, err
+	}
+	// Verify supplier belongs to tenant
+	if _, err := s.GetSupplier(ctx, tenantID, req.SupplierID); err != nil {
+		return nil, err
+	}
+	// Resolve product descriptions + compute total
+	var total float64
+	for i, line := range req.Lines {
+		var name string
+		err := s.pool.QueryRow(ctx,
+			`SELECT name FROM products WHERE id=$1 AND tenant_id=$2 AND active=true`,
+			line.ProductID, tenantID,
+		).Scan(&name)
+		if err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				return nil, fmt.Errorf("product %s not found or inactive", line.ProductID)
+			}
+			return nil, fmt.Errorf("lookup product: %w", err)
+		}
+		if req.Lines[i].Description == "" {
+			req.Lines[i].Description = name
+		}
+		total += line.Quantity * line.UnitCost
+	}
+
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck
+
+	po := &supplier.PurchaseOrder{
+		ID:         uuid.New(),
+		TenantID:   tenantID,
+		SupplierID: req.SupplierID,
+		Status:     supplier.POStatusDraft,
+		Notes:      req.Notes,
+		Total:      total,
+		CreatedBy:  createdBy,
+		CreatedAt:  time.Now().UTC(),
+		UpdatedAt:  time.Now().UTC(),
+	}
+	_, err = tx.Exec(ctx,
+		`INSERT INTO purchase_orders (id, tenant_id, supplier_id, notes, total, created_by)
+		 VALUES ($1,$2,$3,$4,$5,$6)`,
+		po.ID, po.TenantID, po.SupplierID, po.Notes, po.Total, po.CreatedBy,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("insert po: %w", err)
+	}
+	for i, line := range req.Lines {
+		lineID := uuid.New()
+		sub := line.Quantity * line.UnitCost
+		_, err = tx.Exec(ctx,
+			`INSERT INTO purchase_order_lines (id, po_id, product_id, description, quantity_ordered, unit_cost, subtotal, sort_order)
+			 VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+			lineID, po.ID, line.ProductID, req.Lines[i].Description, line.Quantity, line.UnitCost, sub, i,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("insert po line: %w", err)
+		}
+		po.Lines = append(po.Lines, supplier.POLine{
+			ID: lineID, POID: po.ID, ProductID: line.ProductID,
+			Description: req.Lines[i].Description, QuantityOrdered: line.Quantity,
+			UnitCost: line.UnitCost, Subtotal: sub, SortOrder: i,
+		})
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("commit: %w", err)
+	}
+	return po, nil
+}
+
+func (s *SupplierService) ListPOs(ctx context.Context, tenantID uuid.UUID, supplierID *uuid.UUID, status *supplier.POStatus) ([]*supplier.PurchaseOrder, error) {
+	query := `SELECT id, tenant_id, supplier_id, status, notes, total, ordered_at, received_at, created_by, created_at, updated_at
+	          FROM purchase_orders WHERE tenant_id=$1`
+	args := []any{tenantID}
+	idx := 2
+	if supplierID != nil {
+		query += fmt.Sprintf(" AND supplier_id=$%d", idx)
+		args = append(args, *supplierID)
+		idx++
+	}
+	if status != nil {
+		query += fmt.Sprintf(" AND status=$%d", idx)
+		args = append(args, *status)
+	}
+	query += " ORDER BY created_at DESC"
+
+	rows, err := s.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("list pos: %w", err)
+	}
+	defer rows.Close()
+	var result []*supplier.PurchaseOrder
+	for rows.Next() {
+		po, err := scanPO(rows)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, po)
+	}
+	return result, nil
+}
+
+func (s *SupplierService) GetPO(ctx context.Context, tenantID, poID uuid.UUID) (*supplier.PurchaseOrder, error) {
+	po, err := scanPO(s.pool.QueryRow(ctx,
+		`SELECT id, tenant_id, supplier_id, status, notes, total, ordered_at, received_at, created_by, created_at, updated_at
+		 FROM purchase_orders WHERE id=$1 AND tenant_id=$2`,
+		poID, tenantID,
+	))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, supplier.ErrPONotFound
+		}
+		return nil, fmt.Errorf("get po: %w", err)
+	}
+	lines, err := s.loadPOLines(ctx, poID)
+	if err != nil {
+		return nil, err
+	}
+	po.Lines = lines
+	// Load supplier name
+	sup, err := s.GetSupplier(ctx, tenantID, po.SupplierID)
+	if err == nil {
+		po.Supplier = sup
+	}
+	return po, nil
+}
+
+// OrderPO transitions a draft PO to ordered status (sent to supplier).
+func (s *SupplierService) OrderPO(ctx context.Context, tenantID, poID uuid.UUID, supabaseUID string) (*supplier.PurchaseOrder, error) {
+	_, err := s.resolveSupplierUserID(ctx, tenantID, supabaseUID)
+	if err != nil {
+		return nil, err
+	}
+	po, err := s.GetPO(ctx, tenantID, poID)
+	if err != nil {
+		return nil, err
+	}
+	if po.Status != supplier.POStatusDraft {
+		if po.Status == supplier.POStatusOrdered {
+			return nil, supplier.ErrPOAlreadyOrdered
+		}
+		return nil, supplier.ErrPONotDraft
+	}
+	now := time.Now().UTC()
+	_, err = s.pool.Exec(ctx,
+		`UPDATE purchase_orders SET status='ordered', ordered_at=$1, updated_at=NOW() WHERE id=$2`,
+		now, poID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("order po: %w", err)
+	}
+	return s.GetPO(ctx, tenantID, poID)
+}
+
+// ReceivePO transitions an ordered PO to received and creates inventory movements.
+func (s *SupplierService) ReceivePO(ctx context.Context, tenantID, poID uuid.UUID, supabaseUID string) (*supplier.PurchaseOrder, error) {
+	userID, err := s.resolveSupplierUserID(ctx, tenantID, supabaseUID)
+	if err != nil {
+		return nil, err
+	}
+	po, err := s.GetPO(ctx, tenantID, poID)
+	if err != nil {
+		return nil, err
+	}
+	if po.Status != supplier.POStatusOrdered {
+		if po.Status == supplier.POStatusReceived {
+			return nil, supplier.ErrPOAlreadyReceived
+		}
+		return nil, supplier.ErrPONotOrdered
+	}
+
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck
+
+	now := time.Now().UTC()
+	_, err = tx.Exec(ctx,
+		`UPDATE purchase_orders SET status='received', received_at=$1, updated_at=NOW() WHERE id=$2`,
+		now, poID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("mark received: %w", err)
+	}
+
+	// Create inventory movements for each line (type: purchase → increments stock)
+	for _, line := range po.Lines {
+		movID := uuid.New()
+		_, err = tx.Exec(ctx,
+			`INSERT INTO inventory_movements
+			    (id, tenant_id, product_id, type, quantity, unit_cost, reference_type, reference_id, notes, created_by)
+			 VALUES ($1,$2,$3,'entry',$4,$5,'purchase_order',$6,$7,$8)`,
+			movID, tenantID, line.ProductID, line.QuantityOrdered, line.UnitCost, poID,
+			fmt.Sprintf("Recepción OC — %s", po.SupplierID), userID,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("insert movement: %w", err)
+		}
+		// Update stock
+		_, err = tx.Exec(ctx,
+			`INSERT INTO product_stock (tenant_id, product_id, quantity_on_hand, last_updated_at)
+			 VALUES ($1,$2,$3,NOW())
+			 ON CONFLICT (product_id)
+			 DO UPDATE SET quantity_on_hand = product_stock.quantity_on_hand + $3, last_updated_at=NOW()`,
+			tenantID, line.ProductID, line.QuantityOrdered,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("update stock: %w", err)
+		}
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("commit: %w", err)
+	}
+	return s.GetPO(ctx, tenantID, poID)
+}
+
+// CancelPO transitions a draft or ordered PO to cancelled.
+func (s *SupplierService) CancelPO(ctx context.Context, tenantID, poID uuid.UUID, supabaseUID string) (*supplier.PurchaseOrder, error) {
+	_, err := s.resolveSupplierUserID(ctx, tenantID, supabaseUID)
+	if err != nil {
+		return nil, err
+	}
+	po, err := s.GetPO(ctx, tenantID, poID)
+	if err != nil {
+		return nil, err
+	}
+	if po.Status == supplier.POStatusCancelled {
+		return nil, supplier.ErrPOAlreadyCancelled
+	}
+	if po.Status == supplier.POStatusReceived {
+		return nil, supplier.ErrPOAlreadyReceived
+	}
+	_, err = s.pool.Exec(ctx,
+		`UPDATE purchase_orders SET status='cancelled', updated_at=NOW() WHERE id=$1`,
+		poID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("cancel po: %w", err)
+	}
+	return s.GetPO(ctx, tenantID, poID)
+}
+
+// ─── Private helpers ──────────────────────────────────────────────────────────
+
+func (s *SupplierService) resolveSupplierUserID(ctx context.Context, tenantID uuid.UUID, supabaseUID string) (uuid.UUID, error) {
+	var id uuid.UUID
+	err := s.pool.QueryRow(ctx,
+		`SELECT id FROM tenant_users WHERE tenant_id=$1 AND supabase_uid=$2`,
+		tenantID, supabaseUID,
+	).Scan(&id)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("resolve user: %w", err)
+	}
+	return id, nil
+}
+
+func (s *SupplierService) loadPOLines(ctx context.Context, poID uuid.UUID) ([]supplier.POLine, error) {
+	rows, err := s.pool.Query(ctx,
+		`SELECT id, po_id, product_id, description, quantity_ordered, unit_cost, subtotal, sort_order
+		 FROM purchase_order_lines WHERE po_id=$1 ORDER BY sort_order`,
+		poID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("load po lines: %w", err)
+	}
+	defer rows.Close()
+	var lines []supplier.POLine
+	for rows.Next() {
+		var l supplier.POLine
+		if err := rows.Scan(&l.ID, &l.POID, &l.ProductID, &l.Description,
+			&l.QuantityOrdered, &l.UnitCost, &l.Subtotal, &l.SortOrder); err != nil {
+			return nil, fmt.Errorf("scan po line: %w", err)
+		}
+		lines = append(lines, l)
+	}
+	return lines, nil
+}
+
+type supplierScanner interface {
+	Scan(dest ...any) error
+}
+
+func scanSupplier(row supplierScanner) (*supplier.Supplier, error) {
+	var s supplier.Supplier
+	if err := row.Scan(
+		&s.ID, &s.TenantID, &s.Name, &s.RIF, &s.ContactName,
+		&s.Email, &s.Phone, &s.Address, &s.Notes, &s.Active,
+		&s.CreatedAt, &s.UpdatedAt,
+	); err != nil {
+		return nil, err
+	}
+	return &s, nil
+}
+
+func scanPO(row supplierScanner) (*supplier.PurchaseOrder, error) {
+	var po supplier.PurchaseOrder
+	if err := row.Scan(
+		&po.ID, &po.TenantID, &po.SupplierID, &po.Status, &po.Notes, &po.Total,
+		&po.OrderedAt, &po.ReceivedAt, &po.CreatedBy, &po.CreatedAt, &po.UpdatedAt,
+	); err != nil {
+		return nil, err
+	}
+	return &po, nil
+}
