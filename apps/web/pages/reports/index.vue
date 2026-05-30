@@ -9,8 +9,10 @@ import {
   AlertTriangle,
   TrendingDown,
   Boxes,
+  Download,
 } from "lucide-vue-next";
 import { useApiFetch } from "~/composables/useAuth";
+import { useAuthStore } from "~/stores/auth";
 
 definePageMeta({
   layout: "default",
@@ -92,8 +94,57 @@ thirtyDaysAgo.setDate(today.getDate() - 30);
 const fromDate = ref(thirtyDaysAgo.toISOString().slice(0, 10));
 const toDate = ref(today.toISOString().slice(0, 10));
 
+const authStore = useAuthStore();
+const config = useRuntimeConfig();
 const route = useRoute();
 const tabFromQuery = route.query.tab as string | undefined;
+
+// ─── CSV Export ───────────────────────────────────────────────────────────────
+const exporting = ref(false);
+
+async function downloadCSV(endpoint: string, filename: string) {
+  exporting.value = true;
+  try {
+    const res = await fetch(`${config.public.apiBase}${endpoint}`, {
+      headers: { Authorization: `Bearer ${authStore.accessToken}` },
+    });
+    if (!res.ok) throw new Error("Export failed");
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch {
+    // silently fail — user sees no data downloaded
+  } finally {
+    exporting.value = false;
+  }
+}
+
+function exportSalesCSV() {
+  const params = `?from=${fromDate.value}&to=${toDate.value}`;
+  downloadCSV(
+    `/api/v1/reports/sales/export${params}`,
+    `ventas-${fromDate.value}-${toDate.value}.csv`,
+  );
+}
+
+function exportInventoryCSV() {
+  downloadCSV(
+    `/api/v1/reports/inventory/export`,
+    `inventario-${new Date().toISOString().slice(0, 10)}.csv`,
+  );
+}
+
+function exportPurchasesCSV() {
+  const params = `?from=${fromDate.value}&to=${toDate.value}`;
+  downloadCSV(
+    `/api/v1/reports/purchases/export${params}`,
+    `compras-${fromDate.value}-${toDate.value}.csv`,
+  );
+}
 const activeTab = ref<"sales" | "inventory" | "purchases">(
   tabFromQuery === "inventory" || tabFromQuery === "purchases"
     ? tabFromQuery
@@ -300,6 +351,18 @@ onMounted(load);
 
       <!-- ── Sales Tab ──────────────────────────────────────────────────────── -->
       <div v-if="activeTab === 'sales'" class="space-y-5">
+        <!-- Export button -->
+        <div class="flex justify-end">
+          <button
+            :disabled="exporting"
+            class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg border border-border hover:bg-muted transition-colors text-foreground disabled:opacity-50"
+            @click="exportSalesCSV"
+          >
+            <Loader2 v-if="exporting" class="w-4 h-4 animate-spin" />
+            <Download v-else class="w-4 h-4" />
+            Exportar CSV
+          </button>
+        </div>
         <!-- Revenue chart -->
         <div class="bg-card border border-border rounded-xl p-6">
           <h3 class="font-semibold text-foreground mb-4">Ingresos por día</h3>
@@ -402,6 +465,18 @@ onMounted(load);
 
       <!-- ── Inventory Tab ──────────────────────────────────────────────────── -->
       <div v-if="activeTab === 'inventory'" class="space-y-4">
+        <!-- Export button -->
+        <div class="flex justify-end">
+          <button
+            :disabled="exporting"
+            class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg border border-border hover:bg-muted transition-colors text-foreground disabled:opacity-50"
+            @click="exportInventoryCSV"
+          >
+            <Loader2 v-if="exporting" class="w-4 h-4 animate-spin" />
+            <Download v-else class="w-4 h-4" />
+            Exportar CSV
+          </button>
+        </div>
         <!-- Alert badges -->
         <div
           v-if="
@@ -511,6 +586,18 @@ onMounted(load);
 
       <!-- ── Purchases Tab ──────────────────────────────────────────────────── -->
       <div v-if="activeTab === 'purchases'" class="space-y-4">
+        <!-- Export button -->
+        <div class="flex justify-end">
+          <button
+            :disabled="exporting"
+            class="flex items-center gap-2 px-3 py-2 text-sm rounded-lg border border-border hover:bg-muted transition-colors text-foreground disabled:opacity-50"
+            @click="exportPurchasesCSV"
+          >
+            <Loader2 v-if="exporting" class="w-4 h-4 animate-spin" />
+            <Download v-else class="w-4 h-4" />
+            Exportar CSV
+          </button>
+        </div>
         <!-- Summary bar -->
         <div class="grid grid-cols-3 gap-4">
           <div class="bg-card border border-border rounded-xl p-4 text-center">
