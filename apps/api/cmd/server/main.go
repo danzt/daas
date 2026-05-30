@@ -7,8 +7,8 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"github.com/danzt/daas/api/internal/config"
 	adapterhttp "github.com/danzt/daas/api/internal/adapter/http"
+	"github.com/danzt/daas/api/internal/config"
 )
 
 func main() {

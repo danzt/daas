@@ -7,12 +7,12 @@ import (
 // Config holds all application configuration read from environment variables.
 // No hardcoded values — all settings come from the environment at runtime.
 type Config struct {
-	Port                      string
-	SupabaseURL               string
-	SupabaseAnonKey           string
-	JWTSecret                 string
-	DatabaseURL               string
-	IntegrationEncryptionKey  string
+	Port                     string
+	SupabaseURL              string
+	SupabaseAnonKey          string
+	JWTSecret                string
+	DatabaseURL              string
+	IntegrationEncryptionKey string
 }
 
 // Load reads configuration from environment variables.
