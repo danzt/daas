@@ -1,3 +1,10 @@
+-- Ensure service_role exists (local dev compatibility — Supabase creates this automatically)
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = 'service_role') THEN
+    CREATE ROLE service_role;
+  END IF;
+END $$;
+
 -- Product categories
 CREATE TABLE product_categories (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
