@@ -20,7 +20,7 @@ import (
 func ptrF(v float64) *float64 { return &v }
 
 // newEchoCtx builds an Echo context with an optional tenant_id and JSON body.
-func newEchoCtx(t *testing.T, method, path string, body interface{}, tenantID string) (echo.Context, *httptest.ResponseRecorder) {
+func newEchoCtx(t *testing.T, method, path string, body any, tenantID string) (echo.Context, *httptest.ResponseRecorder) {
 	t.Helper()
 	e := echo.New()
 	var buf *bytes.Buffer
