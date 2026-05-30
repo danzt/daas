@@ -184,10 +184,15 @@ func registerRoutes(
 	api.POST("/invoices/fiscal/:id/cancel", fiscalInvoiceHandler.Cancel)
 	api.POST("/invoices/fiscal/:id/retry", fiscalInvoiceHandler.Retry)
 
-	// Reports
+	// Reports — JSON
 	api.GET("/reports/sales", reportHandler.SalesReport)
 	api.GET("/reports/inventory", reportHandler.InventoryReport)
 	api.GET("/reports/purchases", reportHandler.PurchaseReport)
+
+	// Reports — CSV export
+	api.GET("/reports/sales/export", reportHandler.ExportSalesCSV)
+	api.GET("/reports/inventory/export", reportHandler.ExportInventoryCSV)
+	api.GET("/reports/purchases/export", reportHandler.ExportPurchasesCSV)
 }
 
 // healthHandler responds with a simple status OK payload.
