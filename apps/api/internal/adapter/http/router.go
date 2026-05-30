@@ -99,9 +99,10 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen
 	productHandler := handler.NewProductHandler(cfg.Pool)
 	inventoryHandler := handler.NewInventoryHandler(cfg.Pool)
 	invoiceHandler := handler.NewInvoiceHandler(cfg.Pool)
+	fiscalInvoiceHandler := handler.NewFiscalInvoiceHandler(cfg.Pool)
 
 	// Routes
-	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler)
+	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler, fiscalInvoiceHandler)
 
 	return e
 }
@@ -118,6 +119,7 @@ func registerRoutes(
 	productHandler *handler.ProductHandler,
 	inventoryHandler *handler.InventoryHandler,
 	invoiceHandler *handler.InvoiceHandler,
+	fiscalInvoiceHandler *handler.FiscalInvoiceHandler,
 ) {
 	// Health check — unauthenticated
 	e.GET("/health", healthHandler)
@@ -171,6 +173,14 @@ func registerRoutes(
 	api.GET("/invoices/internal/:id", invoiceHandler.GetByID)
 	api.POST("/invoices/internal/:id/issue", invoiceHandler.Issue)
 	api.POST("/invoices/internal/:id/cancel", invoiceHandler.Cancel)
+
+	// Fiscal invoices (SENIAT) — same ordering convention
+	api.POST("/invoices/fiscal", fiscalInvoiceHandler.Create)
+	api.GET("/invoices/fiscal", fiscalInvoiceHandler.List)
+	api.GET("/invoices/fiscal/:id", fiscalInvoiceHandler.GetByID)
+	api.POST("/invoices/fiscal/:id/issue", fiscalInvoiceHandler.Issue)
+	api.POST("/invoices/fiscal/:id/cancel", fiscalInvoiceHandler.Cancel)
+	api.POST("/invoices/fiscal/:id/retry", fiscalInvoiceHandler.Retry)
 }
 
 // healthHandler responds with a simple status OK payload.
