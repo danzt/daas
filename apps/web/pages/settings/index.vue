@@ -199,14 +199,14 @@ onMounted(() => {
         <h1 class="text-2xl font-bold font-heading text-text-brand">
           Configuración
         </h1>
-        <p class="text-gray-500 text-sm">
+        <p class="text-muted-foreground text-sm">
           Gestioná tu empresa, usuarios e integraciones
         </p>
       </div>
     </div>
 
     <!-- Tabs nav -->
-    <div class="flex border-b border-gray-200 gap-1 mb-6">
+    <div class="flex border-b gap-1 mb-6">
       <button
         v-for="tab in [
           { value: 'empresa', label: 'Empresa', icon: Settings },
@@ -219,7 +219,7 @@ onMounted(() => {
           'flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all duration-200 cursor-pointer border-b-2 -mb-px',
           activeTab === tab.value
             ? 'border-primary text-primary'
-            : 'border-transparent text-gray-500 hover:text-primary hover:border-primary/40',
+            : 'border-transparent text-muted-foreground hover:text-primary hover:border-primary/40',
         ]"
         @click="activeTab = tab.value"
       >
@@ -230,12 +230,8 @@ onMounted(() => {
 
     <!-- Tab: Empresa -->
     <div v-if="activeTab === 'empresa'">
-      <div
-        class="bg-white rounded-xl border border-gray-100 shadow-sm max-w-2xl"
-      >
-        <div
-          class="px-6 py-5 border-b border-gray-100 flex items-center justify-between"
-        >
+      <div class="bg-card rounded-xl border shadow-sm max-w-2xl">
+        <div class="px-6 py-5 border-b flex items-center justify-between">
           <h2 class="text-lg font-bold font-heading text-text-brand">
             Perfil de empresa
           </h2>
@@ -255,7 +251,7 @@ onMounted(() => {
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <p
-                  class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1"
+                  class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
                 >
                   Empresa
                 </p>
@@ -265,7 +261,7 @@ onMounted(() => {
               </div>
               <div>
                 <p
-                  class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1"
+                  class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
                 >
                   Pais
                 </p>
@@ -275,7 +271,7 @@ onMounted(() => {
               </div>
               <div>
                 <p
-                  class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1"
+                  class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
                 >
                   ID Fiscal
                 </p>
@@ -300,7 +296,7 @@ onMounted(() => {
                   id="edit-name"
                   v-model="tenantName"
                   type="text"
-                  class="w-full h-11 px-4 border border-gray-200 rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  class="w-full h-11 px-4 border rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 bg-card"
                 />
               </div>
               <div>
@@ -314,7 +310,7 @@ onMounted(() => {
                   id="edit-fiscal"
                   v-model="tenantFiscalId"
                   type="text"
-                  class="w-full h-11 px-4 border border-gray-200 rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                  class="w-full h-11 px-4 border rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 bg-card"
                 />
               </div>
 
@@ -340,7 +336,7 @@ onMounted(() => {
                 </button>
                 <button
                   type="button"
-                  class="flex items-center gap-2 h-10 px-4 border border-gray-200 text-gray-600 text-sm font-semibold rounded-lg hover:bg-gray-50 transition-all duration-200 cursor-pointer"
+                  class="flex items-center gap-2 h-10 px-4 border text-muted-foreground text-sm font-semibold rounded-lg hover:bg-muted transition-all duration-200 cursor-pointer"
                   @click="cancelEditTenant"
                 >
                   <X class="w-4 h-4" />
@@ -355,10 +351,8 @@ onMounted(() => {
 
     <!-- Tab: Usuarios -->
     <div v-if="activeTab === 'usuarios'">
-      <div class="bg-white rounded-xl border border-gray-100 shadow-sm">
-        <div
-          class="px-6 py-5 border-b border-gray-100 flex items-center justify-between"
-        >
+      <div class="bg-card rounded-xl border shadow-sm">
+        <div class="px-6 py-5 border-b flex items-center justify-between">
           <h2 class="text-lg font-bold font-heading text-text-brand">
             Usuarios del tenant
           </h2>
@@ -378,7 +372,7 @@ onMounted(() => {
           <div
             v-for="n in 3"
             :key="n"
-            class="h-12 animate-pulse bg-gray-100 rounded-lg"
+            class="h-12 animate-pulse bg-muted rounded-lg"
           />
         </div>
 
@@ -386,35 +380,35 @@ onMounted(() => {
         <div v-else-if="users.length > 0" class="overflow-x-auto">
           <table class="w-full">
             <thead>
-              <tr class="border-b border-gray-100">
+              <tr class="border-b">
                 <th
-                  class="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide"
+                  class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
                 >
                   Email
                 </th>
                 <th
-                  class="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide"
+                  class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
                 >
                   Rol
                 </th>
                 <th
-                  class="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide"
+                  class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
                 >
                   Estado
                 </th>
                 <th
                   v-if="store.isOwner"
-                  class="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide"
+                  class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
                 >
                   Acciones
                 </th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-50">
+            <tbody class="divide-y divide-border">
               <tr
                 v-for="u in users"
                 :key="u.id"
-                class="hover:bg-gray-50/50 transition-colors duration-150"
+                class="hover:bg-muted/50 transition-colors duration-150"
               >
                 <td class="px-6 py-4 text-sm font-medium text-text-brand">
                   {{ u.email }}
@@ -425,7 +419,7 @@ onMounted(() => {
                       'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold',
                       u.role === 'owner'
                         ? 'bg-primary/10 text-primary'
-                        : 'bg-gray-100 text-gray-600',
+                        : 'bg-muted text-muted-foreground',
                     ]"
                   >
                     {{ u.role === "owner" ? "Propietario" : "Empleado" }}
@@ -437,7 +431,7 @@ onMounted(() => {
                       'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold',
                       u.active
                         ? 'bg-green-100 text-green-700'
-                        : 'bg-gray-100 text-gray-500',
+                        : 'bg-muted text-muted-foreground',
                     ]"
                   >
                     {{ u.active ? "Activo" : "Inactivo" }}
@@ -451,7 +445,7 @@ onMounted(() => {
                       :title="u.active ? 'Desactivar' : 'Activar'"
                       :class="[
                         'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 cursor-pointer',
-                        u.active ? 'bg-primary' : 'bg-gray-200',
+                        u.active ? 'bg-primary' : 'bg-muted',
                         (togglingUserId === u.id || u.role === 'owner') &&
                           'opacity-50 cursor-not-allowed',
                       ]"
@@ -475,8 +469,10 @@ onMounted(() => {
 
         <!-- Empty state -->
         <div v-else class="px-6 py-12 text-center">
-          <Users class="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p class="text-gray-500 font-medium">No hay usuarios registrados</p>
+          <Users class="w-10 h-10 text-muted-foreground/20 mx-auto mb-3" />
+          <p class="text-muted-foreground font-medium">
+            No hay usuarios registrados
+          </p>
         </div>
       </div>
 
@@ -499,7 +495,7 @@ onMounted(() => {
               @click="inviteDialogOpen = false"
             />
             <div
-              class="relative z-10 w-full max-w-md bg-white rounded-xl shadow-xl p-6"
+              class="relative z-10 w-full max-w-md bg-card rounded-xl shadow-xl p-6"
             >
               <h3 class="text-xl font-bold font-heading text-text-brand mb-4">
                 Invitar empleado
@@ -518,7 +514,7 @@ onMounted(() => {
                     v-model="inviteEmail"
                     type="email"
                     placeholder="empleado@empresa.com"
-                    class="w-full h-11 px-4 border border-gray-200 rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400"
+                    class="w-full h-11 px-4 border rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground bg-card"
                   />
                 </div>
 
@@ -535,7 +531,7 @@ onMounted(() => {
               <div class="mt-6 flex justify-end gap-3">
                 <button
                   type="button"
-                  class="h-10 px-4 border border-gray-200 text-gray-600 text-sm font-semibold rounded-lg hover:bg-gray-50 transition-all duration-200 cursor-pointer"
+                  class="h-10 px-4 border text-muted-foreground text-sm font-semibold rounded-lg hover:bg-muted transition-all duration-200 cursor-pointer"
                   @click="
                     inviteDialogOpen = false;
                     inviteError = '';
@@ -563,12 +559,8 @@ onMounted(() => {
 
     <!-- Tab: Integraciones -->
     <div v-if="activeTab === 'integraciones'">
-      <div
-        class="bg-white rounded-xl border border-gray-100 shadow-sm max-w-2xl"
-      >
-        <div
-          class="px-6 py-5 border-b border-gray-100 flex items-center justify-between"
-        >
+      <div class="bg-card rounded-xl border shadow-sm max-w-2xl">
+        <div class="px-6 py-5 border-b flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div
               class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center"
@@ -579,7 +571,7 @@ onMounted(() => {
               <h2 class="text-lg font-bold font-heading text-text-brand">
                 Integracion Fiscal (SENIAT)
               </h2>
-              <p class="text-xs text-gray-500">
+              <p class="text-xs text-muted-foreground">
                 Conecta con el proveedor SENIAT para emitir comprobantes
                 fiscales
               </p>
@@ -592,7 +584,7 @@ onMounted(() => {
               'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold',
               fiscalIntegration?.active
                 ? 'bg-green-100 text-green-700'
-                : 'bg-gray-100 text-gray-500',
+                : 'bg-muted text-muted-foreground',
             ]"
           >
             {{
@@ -603,7 +595,7 @@ onMounted(() => {
 
         <div class="px-6 py-5">
           <div v-if="loadingFiscal">
-            <div class="h-11 animate-pulse bg-gray-100 rounded-lg" />
+            <div class="h-11 animate-pulse bg-muted rounded-lg" />
           </div>
 
           <template v-else>
@@ -642,11 +634,11 @@ onMounted(() => {
                       v-model="apiKey"
                       :type="showApiKey ? 'text' : 'password'"
                       placeholder="Ingresa la clave del proveedor"
-                      class="w-full h-11 px-4 pr-11 border border-gray-200 rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400"
+                      class="w-full h-11 px-4 pr-11 border rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground bg-card"
                     />
                     <button
                       type="button"
-                      class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 transition-colors duration-200 cursor-pointer"
+                      class="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-[hsl(var(--foreground))] transition-colors duration-200 cursor-pointer"
                       @click="showApiKey = !showApiKey"
                     >
                       <component
@@ -690,15 +682,13 @@ onMounted(() => {
 
             <!-- Read-only view for non-owners -->
             <template v-else>
-              <div
-                class="rounded-lg bg-gray-50 border border-gray-200 px-4 py-4"
-              >
-                <p class="text-sm text-gray-600">
+              <div class="rounded-lg bg-muted px-4 py-4">
+                <p class="text-sm text-muted-foreground">
                   Solo el propietario puede configurar la integracion fiscal.
                 </p>
                 <p
                   v-if="fiscalIntegration?.masked_key"
-                  class="text-sm font-mono text-gray-700 mt-2"
+                  class="text-sm font-mono text-text-brand mt-2"
                 >
                   Clave: {{ fiscalIntegration.masked_key }}
                 </p>

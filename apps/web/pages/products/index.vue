@@ -178,7 +178,9 @@ onMounted(async () => {
           <h1 class="text-2xl font-bold font-heading text-text-brand">
             Productos
           </h1>
-          <p class="text-gray-500 text-sm">Gestioná tu catálogo de productos</p>
+          <p class="text-muted-foreground text-sm">
+            Gestioná tu catálogo de productos
+          </p>
         </div>
       </div>
       <button
@@ -194,11 +196,9 @@ onMounted(async () => {
 
     <!-- Stats row -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <div
-        class="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4"
-      >
+      <div class="bg-card rounded-xl border shadow-sm px-5 py-4">
         <p
-          class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1"
+          class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
         >
           Total
         </p>
@@ -206,11 +206,9 @@ onMounted(async () => {
           {{ totalProducts }}
         </p>
       </div>
-      <div
-        class="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4"
-      >
+      <div class="bg-card rounded-xl border shadow-sm px-5 py-4">
         <p
-          class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1"
+          class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
         >
           Fiscales
         </p>
@@ -218,47 +216,41 @@ onMounted(async () => {
           {{ fiscalCount }}
         </p>
       </div>
-      <div
-        class="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4"
-      >
+      <div class="bg-card rounded-xl border shadow-sm px-5 py-4">
         <p
-          class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1"
+          class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
         >
           Internos
         </p>
-        <p class="text-2xl font-bold font-heading text-gray-600">
+        <p class="text-2xl font-bold font-heading text-muted-foreground">
           {{ internalCount }}
         </p>
       </div>
-      <div
-        class="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4"
-      >
+      <div class="bg-card rounded-xl border shadow-sm px-5 py-4">
         <p
-          class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1"
+          class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
         >
           Inactivos
         </p>
-        <p class="text-2xl font-bold font-heading text-red-500">
+        <p class="text-2xl font-bold font-heading text-destructive">
           {{ inactiveCount }}
         </p>
       </div>
     </div>
 
     <!-- Filter bar -->
-    <div
-      class="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4 mb-4"
-    >
+    <div class="bg-card rounded-xl border shadow-sm px-5 py-4 mb-4">
       <div class="flex flex-col sm:flex-row gap-3 flex-wrap items-center">
         <!-- Search -->
         <div class="relative flex-1 min-w-48">
           <Search
-            class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+            class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
           />
           <input
             v-model="searchQuery"
             type="text"
             placeholder="Buscar por nombre o SKU..."
-            class="w-full h-10 pl-9 pr-4 border border-gray-200 rounded-lg text-sm transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400"
+            class="w-full h-10 pl-9 pr-4 border rounded-lg text-sm transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground bg-card"
           />
         </div>
 
@@ -285,7 +277,7 @@ onMounted(async () => {
         </div>
 
         <!-- Type tabs -->
-        <div class="flex bg-gray-100 rounded-lg p-1 gap-1">
+        <div class="flex bg-muted rounded-lg p-1 gap-1">
           <button
             v-for="tab in [
               { value: 'all', label: 'Todos' },
@@ -297,8 +289,8 @@ onMounted(async () => {
             :class="[
               'px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer',
               typeFilter === tab.value
-                ? 'bg-white text-primary shadow-sm'
-                : 'text-gray-500 hover:text-text-brand',
+                ? 'bg-card text-primary shadow-sm'
+                : 'text-muted-foreground hover:text-text-brand',
             ]"
             @click="typeFilter = tab.value"
           >
@@ -309,23 +301,23 @@ onMounted(async () => {
     </div>
 
     <!-- Table card -->
-    <div class="bg-white rounded-xl border border-gray-100 shadow-sm">
+    <div class="bg-card rounded-xl border shadow-sm">
       <!-- Loading skeleton -->
       <div v-if="loading" class="px-6 py-5 space-y-3">
         <div
           v-for="n in 3"
           :key="n"
-          class="h-14 animate-pulse bg-gray-100 rounded-lg"
+          class="h-14 animate-pulse bg-muted rounded-lg"
         />
       </div>
 
       <!-- Error state -->
       <div v-else-if="loadError" class="px-6 py-12 text-center">
-        <AlertTriangle class="w-10 h-10 text-red-400 mx-auto mb-3" />
-        <p class="text-red-600 font-medium">{{ loadError }}</p>
+        <AlertTriangle class="w-10 h-10 text-destructive mx-auto mb-3" />
+        <p class="text-destructive font-medium">{{ loadError }}</p>
         <button
           type="button"
-          class="mt-4 h-9 px-4 border border-gray-200 text-sm font-semibold text-gray-600 rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200"
+          class="mt-4 h-9 px-4 border text-sm font-semibold text-muted-foreground rounded-lg hover:bg-muted cursor-pointer transition-all duration-200"
           @click="fetchProducts"
         >
           Reintentar
@@ -334,11 +326,11 @@ onMounted(async () => {
 
       <!-- Empty state (no data at all) -->
       <div v-else-if="products.length === 0" class="px-6 py-16 text-center">
-        <Package class="w-12 h-12 text-gray-200 mx-auto mb-4" />
-        <h3 class="text-base font-semibold text-gray-600 mb-1">
+        <Package class="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
+        <h3 class="text-base font-semibold text-muted-foreground mb-1">
           Sin productos aún
         </h3>
-        <p class="text-sm text-gray-400 mb-5">
+        <p class="text-sm text-muted-foreground mb-5">
           Agregá tu primer producto para comenzar
         </p>
         <button
@@ -357,8 +349,8 @@ onMounted(async () => {
         v-else-if="filteredProducts.length === 0"
         class="px-6 py-12 text-center"
       >
-        <Search class="w-10 h-10 text-gray-200 mx-auto mb-3" />
-        <p class="text-gray-500 font-medium">
+        <Search class="w-10 h-10 text-muted-foreground/20 mx-auto mb-3" />
+        <p class="text-muted-foreground font-medium">
           No se encontraron productos con los filtros aplicados
         </p>
       </div>
@@ -367,44 +359,44 @@ onMounted(async () => {
       <div v-else class="overflow-x-auto">
         <table class="w-full">
           <thead>
-            <tr class="border-b border-gray-100">
+            <tr class="border-b">
               <th
-                class="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide"
+                class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
               >
                 Producto
               </th>
               <th
-                class="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide"
+                class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
               >
                 Categoría
               </th>
               <th
-                class="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide"
+                class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
               >
                 Tipo
               </th>
               <th
-                class="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide"
+                class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
               >
                 Precio
               </th>
               <th
-                class="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide"
+                class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
               >
                 Estado
               </th>
               <th
-                class="px-6 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wide"
+                class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
               >
                 Acciones
               </th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-50">
+          <tbody class="divide-y divide-border">
             <tr
               v-for="product in filteredProducts"
               :key="product.id"
-              class="hover:bg-gray-50/50 transition-colors duration-150"
+              class="hover:bg-muted/50 transition-colors duration-150"
             >
               <!-- Name + SKU -->
               <td class="px-6 py-4">
@@ -413,14 +405,14 @@ onMounted(async () => {
                 </p>
                 <p
                   v-if="product.sku"
-                  class="text-xs text-gray-400 mt-0.5 font-mono"
+                  class="text-xs text-muted-foreground mt-0.5 font-mono"
                 >
                   {{ product.sku }}
                 </p>
               </td>
 
               <!-- Category -->
-              <td class="px-6 py-4 text-sm text-gray-500">
+              <td class="px-6 py-4 text-sm text-muted-foreground">
                 {{ getCategoryName(product.category_id) }}
               </td>
 
@@ -431,7 +423,7 @@ onMounted(async () => {
                     'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold',
                     product.is_fiscal
                       ? 'bg-primary/10 text-primary'
-                      : 'bg-gray-100 text-gray-600',
+                      : 'bg-muted text-muted-foreground',
                   ]"
                 >
                   {{ product.is_fiscal ? "Fiscal" : "Interno" }}
@@ -443,7 +435,7 @@ onMounted(async () => {
                 {{ formatPrice(product) }}
                 <span
                   v-if="product.is_fiscal && product.tax_rate != null"
-                  class="text-xs text-gray-400 ml-1"
+                  class="text-xs text-muted-foreground ml-1"
                   >+{{ product.tax_rate }}%</span
                 >
               </td>
@@ -469,7 +461,7 @@ onMounted(async () => {
                   <button
                     type="button"
                     title="Editar"
-                    class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-primary hover:bg-primary/10 transition-all duration-200 cursor-pointer"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200 cursor-pointer"
                     @click="openEdit(product)"
                   >
                     <Pencil class="w-4 h-4" />
@@ -482,7 +474,7 @@ onMounted(async () => {
                       v-if="confirmDeleteId === product.id"
                       class="flex items-center gap-1.5"
                     >
-                      <span class="text-xs text-red-600 font-semibold"
+                      <span class="text-xs text-destructive font-semibold"
                         >¿Confirmás?</span
                       >
                       <button
@@ -499,7 +491,7 @@ onMounted(async () => {
                       </button>
                       <button
                         type="button"
-                        class="h-7 px-2.5 border border-gray-200 text-gray-600 text-xs font-semibold rounded-md hover:bg-gray-50 cursor-pointer transition-all duration-200"
+                        class="h-7 px-2.5 border text-muted-foreground text-xs font-semibold rounded-md hover:bg-muted cursor-pointer transition-all duration-200"
                         @click="confirmDeleteId = null"
                       >
                         No
@@ -511,7 +503,7 @@ onMounted(async () => {
                       v-else
                       type="button"
                       title="Eliminar"
-                      class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-red-500 hover:bg-red-50 transition-all duration-200 cursor-pointer"
+                      class="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-all duration-200 cursor-pointer"
                       @click="confirmDeleteId = product.id"
                     >
                       <Trash2 class="w-4 h-4" />

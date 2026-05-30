@@ -51,7 +51,7 @@ const stats = [
     <!-- Page header -->
     <div class="mb-8">
       <h1 class="text-2xl font-bold font-heading text-text-brand">Dashboard</h1>
-      <p class="text-gray-500 mt-1">
+      <p class="text-muted-foreground mt-1">
         Bienvenido,
         <span class="font-semibold text-text-brand">{{
           store.tenant?.name || store.user?.email
@@ -83,11 +83,11 @@ const stats = [
       <div
         v-for="stat in stats"
         :key="stat.label"
-        class="bg-white rounded-xl border border-gray-100 shadow-sm p-5"
+        class="bg-card rounded-xl border shadow-sm p-5"
       >
         <div class="flex items-center justify-between mb-3">
           <span
-            class="text-xs font-semibold text-gray-500 uppercase tracking-wide"
+            class="text-xs font-semibold text-muted-foreground uppercase tracking-wide"
           >
             {{ stat.label }}
           </span>
