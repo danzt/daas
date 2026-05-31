@@ -248,7 +248,7 @@ onMounted(load);
       <div
         v-for="i in 4"
         :key="i"
-        class="bg-card rounded-xl border p-5 animate-pulse"
+        class="bg-white rounded-xl border p-5 animate-pulse"
       >
         <div class="h-3 bg-muted rounded w-2/3 mb-4" />
         <div class="h-8 bg-muted rounded w-1/2 mb-2" />
@@ -264,7 +264,7 @@ onMounted(load);
         :key="stat.label"
         :to="stat.to"
         :class="[
-          'bg-card rounded-xl border border-border p-5 transition-shadow',
+          'bg-white rounded-xl border border-border p-5 transition-shadow',
           stat.to ? 'hover:shadow-md cursor-pointer' : '',
         ]"
       >
@@ -317,7 +317,7 @@ onMounted(load);
     <!-- Pending orders + Recent orders row -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Pending sale orders -->
-      <div class="bg-card border border-border rounded-xl overflow-hidden">
+      <div class="bg-white border border-gray-100 rounded-xl overflow-hidden">
         <div
           class="flex items-center justify-between px-5 py-4 border-b border-border"
         >
@@ -377,7 +377,7 @@ onMounted(load);
       </div>
 
       <!-- Recent orders -->
-      <div class="bg-card border border-border rounded-xl overflow-hidden">
+      <div class="bg-white border border-gray-100 rounded-xl overflow-hidden">
         <div
           class="flex items-center justify-between px-5 py-4 border-b border-border"
         >
@@ -443,7 +443,7 @@ onMounted(load);
     <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
       <NuxtLink
         to="/sales-orders"
-        class="bg-card border border-border rounded-xl p-4 flex flex-col items-center gap-2 hover:border-primary/40 hover:bg-primary/5 transition-colors group text-center"
+        class="bg-white border border-gray-100 rounded-xl p-4 flex flex-col items-center gap-2 hover:border-primary/40 hover:bg-primary/5 transition-colors group text-center"
       >
         <div
           class="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors"
@@ -454,7 +454,7 @@ onMounted(load);
       </NuxtLink>
       <NuxtLink
         to="/invoices"
-        class="bg-card border border-border rounded-xl p-4 flex flex-col items-center gap-2 hover:border-primary/40 hover:bg-primary/5 transition-colors group text-center"
+        class="bg-white border border-gray-100 rounded-xl p-4 flex flex-col items-center gap-2 hover:border-primary/40 hover:bg-primary/5 transition-colors group text-center"
       >
         <div
           class="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors"
@@ -465,7 +465,7 @@ onMounted(load);
       </NuxtLink>
       <NuxtLink
         to="/inventory"
-        class="bg-card border border-border rounded-xl p-4 flex flex-col items-center gap-2 hover:border-primary/40 hover:bg-primary/5 transition-colors group text-center"
+        class="bg-white border border-gray-100 rounded-xl p-4 flex flex-col items-center gap-2 hover:border-primary/40 hover:bg-primary/5 transition-colors group text-center"
       >
         <div
           class="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors"
@@ -476,7 +476,7 @@ onMounted(load);
       </NuxtLink>
       <NuxtLink
         to="/reports"
-        class="bg-card border border-border rounded-xl p-4 flex flex-col items-center gap-2 hover:border-primary/40 hover:bg-primary/5 transition-colors group text-center"
+        class="bg-white border border-gray-100 rounded-xl p-4 flex flex-col items-center gap-2 hover:border-primary/40 hover:bg-primary/5 transition-colors group text-center"
       >
         <div
           class="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors"

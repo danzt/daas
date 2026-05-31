@@ -230,7 +230,7 @@ onMounted(() => {
 
     <!-- Tab: Empresa -->
     <div v-if="activeTab === 'empresa'">
-      <div class="bg-card rounded-xl border shadow-sm max-w-2xl">
+      <div class="bg-white rounded-xl border shadow-sm max-w-2xl">
         <div class="px-6 py-5 border-b flex items-center justify-between">
           <h2 class="text-lg font-bold font-heading text-text-brand">
             Perfil de empresa
@@ -296,7 +296,7 @@ onMounted(() => {
                   id="edit-name"
                   v-model="tenantName"
                   type="text"
-                  class="w-full h-11 px-4 border rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 bg-card"
+                  class="w-full h-11 px-4 border rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white"
                 />
               </div>
               <div>
@@ -310,7 +310,7 @@ onMounted(() => {
                   id="edit-fiscal"
                   v-model="tenantFiscalId"
                   type="text"
-                  class="w-full h-11 px-4 border rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 bg-card"
+                  class="w-full h-11 px-4 border rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white"
                 />
               </div>
 
@@ -351,7 +351,7 @@ onMounted(() => {
 
     <!-- Tab: Usuarios -->
     <div v-if="activeTab === 'usuarios'">
-      <div class="bg-card rounded-xl border shadow-sm">
+      <div class="bg-white rounded-xl border shadow-sm">
         <div class="px-6 py-5 border-b flex items-center justify-between">
           <h2 class="text-lg font-bold font-heading text-text-brand">
             Usuarios del tenant
@@ -495,7 +495,7 @@ onMounted(() => {
               @click="inviteDialogOpen = false"
             />
             <div
-              class="relative z-10 w-full max-w-md bg-card rounded-xl shadow-xl p-6"
+              class="relative z-10 w-full max-w-md bg-white rounded-xl shadow-xl p-6"
             >
               <h3 class="text-xl font-bold font-heading text-text-brand mb-4">
                 Invitar empleado
@@ -514,7 +514,7 @@ onMounted(() => {
                     v-model="inviteEmail"
                     type="email"
                     placeholder="empleado@empresa.com"
-                    class="w-full h-11 px-4 border rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground bg-card"
+                    class="w-full h-11 px-4 border rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground bg-white"
                   />
                 </div>
 
@@ -559,7 +559,7 @@ onMounted(() => {
 
     <!-- Tab: Integraciones -->
     <div v-if="activeTab === 'integraciones'">
-      <div class="bg-card rounded-xl border shadow-sm max-w-2xl">
+      <div class="bg-white rounded-xl border shadow-sm max-w-2xl">
         <div class="px-6 py-5 border-b flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div
@@ -634,7 +634,7 @@ onMounted(() => {
                       v-model="apiKey"
                       :type="showApiKey ? 'text' : 'password'"
                       placeholder="Ingresa la clave del proveedor"
-                      class="w-full h-11 px-4 pr-11 border rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground bg-card"
+                      class="w-full h-11 px-4 pr-11 border rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground bg-white"
                     />
                     <button
                       type="button"

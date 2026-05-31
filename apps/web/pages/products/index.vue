@@ -196,7 +196,7 @@ onMounted(async () => {
 
     <!-- Stats row -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <div class="bg-card rounded-xl border shadow-sm px-5 py-4">
+      <div class="bg-white rounded-xl border shadow-sm px-5 py-4">
         <p
           class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
         >
@@ -206,7 +206,7 @@ onMounted(async () => {
           {{ totalProducts }}
         </p>
       </div>
-      <div class="bg-card rounded-xl border shadow-sm px-5 py-4">
+      <div class="bg-white rounded-xl border shadow-sm px-5 py-4">
         <p
           class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
         >
@@ -216,7 +216,7 @@ onMounted(async () => {
           {{ fiscalCount }}
         </p>
       </div>
-      <div class="bg-card rounded-xl border shadow-sm px-5 py-4">
+      <div class="bg-white rounded-xl border shadow-sm px-5 py-4">
         <p
           class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
         >
@@ -226,7 +226,7 @@ onMounted(async () => {
           {{ internalCount }}
         </p>
       </div>
-      <div class="bg-card rounded-xl border shadow-sm px-5 py-4">
+      <div class="bg-white rounded-xl border shadow-sm px-5 py-4">
         <p
           class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
         >
@@ -239,7 +239,7 @@ onMounted(async () => {
     </div>
 
     <!-- Filter bar -->
-    <div class="bg-card rounded-xl border shadow-sm px-5 py-4 mb-4">
+    <div class="bg-white rounded-xl border shadow-sm px-5 py-4 mb-4">
       <div class="flex flex-col sm:flex-row gap-3 flex-wrap items-center">
         <!-- Search -->
         <div class="relative flex-1 min-w-48">
@@ -250,7 +250,7 @@ onMounted(async () => {
             v-model="searchQuery"
             type="text"
             placeholder="Buscar por nombre o SKU..."
-            class="w-full h-10 pl-9 pr-4 border rounded-lg text-sm transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground bg-card"
+            class="w-full h-10 pl-9 pr-4 border rounded-lg text-sm transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground bg-white"
           />
         </div>
 
@@ -289,7 +289,7 @@ onMounted(async () => {
             :class="[
               'px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer',
               typeFilter === tab.value
-                ? 'bg-card text-primary shadow-sm'
+                ? 'bg-white text-primary shadow-sm'
                 : 'text-muted-foreground hover:text-text-brand',
             ]"
             @click="typeFilter = tab.value"
@@ -301,7 +301,7 @@ onMounted(async () => {
     </div>
 
     <!-- Table card -->
-    <div class="bg-card rounded-xl border shadow-sm">
+    <div class="bg-white rounded-xl border shadow-sm">
       <!-- Loading skeleton -->
       <div v-if="loading" class="px-6 py-5 space-y-3">
         <div

@@ -170,7 +170,7 @@ function formatCurrency(value: number) {
 
     <!-- Stats -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      <div class="bg-card rounded-xl border shadow-sm px-5 py-4">
+      <div class="bg-white rounded-xl border shadow-sm px-5 py-4">
         <div class="flex items-center gap-3">
           <div
             class="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0"
@@ -188,7 +188,7 @@ function formatCurrency(value: number) {
         </div>
       </div>
 
-      <div class="bg-card rounded-xl border shadow-sm px-5 py-4">
+      <div class="bg-white rounded-xl border shadow-sm px-5 py-4">
         <div class="flex items-center gap-3">
           <div
             class="w-9 h-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0"
@@ -206,7 +206,7 @@ function formatCurrency(value: number) {
         </div>
       </div>
 
-      <div class="bg-card rounded-xl border shadow-sm px-5 py-4">
+      <div class="bg-white rounded-xl border shadow-sm px-5 py-4">
         <div class="flex items-center gap-3">
           <div
             class="w-9 h-9 rounded-lg bg-orange-50 flex items-center justify-center flex-shrink-0"
@@ -224,7 +224,7 @@ function formatCurrency(value: number) {
         </div>
       </div>
 
-      <div class="bg-card rounded-xl border shadow-sm px-5 py-4">
+      <div class="bg-white rounded-xl border shadow-sm px-5 py-4">
         <div class="flex items-center gap-3">
           <div
             class="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0"
@@ -244,7 +244,7 @@ function formatCurrency(value: number) {
     </div>
 
     <!-- Filters + Table -->
-    <div class="bg-card rounded-xl border shadow-sm">
+    <div class="bg-white rounded-xl border shadow-sm">
       <div class="px-5 py-4 border-b flex flex-col sm:flex-row gap-3">
         <div class="flex items-center gap-1 bg-muted rounded-lg p-1">
           <button
@@ -254,7 +254,7 @@ function formatCurrency(value: number) {
             :class="[
               'px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer',
               statusFilter === tab.key
-                ? 'bg-card text-text-brand shadow-sm'
+                ? 'bg-white text-text-brand shadow-sm'
                 : 'text-muted-foreground hover:text-foreground',
             ]"
             @click="statusFilter = tab.key"

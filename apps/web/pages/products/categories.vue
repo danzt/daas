@@ -176,7 +176,7 @@ onMounted(() => {
     </div>
 
     <!-- Content card -->
-    <div class="bg-card rounded-xl border shadow-sm">
+    <div class="bg-white rounded-xl border shadow-sm">
       <!-- Table header -->
       <div class="px-6 py-4 border-b flex items-center justify-between">
         <h2 class="text-base font-bold font-heading text-text-brand">
@@ -330,7 +330,7 @@ onMounted(() => {
         >
           <div class="absolute inset-0 bg-black/50" @click="closeDialog" />
           <div
-            class="relative z-10 w-full max-w-sm bg-card rounded-xl shadow-xl"
+            class="relative z-10 w-full max-w-sm bg-white rounded-xl shadow-xl"
           >
             <!-- Header -->
             <div class="flex items-center justify-between px-6 py-5 border-b">
@@ -369,7 +369,7 @@ onMounted(() => {
                   type="text"
                   placeholder="Ej: Alimentos, Bebidas, Electrónica..."
                   :class="[
-                    'w-full h-11 px-4 border rounded-lg text-base transition-all duration-200 bg-card',
+                    'w-full h-11 px-4 border rounded-lg text-base transition-all duration-200 bg-white',
                     'focus:outline-none focus:ring-2 placeholder:text-muted-foreground',
                     nameError
                       ? 'border-red-400 focus:border-red-400 focus:ring-red-200'

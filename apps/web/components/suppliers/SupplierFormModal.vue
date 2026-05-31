@@ -120,7 +120,7 @@ async function save() {
         @click.self="emit('close')"
       >
         <div
-          class="bg-card border border-border rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]"
+          class="bg-white border border-gray-100 rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]"
         >
           <!-- Header -->
           <div
@@ -157,7 +157,7 @@ async function save() {
               >
               <input
                 v-model="form.name"
-                class="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                 placeholder="Distribuidora Ejemplo C.A."
               />
             </div>
@@ -167,7 +167,7 @@ async function save() {
               <label class="text-sm font-medium text-foreground">RIF</label>
               <input
                 v-model="form.rif"
-                class="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                 placeholder="J-12345678-9"
               />
             </div>
@@ -180,7 +180,7 @@ async function save() {
                 >
                 <input
                   v-model="form.contact_name"
-                  class="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                   placeholder="Juan Pérez"
                 />
               </div>
@@ -190,7 +190,7 @@ async function save() {
                 >
                 <input
                   v-model="form.phone"
-                  class="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                   placeholder="+58 412 000 0000"
                 />
               </div>
@@ -202,7 +202,7 @@ async function save() {
               <input
                 v-model="form.email"
                 type="email"
-                class="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+                class="w-full h-10 px-3 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                 placeholder="contacto@proveedor.com"
               />
             </div>
@@ -215,7 +215,7 @@ async function save() {
               <textarea
                 v-model="form.address"
                 rows="2"
-                class="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                class="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
                 placeholder="Av. Principal, Local 5, Caracas"
               />
             </div>
@@ -228,7 +228,7 @@ async function save() {
               <textarea
                 v-model="form.notes"
                 rows="2"
-                class="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                class="w-full px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
                 placeholder="Condiciones de pago, observaciones..."
               />
             </div>
