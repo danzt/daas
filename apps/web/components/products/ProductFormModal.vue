@@ -223,7 +223,7 @@ function handleClose() {
           <div
             class="flex items-center justify-between px-6 py-5 border-b border-gray-100"
           >
-            <h2 class="text-xl font-bold font-heading text-text-brand">
+            <h2 class="text-xl font-bold font-heading text-foreground">
               {{ title }}
             </h2>
             <button
@@ -255,7 +255,7 @@ function handleClose() {
               "
             >
               <div>
-                <p class="text-sm font-bold text-text-brand">
+                <p class="text-sm font-bold text-foreground">
                   Tipo de producto
                 </p>
                 <p class="text-xs text-gray-500 mt-0.5">
@@ -269,7 +269,7 @@ function handleClose() {
               <div class="flex items-center gap-3">
                 <span
                   class="text-sm font-semibold"
-                  :class="isFiscal ? 'text-gray-400' : 'text-text-brand'"
+                  :class="isFiscal ? 'text-gray-400' : 'text-foreground'"
                   >Interno</span
                 >
                 <Switch v-model="isFiscal" class="flex-shrink-0" />
@@ -285,7 +285,7 @@ function handleClose() {
             <div>
               <label
                 for="product-name"
-                class="block text-sm font-semibold text-text-brand mb-1.5"
+                class="block text-sm font-semibold text-foreground mb-1.5"
               >
                 Nombre <span class="text-red-500">*</span>
               </label>
@@ -312,7 +312,7 @@ function handleClose() {
               <div>
                 <label
                   for="product-sku"
-                  class="block text-sm font-semibold text-text-brand mb-1.5"
+                  class="block text-sm font-semibold text-foreground mb-1.5"
                 >
                   SKU
                 </label>
@@ -327,7 +327,7 @@ function handleClose() {
               <div>
                 <label
                   for="product-barcode"
-                  class="block text-sm font-semibold text-text-brand mb-1.5"
+                  class="block text-sm font-semibold text-foreground mb-1.5"
                 >
                   Código de barras
                 </label>
@@ -346,7 +346,7 @@ function handleClose() {
               <div>
                 <label
                   for="fiscal-price"
-                  class="block text-sm font-semibold text-text-brand mb-1.5"
+                  class="block text-sm font-semibold text-foreground mb-1.5"
                 >
                   Precio fiscal <span class="text-red-500">*</span>
                 </label>
@@ -372,7 +372,7 @@ function handleClose() {
               <div>
                 <label
                   for="tax-rate"
-                  class="block text-sm font-semibold text-text-brand mb-1.5"
+                  class="block text-sm font-semibold text-foreground mb-1.5"
                 >
                   Tasa IVA <span class="text-red-500">*</span>
                 </label>
@@ -392,7 +392,7 @@ function handleClose() {
             <div v-else>
               <label
                 for="internal-price"
-                class="block text-sm font-semibold text-text-brand mb-1.5"
+                class="block text-sm font-semibold text-foreground mb-1.5"
               >
                 Precio interno <span class="text-red-500">*</span>
               </label>
@@ -420,7 +420,7 @@ function handleClose() {
             <div>
               <label
                 for="category"
-                class="block text-sm font-semibold text-text-brand mb-1.5"
+                class="block text-sm font-semibold text-foreground mb-1.5"
               >
                 Categoría
               </label>
@@ -436,7 +436,7 @@ function handleClose() {
             <div>
               <label
                 for="product-desc"
-                class="block text-sm font-semibold text-text-brand mb-1.5"
+                class="block text-sm font-semibold text-foreground mb-1.5"
               >
                 Descripción
               </label>
@@ -452,7 +452,7 @@ function handleClose() {
             <!-- Active toggle -->
             <div class="flex items-center justify-between">
               <div>
-                <p class="text-sm font-semibold text-text-brand">
+                <p class="text-sm font-semibold text-foreground">
                   Estado del producto
                 </p>
                 <p class="text-xs text-gray-500 mt-0.5">
@@ -479,7 +479,7 @@ function handleClose() {
             <button
               type="button"
               :disabled="saving"
-              class="flex items-center gap-2 h-10 px-6 bg-cta text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer disabled:opacity-50"
+              class="flex items-center gap-2 h-10 px-6 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer disabled:opacity-50"
               @click="handleSave"
             >
               <Loader2 v-if="saving" class="w-4 h-4 animate-spin" />

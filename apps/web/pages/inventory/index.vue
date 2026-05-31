@@ -168,7 +168,7 @@ onMounted(fetchAll);
           <Warehouse class="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 class="text-2xl font-bold font-heading text-text-brand">
+          <h1 class="text-2xl font-bold font-heading text-foreground">
             Inventario
           </h1>
           <p class="text-gray-500 text-sm">Stock actual y movimientos</p>
@@ -193,7 +193,7 @@ onMounted(fetchAll);
         >
           Total productos
         </p>
-        <p class="text-2xl font-bold font-heading text-text-brand">
+        <p class="text-2xl font-bold font-heading text-foreground">
           {{ stats.total }}
         </p>
       </div>
@@ -207,7 +207,7 @@ onMounted(fetchAll);
         </p>
         <p
           class="text-2xl font-bold font-heading"
-          :class="stats.low > 0 ? 'text-orange-600' : 'text-text-brand'"
+          :class="stats.low > 0 ? 'text-orange-600' : 'text-foreground'"
         >
           {{ stats.low }}
         </p>
@@ -222,7 +222,7 @@ onMounted(fetchAll);
         </p>
         <p
           class="text-2xl font-bold font-heading"
-          :class="stats.outOfStock > 0 ? 'text-red-600' : 'text-text-brand'"
+          :class="stats.outOfStock > 0 ? 'text-red-600' : 'text-foreground'"
         >
           {{ stats.outOfStock }}
         </p>
@@ -235,7 +235,7 @@ onMounted(fetchAll);
         >
           Valor del inventario
         </p>
-        <p class="text-2xl font-bold font-heading text-text-brand">
+        <p class="text-2xl font-bold font-heading text-foreground">
           ${{ stats.totalValue.toFixed(2) }}
         </p>
       </div>
@@ -282,7 +282,7 @@ onMounted(fetchAll);
       <div
         class="px-6 py-4 border-b border-gray-100 flex items-center justify-between"
       >
-        <h2 class="text-base font-bold font-heading text-text-brand">
+        <h2 class="text-base font-bold font-heading text-foreground">
           {{ filteredRows.length }} producto{{
             filteredRows.length !== 1 ? "s" : ""
           }}
@@ -380,7 +380,7 @@ onMounted(fetchAll);
               <!-- Product -->
               <td class="px-6 py-4">
                 <div>
-                  <p class="font-semibold text-text-brand">
+                  <p class="font-semibold text-foreground">
                     {{ row.product?.name ?? "—" }}
                   </p>
                   <p
@@ -404,7 +404,7 @@ onMounted(fetchAll);
 
               <!-- Price -->
               <td class="px-4 py-4 hidden lg:table-cell">
-                <span class="font-medium text-text-brand">
+                <span class="font-medium text-foreground">
                   ${{
                     row.product?.is_fiscal
                       ? (row.product?.fiscal_price ?? 0).toFixed(2)

@@ -254,7 +254,7 @@ onMounted(load);
 
     <!-- Stats -->
     <div class="grid grid-cols-3 gap-4">
-      <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+      <div class="border bg-card rounded-xl p-4 shadow-sm">
         <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">
           Borradores
         </p>
@@ -262,7 +262,7 @@ onMounted(load);
           {{ counts.draft }}
         </p>
       </div>
-      <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+      <div class="border bg-card rounded-xl p-4 shadow-sm">
         <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">
           Confirmadas
         </p>
@@ -270,7 +270,7 @@ onMounted(load);
           {{ counts.confirmed }}
         </p>
       </div>
-      <div class="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+      <div class="border bg-card rounded-xl p-4 shadow-sm">
         <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">
           Facturadas
         </p>
@@ -351,7 +351,7 @@ onMounted(load);
     <!-- Table -->
     <div
       v-else-if="!loading"
-      class="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-sm"
+      class="border bg-card rounded-xl overflow-hidden shadow-sm"
     >
       <table class="w-full text-sm">
         <thead>

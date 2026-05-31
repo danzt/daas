@@ -121,7 +121,7 @@ const selectedCountryLabel = computed(
       <!-- Header with step indicator -->
       <div class="px-6 pt-6 pb-4 border-b border-gray-100">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-xl font-bold font-heading text-text-brand">
+          <h2 class="text-xl font-bold font-heading text-foreground">
             {{ step === 1 ? "Datos de la empresa" : "Detalles de cuenta" }}
           </h2>
           <span
@@ -154,7 +154,7 @@ const selectedCountryLabel = computed(
         <div>
           <label
             for="businessName"
-            class="block text-sm font-semibold text-text-brand mb-1.5"
+            class="block text-sm font-semibold text-foreground mb-1.5"
           >
             Nombre de la empresa
           </label>
@@ -179,7 +179,7 @@ const selectedCountryLabel = computed(
         <div>
           <label
             for="country"
-            class="block text-sm font-semibold text-text-brand mb-1.5"
+            class="block text-sm font-semibold text-foreground mb-1.5"
           >
             País
           </label>
@@ -210,7 +210,7 @@ const selectedCountryLabel = computed(
         <div>
           <label
             for="ownerEmail"
-            class="block text-sm font-semibold text-text-brand mb-1.5"
+            class="block text-sm font-semibold text-foreground mb-1.5"
           >
             Email del propietario
           </label>
@@ -235,7 +235,7 @@ const selectedCountryLabel = computed(
         <div>
           <label
             for="reg-password"
-            class="block text-sm font-semibold text-text-brand mb-1.5"
+            class="block text-sm font-semibold text-foreground mb-1.5"
           >
             Contraseña
           </label>
@@ -269,7 +269,7 @@ const selectedCountryLabel = computed(
         <div>
           <label
             for="confirmPassword"
-            class="block text-sm font-semibold text-text-brand mb-1.5"
+            class="block text-sm font-semibold text-foreground mb-1.5"
           >
             Confirmar contraseña
           </label>
@@ -304,7 +304,7 @@ const selectedCountryLabel = computed(
 
         <button
           type="submit"
-          class="w-full h-12 flex items-center justify-center gap-2 bg-cta text-white rounded-lg font-semibold text-base transition-all duration-200 cursor-pointer hover:opacity-90 focus-visible:outline-2 focus-visible:outline-primary"
+          class="w-full h-12 flex items-center justify-center gap-2 bg-primary text-white rounded-lg font-semibold text-base transition-all duration-200 cursor-pointer hover:opacity-90 focus-visible:outline-2 focus-visible:outline-primary"
         >
           <span>Siguiente</span>
           <ChevronRight class="w-5 h-5" />
@@ -330,7 +330,7 @@ const selectedCountryLabel = computed(
           <div class="flex items-start gap-2">
             <CheckCircle2 class="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
             <div>
-              <p class="text-sm font-semibold text-text-brand">
+              <p class="text-sm font-semibold text-foreground">
                 {{ businessName }}
               </p>
               <p class="text-xs text-gray-500">
@@ -340,7 +340,7 @@ const selectedCountryLabel = computed(
           </div>
           <div class="flex items-center gap-2">
             <CheckCircle2 class="w-4 h-4 text-primary flex-shrink-0" />
-            <p class="text-sm text-text-brand">
+            <p class="text-sm text-foreground">
               {{ ownerEmail }}
             </p>
           </div>
@@ -350,7 +350,7 @@ const selectedCountryLabel = computed(
         <div>
           <label
             for="fiscalId"
-            class="block text-sm font-semibold text-text-brand mb-1.5"
+            class="block text-sm font-semibold text-foreground mb-1.5"
           >
             <span>ID Fiscal</span>
             <span class="text-gray-400 font-normal ml-1">
@@ -399,7 +399,7 @@ const selectedCountryLabel = computed(
           <button
             type="submit"
             :disabled="loading"
-            class="flex-1 h-12 flex items-center justify-center gap-2 bg-cta text-white rounded-lg font-semibold text-base transition-all duration-200 cursor-pointer hover:opacity-90 focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            class="flex-1 h-12 flex items-center justify-center gap-2 bg-primary text-white rounded-lg font-semibold text-base transition-all duration-200 cursor-pointer hover:opacity-90 focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Loader2 v-if="loading" class="w-5 h-5 animate-spin" />
             <span>{{ loading ? "Creando cuenta..." : "Crear cuenta" }}</span>

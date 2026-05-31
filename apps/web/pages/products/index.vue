@@ -175,7 +175,7 @@ onMounted(async () => {
           <Package class="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 class="text-2xl font-bold font-heading text-text-brand">
+          <h1 class="text-2xl font-bold font-heading text-foreground">
             Productos
           </h1>
           <p class="text-muted-foreground text-sm">
@@ -186,7 +186,7 @@ onMounted(async () => {
       <button
         v-if="store.isOwner"
         type="button"
-        class="flex items-center gap-2 h-10 px-5 bg-cta text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
+        class="flex items-center gap-2 h-10 px-5 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
         @click="openCreate"
       >
         <Plus class="w-4 h-4" />
@@ -202,7 +202,7 @@ onMounted(async () => {
         >
           Total
         </p>
-        <p class="text-2xl font-bold font-heading text-text-brand">
+        <p class="text-2xl font-bold font-heading text-foreground">
           {{ totalProducts }}
         </p>
       </div>
@@ -290,7 +290,7 @@ onMounted(async () => {
               'px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer',
               typeFilter === tab.value
                 ? 'bg-white text-primary shadow-sm'
-                : 'text-muted-foreground hover:text-text-brand',
+                : 'text-muted-foreground hover:text-foreground',
             ]"
             @click="typeFilter = tab.value"
           >
@@ -336,7 +336,7 @@ onMounted(async () => {
         <button
           v-if="store.isOwner"
           type="button"
-          class="inline-flex items-center gap-2 h-10 px-5 bg-cta text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
+          class="inline-flex items-center gap-2 h-10 px-5 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
           @click="openCreate"
         >
           <Plus class="w-4 h-4" />
@@ -400,7 +400,7 @@ onMounted(async () => {
             >
               <!-- Name + SKU -->
               <td class="px-6 py-4">
-                <p class="text-sm font-semibold text-text-brand">
+                <p class="text-sm font-semibold text-foreground">
                   {{ product.name }}
                 </p>
                 <p
@@ -431,7 +431,7 @@ onMounted(async () => {
               </td>
 
               <!-- Price -->
-              <td class="px-6 py-4 text-sm font-mono text-text-brand">
+              <td class="px-6 py-4 text-sm font-mono text-foreground">
                 {{ formatPrice(product) }}
                 <span
                   v-if="product.is_fiscal && product.tax_rate != null"

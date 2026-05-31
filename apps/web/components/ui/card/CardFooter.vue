@@ -6,7 +6,13 @@ defineProps<Props>();
 </script>
 
 <template>
-  <div :class="['px-6 pb-6 pt-0', $props.class]">
+  <div
+    data-slot="card-footer"
+    :class="[
+      'flex items-center rounded-b-xl border-t bg-muted/50 p-4',
+      $props.class,
+    ]"
+  >
     <slot />
   </div>
 </template>

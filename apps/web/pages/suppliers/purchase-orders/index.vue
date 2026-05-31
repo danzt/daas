@@ -260,19 +260,19 @@ onMounted(load);
 
     <!-- Stats -->
     <div class="grid grid-cols-3 gap-4">
-      <div class="bg-white border border-gray-100 rounded-xl p-4">
+      <div class="border bg-card rounded-xl p-4">
         <p class="text-sm text-muted-foreground">Borradores</p>
         <p class="text-2xl font-bold text-foreground mt-1">
           {{ counts.draft }}
         </p>
       </div>
-      <div class="bg-white border border-gray-100 rounded-xl p-4">
+      <div class="border bg-card rounded-xl p-4">
         <p class="text-sm text-muted-foreground">Ordenadas</p>
         <p class="text-2xl font-bold text-blue-600 mt-1">
           {{ counts.ordered }}
         </p>
       </div>
-      <div class="bg-white border border-gray-100 rounded-xl p-4">
+      <div class="border bg-card rounded-xl p-4">
         <p class="text-sm text-muted-foreground">Recibidas</p>
         <p class="text-2xl font-bold text-emerald-600 mt-1">
           {{ counts.received }}
@@ -349,10 +349,7 @@ onMounted(load);
     </div>
 
     <!-- Table -->
-    <div
-      v-else-if="!loading"
-      class="bg-white border border-gray-100 rounded-xl overflow-hidden"
-    >
+    <div v-else-if="!loading" class="border bg-card rounded-xl overflow-hidden">
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-border bg-muted/30">

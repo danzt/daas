@@ -196,7 +196,7 @@ onMounted(() => {
         <Settings class="w-5 h-5 text-primary" />
       </div>
       <div>
-        <h1 class="text-2xl font-bold font-heading text-text-brand">
+        <h1 class="text-2xl font-bold font-heading text-foreground">
           Configuración
         </h1>
         <p class="text-muted-foreground text-sm">
@@ -232,7 +232,7 @@ onMounted(() => {
     <div v-if="activeTab === 'empresa'">
       <div class="bg-white rounded-xl border shadow-sm max-w-2xl">
         <div class="px-6 py-5 border-b flex items-center justify-between">
-          <h2 class="text-lg font-bold font-heading text-text-brand">
+          <h2 class="text-lg font-bold font-heading text-foreground">
             Perfil de empresa
           </h2>
           <button
@@ -255,7 +255,7 @@ onMounted(() => {
                 >
                   Empresa
                 </p>
-                <p class="text-base font-medium text-text-brand">
+                <p class="text-base font-medium text-foreground">
                   {{ store.tenant?.name || "—" }}
                 </p>
               </div>
@@ -265,7 +265,7 @@ onMounted(() => {
                 >
                   Pais
                 </p>
-                <p class="text-base font-medium text-text-brand">
+                <p class="text-base font-medium text-foreground">
                   {{ store.tenant?.countryCode || "—" }}
                 </p>
               </div>
@@ -275,7 +275,7 @@ onMounted(() => {
                 >
                   ID Fiscal
                 </p>
-                <p class="text-base font-medium text-text-brand">
+                <p class="text-base font-medium text-foreground">
                   {{ store.tenant?.fiscalId || "—" }}
                 </p>
               </div>
@@ -288,7 +288,7 @@ onMounted(() => {
               <div>
                 <label
                   for="edit-name"
-                  class="block text-sm font-semibold text-text-brand mb-1.5"
+                  class="block text-sm font-semibold text-foreground mb-1.5"
                 >
                   Nombre de la empresa
                 </label>
@@ -302,7 +302,7 @@ onMounted(() => {
               <div>
                 <label
                   for="edit-fiscal"
-                  class="block text-sm font-semibold text-text-brand mb-1.5"
+                  class="block text-sm font-semibold text-foreground mb-1.5"
                 >
                   ID Fiscal
                 </label>
@@ -353,13 +353,13 @@ onMounted(() => {
     <div v-if="activeTab === 'usuarios'">
       <div class="bg-white rounded-xl border shadow-sm">
         <div class="px-6 py-5 border-b flex items-center justify-between">
-          <h2 class="text-lg font-bold font-heading text-text-brand">
+          <h2 class="text-lg font-bold font-heading text-foreground">
             Usuarios del tenant
           </h2>
           <button
             v-if="store.isOwner"
             type="button"
-            class="flex items-center gap-2 h-10 px-4 bg-cta text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
+            class="flex items-center gap-2 h-10 px-4 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
             @click="inviteDialogOpen = true"
           >
             <Plus class="w-4 h-4" />
@@ -410,7 +410,7 @@ onMounted(() => {
                 :key="u.id"
                 class="hover:bg-muted/50 transition-colors duration-150"
               >
-                <td class="px-6 py-4 text-sm font-medium text-text-brand">
+                <td class="px-6 py-4 text-sm font-medium text-foreground">
                   {{ u.email }}
                 </td>
                 <td class="px-6 py-4">
@@ -497,7 +497,7 @@ onMounted(() => {
             <div
               class="relative z-10 w-full max-w-md bg-white rounded-xl shadow-xl p-6"
             >
-              <h3 class="text-xl font-bold font-heading text-text-brand mb-4">
+              <h3 class="text-xl font-bold font-heading text-foreground mb-4">
                 Invitar empleado
               </h3>
 
@@ -505,7 +505,7 @@ onMounted(() => {
                 <div>
                   <label
                     for="invite-email"
-                    class="block text-sm font-semibold text-text-brand mb-1.5"
+                    class="block text-sm font-semibold text-foreground mb-1.5"
                   >
                     Email
                   </label>
@@ -542,7 +542,7 @@ onMounted(() => {
                 <button
                   type="button"
                   :disabled="inviting"
-                  class="flex items-center gap-2 h-10 px-5 bg-cta text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer disabled:opacity-50"
+                  class="flex items-center gap-2 h-10 px-5 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer disabled:opacity-50"
                   @click="sendInvite"
                 >
                   <Loader2 v-if="inviting" class="w-4 h-4 animate-spin" />
@@ -568,7 +568,7 @@ onMounted(() => {
               <Zap class="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h2 class="text-lg font-bold font-heading text-text-brand">
+              <h2 class="text-lg font-bold font-heading text-foreground">
                 Integracion Fiscal (SENIAT)
               </h2>
               <p class="text-xs text-muted-foreground">
@@ -620,7 +620,7 @@ onMounted(() => {
                 <div>
                   <label
                     for="api-key"
-                    class="block text-sm font-semibold text-text-brand mb-1.5"
+                    class="block text-sm font-semibold text-foreground mb-1.5"
                   >
                     {{
                       fiscalIntegration?.active
@@ -688,7 +688,7 @@ onMounted(() => {
                 </p>
                 <p
                   v-if="fiscalIntegration?.masked_key"
-                  class="text-sm font-mono text-text-brand mt-2"
+                  class="text-sm font-mono text-foreground mt-2"
                 >
                   Clave: {{ fiscalIntegration.masked_key }}
                 </p>

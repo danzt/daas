@@ -11,7 +11,7 @@ defineProps<Props>();
   <label
     :for="$props.for"
     :class="[
-      'block text-sm font-semibold text-text-brand mb-1.5 cursor-default',
+      'block text-sm font-semibold text-foreground mb-1.5 cursor-default',
       $props.class,
     ]"
   >

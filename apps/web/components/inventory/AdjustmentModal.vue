@@ -124,7 +124,7 @@ watch(
           <div
             class="flex items-center justify-between px-6 py-5 border-b border-gray-100"
           >
-            <h2 class="text-xl font-bold font-heading text-text-brand">
+            <h2 class="text-xl font-bold font-heading text-foreground">
               Ajuste de Stock
             </h2>
             <button
@@ -145,12 +145,12 @@ watch(
               >
                 Producto
               </p>
-              <p class="text-sm font-semibold text-text-brand">
+              <p class="text-sm font-semibold text-foreground">
                 {{ productName }}
               </p>
               <p class="text-xs text-gray-500 mt-0.5">
                 Stock actual:
-                <span class="font-semibold text-text-brand">{{
+                <span class="font-semibold text-foreground">{{
                   currentStock
                 }}</span>
               </p>
@@ -171,7 +171,7 @@ watch(
             <div>
               <label
                 for="adj-delta"
-                class="block text-sm font-semibold text-text-brand mb-1.5"
+                class="block text-sm font-semibold text-foreground mb-1.5"
               >
                 Delta <span class="text-red-500">*</span>
                 <span class="text-gray-400 font-normal ml-1">
@@ -241,7 +241,7 @@ watch(
             <div>
               <label
                 for="adj-notes"
-                class="block text-sm font-semibold text-text-brand mb-1.5"
+                class="block text-sm font-semibold text-foreground mb-1.5"
               >
                 Razón del ajuste <span class="text-red-500">*</span>
               </label>
@@ -278,7 +278,7 @@ watch(
             <button
               type="button"
               :disabled="saving || wouldGoNegative"
-              class="flex items-center gap-2 h-10 px-6 bg-cta text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer disabled:opacity-50"
+              class="flex items-center gap-2 h-10 px-6 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer disabled:opacity-50"
               @click="submit"
             >
               <Loader2 v-if="saving" class="w-4 h-4 animate-spin" />

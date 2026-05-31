@@ -120,7 +120,7 @@ async function save() {
         @click.self="emit('close')"
       >
         <div
-          class="bg-white border border-gray-100 rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]"
+          class="border bg-card rounded-xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]"
         >
           <!-- Header -->
           <div

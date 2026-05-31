@@ -163,7 +163,7 @@ onMounted(() => {
           <History class="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 class="text-2xl font-bold font-heading text-text-brand">
+          <h1 class="text-2xl font-bold font-heading text-foreground">
             Historial de movimientos
           </h1>
           <p class="text-gray-500 text-sm">Entradas, salidas y ajustes</p>
@@ -236,7 +236,7 @@ onMounted(() => {
       <div
         class="px-6 py-4 border-b border-gray-100 flex items-center justify-between"
       >
-        <h2 class="text-base font-bold font-heading text-text-brand">
+        <h2 class="text-base font-bold font-heading text-foreground">
           {{ movements.length }} movimiento{{
             movements.length !== 1 ? "s" : ""
           }}
@@ -311,7 +311,7 @@ onMounted(() => {
           <div class="flex-1 min-w-0">
             <div class="flex items-start justify-between gap-2">
               <div>
-                <p class="text-sm font-semibold text-text-brand">
+                <p class="text-sm font-semibold text-foreground">
                   {{
                     productMap[mov.product_id]?.name ??
                     mov.product_id.slice(0, 8) + "..."

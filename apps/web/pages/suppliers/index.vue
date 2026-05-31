@@ -176,10 +176,7 @@ watch(showInactive, loadSuppliers);
     </div>
 
     <!-- Table -->
-    <div
-      v-else-if="!loading"
-      class="bg-white border border-gray-100 rounded-xl overflow-hidden"
-    >
+    <div v-else-if="!loading" class="border bg-card rounded-xl overflow-hidden">
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-border bg-muted/30">

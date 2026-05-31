@@ -82,7 +82,7 @@ async function handleSubmit() {
     <!-- Card -->
     <div class="bg-white rounded-xl border border-gray-100 shadow-md">
       <div class="px-6 pt-6 pb-2">
-        <h2 class="text-2xl font-bold font-heading text-text-brand">
+        <h2 class="text-2xl font-bold font-heading text-foreground">
           Iniciar sesión
         </h2>
         <p class="text-sm text-gray-500 mt-1">Accedé a tu cuenta de empresa</p>
@@ -97,7 +97,7 @@ async function handleSubmit() {
         <div>
           <label
             for="email"
-            class="block text-sm font-semibold text-text-brand mb-1.5"
+            class="block text-sm font-semibold text-foreground mb-1.5"
           >
             Email
           </label>
@@ -125,7 +125,7 @@ async function handleSubmit() {
         <div>
           <label
             for="password"
-            class="block text-sm font-semibold text-text-brand mb-1.5"
+            class="block text-sm font-semibold text-foreground mb-1.5"
           >
             Contraseña
           </label>
@@ -175,7 +175,7 @@ async function handleSubmit() {
         <button
           type="submit"
           :disabled="loading"
-          class="w-full h-12 flex items-center justify-center gap-2 bg-cta text-white rounded-lg font-semibold text-base transition-all duration-200 cursor-pointer hover:opacity-90 focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          class="w-full h-12 flex items-center justify-center gap-2 bg-primary text-white rounded-lg font-semibold text-base transition-all duration-200 cursor-pointer hover:opacity-90 focus-visible:outline-2 focus-visible:outline-primary disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Loader2 v-if="loading" class="w-5 h-5 animate-spin" />
           <span>{{ loading ? "Ingresando..." : "Ingresar" }}</span>

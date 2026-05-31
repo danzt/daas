@@ -6,7 +6,7 @@ defineProps<Props>();
 </script>
 
 <template>
-  <div :class="['px-6 py-6', $props.class]">
+  <div data-slot="card-content" :class="['px-4', $props.class]">
     <slot />
   </div>
 </template>

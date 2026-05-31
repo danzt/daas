@@ -16,7 +16,7 @@ const props = withDefaults(defineProps<Props>(), {
 
 const variantClasses: Record<string, string> = {
   default: "bg-primary text-white hover:opacity-90",
-  cta: "bg-cta text-white hover:opacity-90",
+  cta: "bg-primary text-white hover:opacity-90",
   outline:
     "border-2 border-primary text-primary bg-transparent hover:bg-primary hover:text-white",
   ghost: "bg-transparent text-primary hover:bg-primary/10",

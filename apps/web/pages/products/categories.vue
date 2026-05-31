@@ -148,7 +148,7 @@ onMounted(() => {
           <Tag class="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 class="text-2xl font-bold font-heading text-text-brand">
+          <h1 class="text-2xl font-bold font-heading text-foreground">
             Categorías
           </h1>
           <p class="text-muted-foreground text-sm">
@@ -166,7 +166,7 @@ onMounted(() => {
         <button
           v-if="store.isOwner"
           type="button"
-          class="flex items-center gap-2 h-10 px-5 bg-cta text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
+          class="flex items-center gap-2 h-10 px-5 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
           @click="openCreate"
         >
           <Plus class="w-4 h-4" />
@@ -179,7 +179,7 @@ onMounted(() => {
     <div class="bg-white rounded-xl border shadow-sm">
       <!-- Table header -->
       <div class="px-6 py-4 border-b flex items-center justify-between">
-        <h2 class="text-base font-bold font-heading text-text-brand">
+        <h2 class="text-base font-bold font-heading text-foreground">
           {{ categories.length }} categoría{{
             categories.length !== 1 ? "s" : ""
           }}
@@ -220,7 +220,7 @@ onMounted(() => {
         <button
           v-if="store.isOwner"
           type="button"
-          class="inline-flex items-center gap-2 h-10 px-5 bg-cta text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
+          class="inline-flex items-center gap-2 h-10 px-5 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
           @click="openCreate"
         >
           <Plus class="w-4 h-4" />
@@ -243,7 +243,7 @@ onMounted(() => {
                 <Tag class="w-4 h-4 text-primary" />
               </div>
               <div>
-                <p class="text-sm font-semibold text-text-brand">
+                <p class="text-sm font-semibold text-foreground">
                   {{ cat.name }}
                 </p>
                 <p class="text-xs text-muted-foreground font-mono mt-0.5">
@@ -334,7 +334,7 @@ onMounted(() => {
           >
             <!-- Header -->
             <div class="flex items-center justify-between px-6 py-5 border-b">
-              <h2 class="text-xl font-bold font-heading text-text-brand">
+              <h2 class="text-xl font-bold font-heading text-foreground">
                 {{ dialogTitle }}
               </h2>
               <button
@@ -359,7 +359,7 @@ onMounted(() => {
               <div>
                 <label
                   for="cat-name"
-                  class="block text-sm font-semibold text-text-brand mb-1.5"
+                  class="block text-sm font-semibold text-foreground mb-1.5"
                 >
                   Nombre <span class="text-destructive">*</span>
                 </label>
@@ -395,7 +395,7 @@ onMounted(() => {
               <button
                 type="button"
                 :disabled="savingCategory"
-                class="flex items-center gap-2 h-10 px-6 bg-cta text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer disabled:opacity-50"
+                class="flex items-center gap-2 h-10 px-6 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer disabled:opacity-50"
                 @click="saveCategory"
               >
                 <Loader2 v-if="savingCategory" class="w-4 h-4 animate-spin" />
