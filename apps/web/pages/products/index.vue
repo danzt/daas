@@ -166,9 +166,9 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div>
+  <div class="p-4 sm:p-6 space-y-5">
     <!-- Page header -->
-    <div class="mb-8 flex items-center justify-between gap-4">
+    <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-3">
         <div
           class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"
@@ -196,7 +196,7 @@ onMounted(async () => {
     </div>
 
     <!-- Stats row -->
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="rounded-xl border bg-card shadow-sm px-5 py-4">
         <p
           class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
@@ -240,7 +240,7 @@ onMounted(async () => {
     </div>
 
     <!-- Filter bar -->
-    <div class="rounded-xl border bg-card shadow-sm px-5 py-4 mb-4">
+    <div class="rounded-xl border bg-card shadow-sm px-4 py-3 sm:px-5 sm:py-4">
       <div class="flex flex-col sm:flex-row gap-3 flex-wrap items-center">
         <!-- Search -->
         <div class="relative flex-1 min-w-48">
@@ -301,220 +301,202 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- Table card -->
-    <div class="rounded-xl border bg-card shadow-sm">
-      <!-- Loading skeleton -->
-      <div v-if="loading" class="px-6 py-5 space-y-3">
-        <div
-          v-for="n in 3"
-          :key="n"
-          class="h-14 animate-pulse bg-muted rounded-lg"
-        />
-      </div>
-
-      <!-- Error state -->
-      <div v-else-if="loadError" class="px-6 py-12 text-center">
-        <AlertTriangle class="w-10 h-10 text-destructive mx-auto mb-3" />
-        <p class="text-destructive font-medium">{{ loadError }}</p>
-        <button
-          type="button"
-          class="mt-4 h-9 px-4 border text-sm font-semibold text-muted-foreground rounded-lg hover:bg-muted cursor-pointer transition-all duration-200"
-          @click="fetchProducts"
-        >
-          Reintentar
-        </button>
-      </div>
-
-      <!-- Empty state (no data at all) -->
-      <div v-else-if="products.length === 0" class="px-6 py-16 text-center">
-        <Package class="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
-        <h3 class="text-base font-semibold text-muted-foreground mb-1">
-          Sin productos aún
-        </h3>
-        <p class="text-sm text-muted-foreground mb-5">
-          Agregá tu primer producto para comenzar
-        </p>
-        <button
-          v-if="store.isOwner"
-          type="button"
-          class="inline-flex items-center gap-2 h-10 px-5 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
-          @click="openCreate"
-        >
-          <Plus class="w-4 h-4" />
-          Nuevo Producto
-        </button>
-      </div>
-
-      <!-- Empty filtered state -->
+    <!-- Loading skeleton -->
+    <div
+      v-if="loading"
+      class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"
+    >
       <div
-        v-else-if="filteredProducts.length === 0"
-        class="px-6 py-12 text-center"
+        v-for="n in 8"
+        :key="n"
+        class="rounded-xl border bg-card shadow-sm overflow-hidden animate-pulse"
       >
-        <Search class="w-10 h-10 text-muted-foreground/20 mx-auto mb-3" />
-        <p class="text-muted-foreground font-medium">
-          No se encontraron productos con los filtros aplicados
-        </p>
+        <div class="aspect-square bg-muted" />
+        <div class="p-3 space-y-2">
+          <div class="h-3 bg-muted rounded w-3/4" />
+          <div class="h-3 bg-muted rounded w-1/2" />
+          <div class="h-4 bg-muted rounded w-2/3 mt-3" />
+        </div>
       </div>
+    </div>
 
-      <!-- Table -->
-      <div v-else class="overflow-x-auto">
-        <table class="w-full">
-          <thead>
-            <tr class="border-b">
-              <th
-                class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
-              >
-                Producto
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
-              >
-                Categoría
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
-              >
-                Tipo
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
-              >
-                Precio
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
-              >
-                Estado
-              </th>
-              <th
-                class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
-              >
-                Acciones
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-border">
-            <tr
-              v-for="product in filteredProducts"
-              :key="product.id"
-              class="hover:bg-muted/50 transition-colors duration-150"
+    <!-- Error state -->
+    <div
+      v-else-if="loadError"
+      class="rounded-xl border bg-card shadow-sm px-6 py-12 text-center"
+    >
+      <AlertTriangle class="w-10 h-10 text-destructive mx-auto mb-3" />
+      <p class="text-destructive font-medium">{{ loadError }}</p>
+      <button
+        type="button"
+        class="mt-4 h-9 px-4 border text-sm font-semibold text-muted-foreground rounded-lg hover:bg-muted cursor-pointer transition-all duration-200"
+        @click="fetchProducts"
+      >
+        Reintentar
+      </button>
+    </div>
+
+    <!-- Empty state — no products -->
+    <div
+      v-else-if="products.length === 0"
+      class="rounded-xl border bg-card shadow-sm px-6 py-16 text-center"
+    >
+      <Package class="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
+      <h3 class="text-base font-semibold text-muted-foreground mb-1">
+        Sin productos aún
+      </h3>
+      <p class="text-sm text-muted-foreground mb-5">
+        Agregá tu primer producto para comenzar
+      </p>
+      <button
+        v-if="store.isOwner"
+        type="button"
+        class="inline-flex items-center gap-2 h-10 px-5 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
+        @click="openCreate"
+      >
+        <Plus class="w-4 h-4" />
+        Nuevo Producto
+      </button>
+    </div>
+
+    <!-- Empty filtered state -->
+    <div
+      v-else-if="filteredProducts.length === 0"
+      class="rounded-xl border bg-card shadow-sm px-6 py-12 text-center"
+    >
+      <Search class="w-10 h-10 text-muted-foreground/20 mx-auto mb-3" />
+      <p class="text-muted-foreground font-medium">
+        No se encontraron productos con los filtros aplicados
+      </p>
+    </div>
+
+    <!-- Product card grid -->
+    <div
+      v-else
+      class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"
+    >
+      <div
+        v-for="product in filteredProducts"
+        :key="product.id"
+        class="rounded-xl border bg-card shadow-sm overflow-hidden flex flex-col group hover:shadow-md transition-shadow duration-200"
+        :class="!product.active ? 'opacity-60' : ''"
+      >
+        <!-- Image / icon area -->
+        <div
+          class="relative aspect-square bg-gradient-to-br from-primary/5 via-primary/10 to-violet-100 flex items-center justify-center"
+        >
+          <Package class="w-10 h-10 sm:w-14 sm:h-14 text-primary/30" />
+          <!-- Fiscal badge — top-left like Amazon Prime -->
+          <span
+            v-if="product.is_fiscal"
+            class="absolute top-2 left-2 bg-primary text-white text-[10px] font-bold px-1.5 py-0.5 rounded"
+          >
+            FISCAL
+          </span>
+          <!-- Inactive ribbon -->
+          <span
+            v-if="!product.active"
+            class="absolute top-2 right-2 bg-muted text-muted-foreground text-[10px] font-semibold px-1.5 py-0.5 rounded"
+          >
+            INACTIVO
+          </span>
+        </div>
+
+        <!-- Info area -->
+        <div class="flex flex-col flex-1 p-2.5 sm:p-3 gap-1">
+          <!-- Name -->
+          <p
+            class="text-xs sm:text-sm font-semibold text-foreground line-clamp-2 leading-snug"
+          >
+            {{ product.name }}
+          </p>
+          <!-- SKU -->
+          <p
+            v-if="product.sku"
+            class="text-[10px] text-muted-foreground font-mono truncate"
+          >
+            {{ product.sku }}
+          </p>
+          <!-- Category -->
+          <p class="text-[10px] text-muted-foreground truncate">
+            {{ getCategoryName(product.category_id) }}
+          </p>
+
+          <!-- Price block — prominent like Amazon -->
+          <div class="mt-auto pt-2">
+            <p class="text-sm sm:text-base font-bold text-foreground font-mono">
+              {{ formatPrice(product) }}
+            </p>
+            <p
+              v-if="product.is_fiscal && product.tax_rate != null"
+              class="text-[10px] text-muted-foreground"
             >
-              <!-- Name + SKU -->
-              <td class="px-6 py-4">
-                <p class="text-sm font-semibold text-foreground">
-                  {{ product.name }}
-                </p>
-                <p
-                  v-if="product.sku"
-                  class="text-xs text-muted-foreground mt-0.5 font-mono"
-                >
-                  {{ product.sku }}
-                </p>
-              </td>
+              + {{ product.tax_rate }}% IVA
+            </p>
+          </div>
 
-              <!-- Category -->
-              <td class="px-6 py-4 text-sm text-muted-foreground">
-                {{ getCategoryName(product.category_id) }}
-              </td>
+          <!-- Actions row -->
+          <div
+            class="flex items-center justify-between pt-2 mt-1 border-t border-border"
+          >
+            <!-- Status pill -->
+            <span
+              :class="[
+                'text-[10px] font-semibold px-1.5 py-0.5 rounded',
+                product.active
+                  ? 'bg-emerald-100 text-emerald-700'
+                  : 'bg-muted text-muted-foreground',
+              ]"
+            >
+              {{ product.active ? "Activo" : "Inactivo" }}
+            </span>
 
-              <!-- Type badge -->
-              <td class="px-6 py-4">
-                <span
-                  :class="[
-                    'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold',
-                    product.is_fiscal
-                      ? 'bg-primary/10 text-primary'
-                      : 'bg-muted text-muted-foreground',
-                  ]"
-                >
-                  {{ product.is_fiscal ? "Fiscal" : "Interno" }}
-                </span>
-              </td>
+            <!-- Buttons -->
+            <div class="flex items-center gap-0.5">
+              <button
+                type="button"
+                title="Editar"
+                class="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors cursor-pointer"
+                @click="openEdit(product)"
+              >
+                <Pencil class="w-3.5 h-3.5" />
+              </button>
 
-              <!-- Price -->
-              <td class="px-6 py-4 text-sm font-mono text-foreground">
-                {{ formatPrice(product) }}
-                <span
-                  v-if="product.is_fiscal && product.tax_rate != null"
-                  class="text-xs text-muted-foreground ml-1"
-                  >+{{ product.tax_rate }}%</span
-                >
-              </td>
-
-              <!-- Status badge -->
-              <td class="px-6 py-4">
-                <span
-                  :class="[
-                    'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold',
-                    product.active
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-red-100 text-red-600',
-                  ]"
-                >
-                  {{ product.active ? "Activo" : "Inactivo" }}
-                </span>
-              </td>
-
-              <!-- Actions -->
-              <td class="px-6 py-4">
-                <div class="flex items-center gap-2">
-                  <!-- Edit -->
+              <template v-if="store.isOwner">
+                <template v-if="confirmDeleteId === product.id">
                   <button
                     type="button"
-                    title="Editar"
-                    class="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200 cursor-pointer"
-                    @click="openEdit(product)"
+                    :disabled="deletingId === product.id"
+                    class="h-7 px-2 bg-red-500 text-white text-[10px] font-bold rounded-md hover:bg-red-600 cursor-pointer disabled:opacity-50 transition-colors"
+                    @click="deleteProduct(product.id)"
                   >
-                    <Pencil class="w-4 h-4" />
+                    <Loader2
+                      v-if="deletingId === product.id"
+                      class="w-3 h-3 animate-spin"
+                    />
+                    <span v-else>Sí</span>
                   </button>
-
-                  <!-- Delete (owners only) -->
-                  <template v-if="store.isOwner">
-                    <!-- Confirm step -->
-                    <div
-                      v-if="confirmDeleteId === product.id"
-                      class="flex items-center gap-1.5"
-                    >
-                      <span class="text-xs text-destructive font-semibold"
-                        >¿Confirmás?</span
-                      >
-                      <button
-                        type="button"
-                        :disabled="deletingId === product.id"
-                        class="h-7 px-2.5 bg-red-500 text-white text-xs font-semibold rounded-md hover:bg-red-600 cursor-pointer disabled:opacity-50 transition-all duration-200"
-                        @click="deleteProduct(product.id)"
-                      >
-                        <Loader2
-                          v-if="deletingId === product.id"
-                          class="w-3 h-3 animate-spin"
-                        />
-                        <span v-else>Sí</span>
-                      </button>
-                      <button
-                        type="button"
-                        class="h-7 px-2.5 border text-muted-foreground text-xs font-semibold rounded-md hover:bg-muted cursor-pointer transition-all duration-200"
-                        @click="confirmDeleteId = null"
-                      >
-                        No
-                      </button>
-                    </div>
-
-                    <!-- Delete icon -->
-                    <button
-                      v-else
-                      type="button"
-                      title="Eliminar"
-                      class="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-all duration-200 cursor-pointer"
-                      @click="confirmDeleteId = product.id"
-                    >
-                      <Trash2 class="w-4 h-4" />
-                    </button>
-                  </template>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+                  <button
+                    type="button"
+                    class="h-7 px-2 border text-[10px] font-bold text-muted-foreground rounded-md hover:bg-muted cursor-pointer transition-colors"
+                    @click="confirmDeleteId = null"
+                  >
+                    No
+                  </button>
+                </template>
+                <button
+                  v-else
+                  type="button"
+                  title="Eliminar"
+                  class="w-7 h-7 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
+                  @click="confirmDeleteId = product.id"
+                >
+                  <Trash2 class="w-3.5 h-3.5" />
+                </button>
+              </template>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
