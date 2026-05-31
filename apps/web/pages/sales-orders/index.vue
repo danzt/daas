@@ -270,7 +270,7 @@ onMounted(load);
         >
           Confirmadas
         </p>
-        <p class="text-3xl font-bold text-blue-600 mt-1">
+        <p class="text-3xl font-bold text-foreground mt-1">
           {{ counts.confirmed }}
         </p>
       </div>
@@ -280,7 +280,7 @@ onMounted(load);
         >
           Facturadas
         </p>
-        <p class="text-3xl font-bold text-emerald-600 mt-1">
+        <p class="text-3xl font-bold text-foreground mt-1">
           {{ counts.invoiced }}
         </p>
       </div>
