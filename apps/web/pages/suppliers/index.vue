@@ -92,7 +92,7 @@ watch(showInactive, loadSuppliers);
 </script>
 
 <template>
-  <div class="p-6 space-y-6">
+  <div class="p-4 sm:p-6 space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
@@ -178,104 +178,106 @@ watch(showInactive, loadSuppliers);
 
     <!-- Table -->
     <div v-else-if="!loading" class="border bg-card rounded-xl overflow-hidden">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b border-border bg-muted/30">
-            <th class="px-4 py-3 text-left font-medium text-muted-foreground">
-              Proveedor
-            </th>
-            <th
-              class="px-4 py-3 text-left font-medium text-muted-foreground hidden md:table-cell"
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border bg-muted/30">
+              <th class="px-4 py-3 text-left font-medium text-muted-foreground">
+                Proveedor
+              </th>
+              <th
+                class="px-4 py-3 text-left font-medium text-muted-foreground hidden md:table-cell"
+              >
+                RIF
+              </th>
+              <th
+                class="px-4 py-3 text-left font-medium text-muted-foreground hidden lg:table-cell"
+              >
+                Contacto
+              </th>
+              <th class="px-4 py-3 text-left font-medium text-muted-foreground">
+                Estado
+              </th>
+              <th class="px-4 py-3" />
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <tr
+              v-for="sup in filteredSuppliers"
+              :key="sup.id"
+              class="hover:bg-muted/20 transition-colors group"
             >
-              RIF
-            </th>
-            <th
-              class="px-4 py-3 text-left font-medium text-muted-foreground hidden lg:table-cell"
-            >
-              Contacto
-            </th>
-            <th class="px-4 py-3 text-left font-medium text-muted-foreground">
-              Estado
-            </th>
-            <th class="px-4 py-3" />
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-border">
-          <tr
-            v-for="sup in filteredSuppliers"
-            :key="sup.id"
-            class="hover:bg-muted/20 transition-colors group"
-          >
-            <td class="px-4 py-3">
-              <div class="flex items-center gap-3">
-                <div
-                  class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0"
-                >
-                  <Building2 class="w-4 h-4 text-primary" />
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-3">
+                  <div
+                    class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0"
+                  >
+                    <Building2 class="w-4 h-4 text-primary" />
+                  </div>
+                  <div>
+                    <p class="font-medium text-foreground">{{ sup.name }}</p>
+                    <p
+                      v-if="sup.email"
+                      class="text-xs text-muted-foreground flex items-center gap-1 mt-0.5"
+                    >
+                      <Mail class="w-3 h-3" />{{ sup.email }}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <p class="font-medium text-foreground">{{ sup.name }}</p>
+              </td>
+              <td
+                class="px-4 py-3 text-muted-foreground hidden md:table-cell font-mono text-xs"
+              >
+                {{ sup.rif || "—" }}
+              </td>
+              <td class="px-4 py-3 hidden lg:table-cell">
+                <div v-if="sup.contact_name || sup.phone">
+                  <p class="text-foreground">{{ sup.contact_name || "—" }}</p>
                   <p
-                    v-if="sup.email"
+                    v-if="sup.phone"
                     class="text-xs text-muted-foreground flex items-center gap-1 mt-0.5"
                   >
-                    <Mail class="w-3 h-3" />{{ sup.email }}
+                    <Phone class="w-3 h-3" />{{ sup.phone }}
                   </p>
                 </div>
-              </div>
-            </td>
-            <td
-              class="px-4 py-3 text-muted-foreground hidden md:table-cell font-mono text-xs"
-            >
-              {{ sup.rif || "—" }}
-            </td>
-            <td class="px-4 py-3 hidden lg:table-cell">
-              <div v-if="sup.contact_name || sup.phone">
-                <p class="text-foreground">{{ sup.contact_name || "—" }}</p>
-                <p
-                  v-if="sup.phone"
-                  class="text-xs text-muted-foreground flex items-center gap-1 mt-0.5"
+                <span v-else class="text-muted-foreground">—</span>
+              </td>
+              <td class="px-4 py-3">
+                <span
+                  :class="[
+                    'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
+                    sup.active
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                      : 'bg-muted text-muted-foreground',
+                  ]"
                 >
-                  <Phone class="w-3 h-3" />{{ sup.phone }}
-                </p>
-              </div>
-              <span v-else class="text-muted-foreground">—</span>
-            </td>
-            <td class="px-4 py-3">
-              <span
-                :class="[
-                  'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
-                  sup.active
-                    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                    : 'bg-muted text-muted-foreground',
-                ]"
-              >
-                {{ sup.active ? "Activo" : "Inactivo" }}
-              </span>
-            </td>
-            <td class="px-4 py-3">
-              <div
-                class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity justify-end"
-              >
-                <button
-                  class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
-                  title="Editar"
-                  @click="openEdit(sup)"
+                  {{ sup.active ? "Activo" : "Inactivo" }}
+                </span>
+              </td>
+              <td class="px-4 py-3">
+                <div
+                  class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity justify-end"
                 >
-                  <Pencil class="w-4 h-4" />
-                </button>
-                <NuxtLink
-                  :to="`/suppliers/${sup.id}`"
-                  class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
-                  title="Ver detalle"
-                >
-                  <ChevronRight class="w-4 h-4" />
-                </NuxtLink>
-              </div>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+                  <button
+                    class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
+                    title="Editar"
+                    @click="openEdit(sup)"
+                  >
+                    <Pencil class="w-4 h-4" />
+                  </button>
+                  <NuxtLink
+                    :to="`/suppliers/${sup.id}`"
+                    class="p-1.5 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
+                    title="Ver detalle"
+                  >
+                    <ChevronRight class="w-4 h-4" />
+                  </NuxtLink>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Modal -->

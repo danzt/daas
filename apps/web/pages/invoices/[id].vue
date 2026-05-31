@@ -129,7 +129,7 @@ function formatCurrency(value: number) {
 </script>
 
 <template>
-  <div class="p-6 space-y-6">
+  <div class="p-4 sm:p-6 space-y-6">
     <!-- Back nav -->
     <button
       type="button"
@@ -287,77 +287,79 @@ function formatCurrency(value: number) {
           <div class="px-5 py-4 border-b">
             <h2 class="text-sm font-bold text-foreground">Detalle</h2>
           </div>
-          <table class="w-full">
-            <thead>
-              <tr class="bg-muted/40 border-b">
-                <th
-                  class="px-5 py-3 text-left text-xs font-semibold text-muted-foreground"
-                >
-                  Descripción
-                </th>
-                <th
-                  class="px-4 py-3 text-right text-xs font-semibold text-muted-foreground"
-                >
-                  Cant.
-                </th>
-                <th
-                  class="px-4 py-3 text-right text-xs font-semibold text-muted-foreground"
-                >
-                  P. Unit.
-                </th>
-                <th
-                  class="px-5 py-3 text-right text-xs font-semibold text-muted-foreground"
-                >
-                  Subtotal
-                </th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-border">
-              <tr
-                v-for="line in invoice.lines"
-                :key="line.id"
-                class="hover:bg-muted/20 transition-colors"
-              >
-                <td class="px-5 py-3">
-                  <p class="text-sm font-medium text-foreground">
-                    {{ line.description }}
-                  </p>
-                </td>
-                <td class="px-4 py-3 text-right">
-                  <span class="text-sm tabular-nums text-muted-foreground">
-                    {{ line.quantity }}
-                  </span>
-                </td>
-                <td class="px-4 py-3 text-right">
-                  <span class="text-sm tabular-nums text-muted-foreground">
-                    {{ formatCurrency(line.unit_price) }}
-                  </span>
-                </td>
-                <td class="px-5 py-3 text-right">
-                  <span
-                    class="text-sm font-semibold tabular-nums text-foreground"
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="bg-muted/40 border-b">
+                  <th
+                    class="px-5 py-3 text-left text-xs font-semibold text-muted-foreground"
                   >
-                    {{ formatCurrency(line.subtotal) }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-            <tfoot>
-              <tr class="border-t-2 bg-muted/20">
-                <td
-                  colspan="3"
-                  class="px-5 py-4 text-right text-sm font-bold text-foreground"
+                    Descripción
+                  </th>
+                  <th
+                    class="px-4 py-3 text-right text-xs font-semibold text-muted-foreground"
+                  >
+                    Cant.
+                  </th>
+                  <th
+                    class="px-4 py-3 text-right text-xs font-semibold text-muted-foreground"
+                  >
+                    P. Unit.
+                  </th>
+                  <th
+                    class="px-5 py-3 text-right text-xs font-semibold text-muted-foreground"
+                  >
+                    Subtotal
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                <tr
+                  v-for="line in invoice.lines"
+                  :key="line.id"
+                  class="hover:bg-muted/20 transition-colors"
                 >
-                  Total
-                </td>
-                <td
-                  class="px-5 py-4 text-right text-lg font-bold font-heading text-foreground tabular-nums"
-                >
-                  {{ formatCurrency(invoice.total) }}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
+                  <td class="px-5 py-3">
+                    <p class="text-sm font-medium text-foreground">
+                      {{ line.description }}
+                    </p>
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <span class="text-sm tabular-nums text-muted-foreground">
+                      {{ line.quantity }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <span class="text-sm tabular-nums text-muted-foreground">
+                      {{ formatCurrency(line.unit_price) }}
+                    </span>
+                  </td>
+                  <td class="px-5 py-3 text-right">
+                    <span
+                      class="text-sm font-semibold tabular-nums text-foreground"
+                    >
+                      {{ formatCurrency(line.subtotal) }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr class="border-t-2 bg-muted/20">
+                  <td
+                    colspan="3"
+                    class="px-5 py-4 text-right text-sm font-bold text-foreground"
+                  >
+                    Total
+                  </td>
+                  <td
+                    class="px-5 py-4 text-right text-lg font-bold font-heading text-foreground tabular-nums"
+                  >
+                    {{ formatCurrency(invoice.total) }}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
       </div>
     </template>

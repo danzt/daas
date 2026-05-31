@@ -22,7 +22,8 @@ const store = useAuthStore();
 const router = useRouter();
 const route = useRoute();
 
-const sidebarOpen = ref(true);
+const sidebarOpen = ref(false);
+const isMobile = ref(false);
 const openGroups = ref<Set<string>>(new Set());
 
 interface NavSubItem {
@@ -149,24 +150,65 @@ const roleLabel = computed(() =>
   store.user?.role === "owner" ? "Propietario" : "Empleado",
 );
 
+// Close sidebar on route change (mobile drawer behaviour)
+watch(
+  () => route.path,
+  () => {
+    if (isMobile.value) sidebarOpen.value = false;
+  },
+);
+
 onMounted(() => {
+  const checkMobile = () => {
+    isMobile.value = window.innerWidth < 1024;
+    if (!isMobile.value && !sidebarOpen.value) sidebarOpen.value = true;
+  };
+  checkMobile();
+  window.addEventListener("resize", checkMobile);
+
   const handleKeyboard = (e: KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "b") {
       e.preventDefault();
       sidebarOpen.value = !sidebarOpen.value;
     }
+    if (e.key === "Escape" && isMobile.value) sidebarOpen.value = false;
   };
   window.addEventListener("keydown", handleKeyboard);
-  onUnmounted(() => window.removeEventListener("keydown", handleKeyboard));
+
+  onUnmounted(() => {
+    window.removeEventListener("resize", checkMobile);
+    window.removeEventListener("keydown", handleKeyboard);
+  });
 });
 </script>
 
 <template>
   <div class="flex h-screen overflow-hidden bg-background">
+    <!-- ── Mobile backdrop ───────────────────────────────── -->
+    <Transition name="fade">
+      <div
+        v-if="isMobile && sidebarOpen"
+        class="fixed inset-0 z-30 bg-black/50 lg:hidden"
+        aria-hidden="true"
+        @click="sidebarOpen = false"
+      />
+    </Transition>
+
     <!-- ── Sidebar ─────────────────────────────────────── -->
     <aside
       class="flex flex-col shrink-0 border-r border-border bg-sidebar transition-all duration-200 overflow-hidden"
-      :class="sidebarOpen ? 'w-64' : 'w-14'"
+      :class="
+        isMobile
+          ? 'fixed inset-y-0 left-0 z-40 w-64 shadow-xl'
+          : sidebarOpen
+            ? 'w-64'
+            : 'w-14'
+      "
+      :style="
+        isMobile
+          ? { transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)' }
+          : {}
+      "
     >
       <!-- Logo -->
       <div class="flex h-12 shrink-0 items-center border-b border-border px-3">
@@ -347,3 +389,14 @@ onMounted(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

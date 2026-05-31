@@ -239,7 +239,7 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="p-6 space-y-6">
+  <div class="p-4 sm:p-6 space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
@@ -350,74 +350,78 @@ onMounted(load);
 
     <!-- Table -->
     <div v-else-if="!loading" class="border bg-card rounded-xl overflow-hidden">
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b border-border bg-muted/30">
-            <th class="px-4 py-3 text-left font-medium text-muted-foreground">
-              Proveedor
-            </th>
-            <th class="px-4 py-3 text-left font-medium text-muted-foreground">
-              Estado
-            </th>
-            <th
-              class="px-4 py-3 text-left font-medium text-muted-foreground hidden md:table-cell"
-            >
-              Fecha
-            </th>
-            <th class="px-4 py-3 text-right font-medium text-muted-foreground">
-              Total
-            </th>
-            <th class="px-4 py-3" />
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-border">
-          <tr
-            v-for="po in filteredOrders"
-            :key="po.id"
-            class="hover:bg-muted/20 transition-colors group"
-          >
-            <td class="px-4 py-3">
-              <p class="font-medium text-foreground">
-                {{ po.supplier?.name ?? "—" }}
-              </p>
-              <p
-                v-if="po.notes"
-                class="text-xs text-muted-foreground truncate max-w-48"
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border bg-muted/30">
+              <th class="px-4 py-3 text-left font-medium text-muted-foreground">
+                Proveedor
+              </th>
+              <th class="px-4 py-3 text-left font-medium text-muted-foreground">
+                Estado
+              </th>
+              <th
+                class="px-4 py-3 text-left font-medium text-muted-foreground hidden md:table-cell"
               >
-                {{ po.notes }}
-              </p>
-            </td>
-            <td class="px-4 py-3">
-              <span
-                :class="[
-                  'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
-                  STATUS_CONFIG[po.status]?.class,
-                ]"
+                Fecha
+              </th>
+              <th
+                class="px-4 py-3 text-right font-medium text-muted-foreground"
               >
-                {{ STATUS_CONFIG[po.status]?.label }}
-              </span>
-            </td>
-            <td
-              class="px-4 py-3 text-muted-foreground hidden md:table-cell text-xs"
+                Total
+              </th>
+              <th class="px-4 py-3" />
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-border">
+            <tr
+              v-for="po in filteredOrders"
+              :key="po.id"
+              class="hover:bg-muted/20 transition-colors group"
             >
-              {{ fmtDate(po.created_at) }}
-            </td>
-            <td
-              class="px-4 py-3 text-right font-mono font-medium text-foreground"
-            >
-              {{ fmtCurrency(po.total) }}
-            </td>
-            <td class="px-4 py-3 text-right">
-              <NuxtLink
-                :to="`/suppliers/purchase-orders/${po.id}`"
-                class="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-muted transition-all text-muted-foreground inline-flex"
+              <td class="px-4 py-3">
+                <p class="font-medium text-foreground">
+                  {{ po.supplier?.name ?? "—" }}
+                </p>
+                <p
+                  v-if="po.notes"
+                  class="text-xs text-muted-foreground truncate max-w-48"
+                >
+                  {{ po.notes }}
+                </p>
+              </td>
+              <td class="px-4 py-3">
+                <span
+                  :class="[
+                    'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
+                    STATUS_CONFIG[po.status]?.class,
+                  ]"
+                >
+                  {{ STATUS_CONFIG[po.status]?.label }}
+                </span>
+              </td>
+              <td
+                class="px-4 py-3 text-muted-foreground hidden md:table-cell text-xs"
               >
-                <ChevronRight class="w-4 h-4" />
-              </NuxtLink>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+                {{ fmtDate(po.created_at) }}
+              </td>
+              <td
+                class="px-4 py-3 text-right font-mono font-medium text-foreground"
+              >
+                {{ fmtCurrency(po.total) }}
+              </td>
+              <td class="px-4 py-3 text-right">
+                <NuxtLink
+                  :to="`/suppliers/purchase-orders/${po.id}`"
+                  class="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-muted transition-all text-muted-foreground inline-flex"
+                >
+                  <ChevronRight class="w-4 h-4" />
+                </NuxtLink>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- New PO slide-over -->
