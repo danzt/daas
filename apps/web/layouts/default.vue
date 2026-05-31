@@ -134,7 +134,7 @@ function isGroupOpen(item: NavItem) {
 
 async function handleLogout() {
   await store.logout();
-  router.push("/auth/login");
+  await navigateTo("/auth/login");
 }
 
 const userInitials = computed(() => {

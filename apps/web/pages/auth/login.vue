@@ -56,7 +56,7 @@ async function handleSubmit() {
 
   try {
     await store.login(email.value, password.value);
-    router.push("/dashboard");
+    await navigateTo("/dashboard");
   } catch (err: unknown) {
     const apiError = err as { data?: { detail?: string }; message?: string };
     errorMessage.value =
