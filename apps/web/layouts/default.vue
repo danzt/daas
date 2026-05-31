@@ -304,7 +304,7 @@ onMounted(() => {
     <div class="flex flex-1 flex-col min-w-0 overflow-hidden">
       <!-- Top header -->
       <header
-        class="flex h-12 shrink-0 items-center border-b border-border bg-background"
+        class="flex h-12 shrink-0 items-center border-b border-border bg-sidebar"
       >
         <div class="flex w-full items-center justify-between px-4">
           <div class="flex items-center gap-2">
