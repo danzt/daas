@@ -102,9 +102,10 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen
 	fiscalInvoiceHandler := handler.NewFiscalInvoiceHandler(cfg.Pool)
 	supplierHandler := handler.NewSupplierHandler(cfg.Pool)
 	reportHandler := handler.NewReportHandler(cfg.Pool)
+	saleHandler := handler.NewSaleHandler(cfg.Pool)
 
 	// Routes
-	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler, fiscalInvoiceHandler, supplierHandler, reportHandler)
+	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler, fiscalInvoiceHandler, supplierHandler, reportHandler, saleHandler)
 
 	return e
 }
@@ -124,6 +125,7 @@ func registerRoutes(
 	fiscalInvoiceHandler *handler.FiscalInvoiceHandler,
 	supplierHandler *handler.SupplierHandler,
 	reportHandler *handler.ReportHandler,
+	saleHandler *handler.SaleHandler,
 ) {
 	// Health check — unauthenticated
 	e.GET("/health", healthHandler)
@@ -185,6 +187,14 @@ func registerRoutes(
 	api.POST("/invoices/fiscal/:id/issue", fiscalInvoiceHandler.Issue)
 	api.POST("/invoices/fiscal/:id/cancel", fiscalInvoiceHandler.Cancel)
 	api.POST("/invoices/fiscal/:id/retry", fiscalInvoiceHandler.Retry)
+
+	// Sales Orders — action routes before /:id
+	api.POST("/sales-orders", saleHandler.CreateOrder)
+	api.GET("/sales-orders", saleHandler.ListOrders)
+	api.GET("/sales-orders/:id", saleHandler.GetOrder)
+	api.POST("/sales-orders/:id/confirm", saleHandler.ConfirmOrder)
+	api.POST("/sales-orders/:id/invoice", saleHandler.InvoiceOrder)
+	api.POST("/sales-orders/:id/cancel", saleHandler.CancelOrder)
 
 	// Reports — JSON
 	api.GET("/reports/sales", reportHandler.SalesReport)

@@ -74,7 +74,12 @@ const navGroups: NavGroup[] = [
     id: "sales",
     label: "Ventas",
     items: [
-      { label: "Ventas", icon: ShoppingCart, to: "/sales" },
+      {
+        label: "Ventas",
+        icon: ShoppingCart,
+        to: "/sales-orders",
+        children: [{ label: "Órdenes de venta", to: "/sales-orders" }],
+      },
       {
         label: "Facturas",
         icon: FileText,
