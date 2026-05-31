@@ -198,209 +198,151 @@ function handleClose() {
 
 <template>
   <Teleport to="body">
-    <Transition
-      enter-active-class="transition-opacity duration-200"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="transition-opacity duration-200"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
+    <div
+      v-if="modelValue"
+      class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
     >
-      <div
-        v-if="modelValue"
-        class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 overflow-y-auto"
-        role="dialog"
-        aria-modal="true"
-      >
-        <!-- Backdrop -->
-        <div class="absolute inset-0 bg-black/50" @click="handleClose" />
+      <!-- Backdrop -->
+      <div class="absolute inset-0 bg-black/50" @click="handleClose" />
 
-        <!-- Modal content -->
+      <!-- Modal content -->
+      <div
+        class="relative z-10 w-full max-w-lg bg-white rounded-xl shadow-xl mb-10"
+      >
+        <!-- Header -->
         <div
-          class="relative z-10 w-full max-w-lg bg-white rounded-xl shadow-xl mb-10"
+          class="flex items-center justify-between px-6 py-5 border-b border-border"
         >
-          <!-- Header -->
-          <div
-            class="flex items-center justify-between px-6 py-5 border-b border-border"
+          <h2 class="text-xl font-bold font-heading text-foreground">
+            {{ title }}
+          </h2>
+          <button
+            type="button"
+            class="p-1.5 rounded-lg text-muted-foreground hover:text-muted-foreground hover:bg-gray-100 transition-all duration-200 cursor-pointer"
+            @click="handleClose"
           >
-            <h2 class="text-xl font-bold font-heading text-foreground">
-              {{ title }}
-            </h2>
-            <button
-              type="button"
-              class="p-1.5 rounded-lg text-muted-foreground hover:text-muted-foreground hover:bg-gray-100 transition-all duration-200 cursor-pointer"
-              @click="handleClose"
-            >
-              <X class="w-5 h-5" />
-            </button>
+            <X class="w-5 h-5" />
+          </button>
+        </div>
+
+        <!-- Body -->
+        <div class="px-6 py-5 space-y-5">
+          <!-- Server error -->
+          <div
+            v-if="serverError"
+            class="rounded-lg bg-red-50 border border-red-200 px-4 py-3"
+          >
+            <p class="text-sm text-red-600">{{ serverError }}</p>
           </div>
 
-          <!-- Body -->
-          <div class="px-6 py-5 space-y-5">
-            <!-- Server error -->
-            <div
-              v-if="serverError"
-              class="rounded-lg bg-red-50 border border-red-200 px-4 py-3"
-            >
-              <p class="text-sm text-red-600">{{ serverError }}</p>
-            </div>
-
-            <!-- Fiscal toggle — prominent -->
-            <div
-              class="flex items-center justify-between rounded-xl border-2 px-5 py-4 transition-colors duration-200"
-              :class="
-                isFiscal
-                  ? 'border-primary bg-primary/5'
-                  : 'border-input bg-gray-50'
-              "
-            >
-              <div>
-                <p class="text-sm font-bold text-foreground">
-                  Tipo de producto
-                </p>
-                <p class="text-xs text-muted-foreground mt-0.5">
-                  {{
-                    isFiscal
-                      ? "Fiscal — emite comprobante, lleva IVA"
-                      : "Interno — precio libre, sin IVA"
-                  }}
-                </p>
-              </div>
-              <div class="flex items-center gap-3">
-                <span
-                  class="text-sm font-semibold"
-                  :class="
-                    isFiscal ? 'text-muted-foreground' : 'text-foreground'
-                  "
-                  >Interno</span
-                >
-                <Switch v-model="isFiscal" class="flex-shrink-0" />
-                <span
-                  class="text-sm font-semibold"
-                  :class="isFiscal ? 'text-primary' : 'text-muted-foreground'"
-                  >Fiscal</span
-                >
-              </div>
-            </div>
-
-            <!-- Name (required) -->
+          <!-- Fiscal toggle — prominent -->
+          <div
+            class="flex items-center justify-between rounded-xl border-2 px-5 py-4 transition-colors duration-200"
+            :class="
+              isFiscal
+                ? 'border-primary bg-primary/5'
+                : 'border-input bg-gray-50'
+            "
+          >
             <div>
-              <label
-                for="product-name"
-                class="block text-sm font-semibold text-foreground mb-1.5"
-              >
-                Nombre <span class="text-red-500">*</span>
-              </label>
-              <input
-                id="product-name"
-                v-model="name"
-                type="text"
-                placeholder="Nombre del producto"
-                :class="[
-                  'w-full h-11 px-4 border rounded-lg text-base transition-all duration-200',
-                  'focus:outline-none focus:ring-2 placeholder:text-muted-foreground',
-                  errors.name
-                    ? 'border-red-400 focus:border-red-400 focus:ring-red-200'
-                    : 'border-input focus:border-primary focus:ring-primary/20',
-                ]"
-              />
-              <p v-if="errors.name" class="mt-1 text-xs text-red-500">
-                {{ errors.name }}
+              <p class="text-sm font-bold text-foreground">Tipo de producto</p>
+              <p class="text-xs text-muted-foreground mt-0.5">
+                {{
+                  isFiscal
+                    ? "Fiscal — emite comprobante, lleva IVA"
+                    : "Interno — precio libre, sin IVA"
+                }}
               </p>
             </div>
-
-            <!-- SKU + Barcode row -->
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  for="product-sku"
-                  class="block text-sm font-semibold text-foreground mb-1.5"
-                >
-                  SKU
-                </label>
-                <input
-                  id="product-sku"
-                  v-model="sku"
-                  type="text"
-                  placeholder="PROD-001"
-                  class="w-full h-11 px-4 border border-input rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground"
-                />
-              </div>
-              <div>
-                <label
-                  for="product-barcode"
-                  class="block text-sm font-semibold text-foreground mb-1.5"
-                >
-                  Código de barras
-                </label>
-                <input
-                  id="product-barcode"
-                  v-model="barcode"
-                  type="text"
-                  placeholder="7590000000000"
-                  class="w-full h-11 px-4 border border-input rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground"
-                />
-              </div>
+            <div class="flex items-center gap-3">
+              <span
+                class="text-sm font-semibold"
+                :class="isFiscal ? 'text-muted-foreground' : 'text-foreground'"
+                >Interno</span
+              >
+              <Switch v-model="isFiscal" class="flex-shrink-0" />
+              <span
+                class="text-sm font-semibold"
+                :class="isFiscal ? 'text-primary' : 'text-muted-foreground'"
+                >Fiscal</span
+              >
             </div>
+          </div>
 
-            <!-- Price fields — conditional on fiscal type -->
-            <div v-if="isFiscal" class="grid grid-cols-2 gap-4">
-              <div>
-                <label
-                  for="fiscal-price"
-                  class="block text-sm font-semibold text-foreground mb-1.5"
-                >
-                  Precio fiscal <span class="text-red-500">*</span>
-                </label>
-                <input
-                  id="fiscal-price"
-                  v-model="fiscalPrice"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  :class="[
-                    'w-full h-11 px-4 border rounded-lg text-base transition-all duration-200',
-                    'focus:outline-none focus:ring-2 placeholder:text-muted-foreground',
-                    errors.fiscalPrice
-                      ? 'border-red-400 focus:border-red-400 focus:ring-red-200'
-                      : 'border-input focus:border-primary focus:ring-primary/20',
-                  ]"
-                />
-                <p v-if="errors.fiscalPrice" class="mt-1 text-xs text-red-500">
-                  {{ errors.fiscalPrice }}
-                </p>
-              </div>
-              <div>
-                <label
-                  for="tax-rate"
-                  class="block text-sm font-semibold text-foreground mb-1.5"
-                >
-                  Tasa IVA <span class="text-red-500">*</span>
-                </label>
-                <Select
-                  id="tax-rate"
-                  v-model="taxRate"
-                  :options="taxRateOptions"
-                  placeholder="Seleccionar IVA..."
-                  :class="errors.taxRate ? 'border-red-400 ring-red-200' : ''"
-                />
-                <p v-if="errors.taxRate" class="mt-1 text-xs text-red-500">
-                  {{ errors.taxRate }}
-                </p>
-              </div>
-            </div>
+          <!-- Name (required) -->
+          <div>
+            <label
+              for="product-name"
+              class="block text-sm font-semibold text-foreground mb-1.5"
+            >
+              Nombre <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="product-name"
+              v-model="name"
+              type="text"
+              placeholder="Nombre del producto"
+              :class="[
+                'w-full h-11 px-4 border rounded-lg text-base transition-all duration-200',
+                'focus:outline-none focus:ring-2 placeholder:text-muted-foreground',
+                errors.name
+                  ? 'border-red-400 focus:border-red-400 focus:ring-red-200'
+                  : 'border-input focus:border-primary focus:ring-primary/20',
+              ]"
+            />
+            <p v-if="errors.name" class="mt-1 text-xs text-red-500">
+              {{ errors.name }}
+            </p>
+          </div>
 
-            <div v-else>
+          <!-- SKU + Barcode row -->
+          <div class="grid grid-cols-2 gap-4">
+            <div>
               <label
-                for="internal-price"
+                for="product-sku"
                 class="block text-sm font-semibold text-foreground mb-1.5"
               >
-                Precio interno <span class="text-red-500">*</span>
+                SKU
               </label>
               <input
-                id="internal-price"
-                v-model="internalPrice"
+                id="product-sku"
+                v-model="sku"
+                type="text"
+                placeholder="PROD-001"
+                class="w-full h-11 px-4 border border-input rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground"
+              />
+            </div>
+            <div>
+              <label
+                for="product-barcode"
+                class="block text-sm font-semibold text-foreground mb-1.5"
+              >
+                Código de barras
+              </label>
+              <input
+                id="product-barcode"
+                v-model="barcode"
+                type="text"
+                placeholder="7590000000000"
+                class="w-full h-11 px-4 border border-input rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground"
+              />
+            </div>
+          </div>
+
+          <!-- Price fields — conditional on fiscal type -->
+          <div v-if="isFiscal" class="grid grid-cols-2 gap-4">
+            <div>
+              <label
+                for="fiscal-price"
+                class="block text-sm font-semibold text-foreground mb-1.5"
+              >
+                Precio fiscal <span class="text-red-500">*</span>
+              </label>
+              <input
+                id="fiscal-price"
+                v-model="fiscalPrice"
                 type="number"
                 min="0"
                 step="0.01"
@@ -408,94 +350,139 @@ function handleClose() {
                 :class="[
                   'w-full h-11 px-4 border rounded-lg text-base transition-all duration-200',
                   'focus:outline-none focus:ring-2 placeholder:text-muted-foreground',
-                  errors.internalPrice
+                  errors.fiscalPrice
                     ? 'border-red-400 focus:border-red-400 focus:ring-red-200'
                     : 'border-input focus:border-primary focus:ring-primary/20',
                 ]"
               />
-              <p v-if="errors.internalPrice" class="mt-1 text-xs text-red-500">
-                {{ errors.internalPrice }}
+              <p v-if="errors.fiscalPrice" class="mt-1 text-xs text-red-500">
+                {{ errors.fiscalPrice }}
               </p>
             </div>
-
-            <!-- Category -->
             <div>
               <label
-                for="category"
+                for="tax-rate"
                 class="block text-sm font-semibold text-foreground mb-1.5"
               >
-                Categoría
+                Tasa IVA <span class="text-red-500">*</span>
               </label>
               <Select
-                id="category"
-                v-model="categoryId"
-                :options="categoryOptions"
-                placeholder="Sin categoría"
+                id="tax-rate"
+                v-model="taxRate"
+                :options="taxRateOptions"
+                placeholder="Seleccionar IVA..."
+                :class="errors.taxRate ? 'border-red-400 ring-red-200' : ''"
               />
-            </div>
-
-            <!-- Description -->
-            <div>
-              <label
-                for="product-desc"
-                class="block text-sm font-semibold text-foreground mb-1.5"
-              >
-                Descripción
-              </label>
-              <textarea
-                id="product-desc"
-                v-model="description"
-                rows="3"
-                placeholder="Descripción opcional del producto..."
-                class="w-full px-4 py-3 border border-input rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground resize-none"
-              />
-            </div>
-
-            <!-- Active toggle -->
-            <div class="flex items-center justify-between">
-              <div>
-                <p class="text-sm font-semibold text-foreground">
-                  Estado del producto
-                </p>
-                <p class="text-xs text-muted-foreground mt-0.5">
-                  {{
-                    active ? "Activo — visible en ventas" : "Inactivo — oculto"
-                  }}
-                </p>
-              </div>
-              <Switch v-model="active" />
+              <p v-if="errors.taxRate" class="mt-1 text-xs text-red-500">
+                {{ errors.taxRate }}
+              </p>
             </div>
           </div>
 
-          <!-- Footer -->
-          <div
-            class="px-6 py-4 border-t border-border flex items-center justify-end gap-3"
-          >
-            <button
-              type="button"
-              class="h-10 px-5 border border-input text-muted-foreground text-sm font-semibold rounded-lg hover:bg-gray-50 transition-all duration-200 cursor-pointer"
-              @click="handleClose"
+          <div v-else>
+            <label
+              for="internal-price"
+              class="block text-sm font-semibold text-foreground mb-1.5"
             >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              :disabled="saving"
-              class="flex items-center gap-2 h-10 px-6 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer disabled:opacity-50"
-              @click="handleSave"
+              Precio interno <span class="text-red-500">*</span>
+            </label>
+            <input
+              id="internal-price"
+              v-model="internalPrice"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              :class="[
+                'w-full h-11 px-4 border rounded-lg text-base transition-all duration-200',
+                'focus:outline-none focus:ring-2 placeholder:text-muted-foreground',
+                errors.internalPrice
+                  ? 'border-red-400 focus:border-red-400 focus:ring-red-200'
+                  : 'border-input focus:border-primary focus:ring-primary/20',
+              ]"
+            />
+            <p v-if="errors.internalPrice" class="mt-1 text-xs text-red-500">
+              {{ errors.internalPrice }}
+            </p>
+          </div>
+
+          <!-- Category -->
+          <div>
+            <label
+              for="category"
+              class="block text-sm font-semibold text-foreground mb-1.5"
             >
-              <Loader2 v-if="saving" class="w-4 h-4 animate-spin" />
-              <span>{{
-                saving
-                  ? "Guardando..."
-                  : isEdit
-                    ? "Guardar cambios"
-                    : "Crear producto"
-              }}</span>
-            </button>
+              Categoría
+            </label>
+            <Select
+              id="category"
+              v-model="categoryId"
+              :options="categoryOptions"
+              placeholder="Sin categoría"
+            />
+          </div>
+
+          <!-- Description -->
+          <div>
+            <label
+              for="product-desc"
+              class="block text-sm font-semibold text-foreground mb-1.5"
+            >
+              Descripción
+            </label>
+            <textarea
+              id="product-desc"
+              v-model="description"
+              rows="3"
+              placeholder="Descripción opcional del producto..."
+              class="w-full px-4 py-3 border border-input rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground resize-none"
+            />
+          </div>
+
+          <!-- Active toggle -->
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-sm font-semibold text-foreground">
+                Estado del producto
+              </p>
+              <p class="text-xs text-muted-foreground mt-0.5">
+                {{
+                  active ? "Activo — visible en ventas" : "Inactivo — oculto"
+                }}
+              </p>
+            </div>
+            <Switch v-model="active" />
           </div>
         </div>
+
+        <!-- Footer -->
+        <div
+          class="px-6 py-4 border-t border-border flex items-center justify-end gap-3"
+        >
+          <button
+            type="button"
+            class="h-10 px-5 border border-input text-muted-foreground text-sm font-semibold rounded-lg hover:bg-gray-50 transition-all duration-200 cursor-pointer"
+            @click="handleClose"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            :disabled="saving"
+            class="flex items-center gap-2 h-10 px-6 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer disabled:opacity-50"
+            @click="handleSave"
+          >
+            <Loader2 v-if="saving" class="w-4 h-4 animate-spin" />
+            <span>{{
+              saving
+                ? "Guardando..."
+                : isEdit
+                  ? "Guardar cambios"
+                  : "Crear producto"
+            }}</span>
+          </button>
+        </div>
       </div>
-    </Transition>
+    </div>
   </Teleport>
 </template>
