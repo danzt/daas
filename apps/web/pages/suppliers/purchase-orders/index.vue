@@ -292,7 +292,7 @@ onMounted(load);
           placeholder="Buscar por proveedor..."
         />
       </div>
-      <div class="flex gap-1 bg-muted/50 rounded-lg p-1">
+      <div class="flex gap-1 bg-muted/50 rounded-lg p-1 overflow-x-auto">
         <button
           v-for="tab in filterTabs"
           :key="tab.key"
