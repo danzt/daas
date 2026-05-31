@@ -12,6 +12,7 @@ import {
 } from "lucide-vue-next";
 import { useApiFetch } from "~/composables/useAuth";
 import type { Product } from "~/components/products/ProductFormModal.vue";
+import InvoiceFormModal from "~/components/invoices/InvoiceFormModal.vue";
 import type { Invoice } from "~/components/invoices/InvoiceFormModal.vue";
 
 definePageMeta({

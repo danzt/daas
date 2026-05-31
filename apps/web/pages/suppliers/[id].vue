@@ -12,6 +12,7 @@ import {
   ChevronRight,
 } from "lucide-vue-next";
 import { useApiFetch } from "~/composables/useAuth";
+import SupplierFormModal from "~/components/suppliers/SupplierFormModal.vue";
 import type { Supplier } from "~/components/suppliers/SupplierFormModal.vue";
 
 definePageMeta({

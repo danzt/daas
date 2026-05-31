@@ -10,6 +10,7 @@ import {
 } from "lucide-vue-next";
 import { useApiFetch } from "~/composables/useAuth";
 import { useAuthStore } from "~/stores/auth";
+import AdjustmentModal from "~/components/inventory/AdjustmentModal.vue";
 import type {
   Product,
   Category,
