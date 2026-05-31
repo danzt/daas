@@ -171,10 +171,10 @@ onMounted(() => {
       <!-- Logo -->
       <div class="flex h-12 shrink-0 items-center border-b border-border px-3">
         <div class="flex items-center gap-2 min-w-0">
-          <Command class="size-4 shrink-0 text-foreground" />
+          <Command class="size-4 shrink-0 text-primary" />
           <span
             v-if="sidebarOpen"
-            class="font-semibold text-sm truncate text-foreground"
+            class="font-bold text-sm truncate text-primary tracking-tight"
             >DaaS</span
           >
         </div>
