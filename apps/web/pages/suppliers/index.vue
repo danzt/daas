@@ -120,7 +120,7 @@ watch(showInactive, loadSuppliers);
         />
         <input
           v-model="searchQuery"
-          class="w-full h-10 pl-9 pr-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+          class="w-full h-10 pl-9 pr-3 rounded-lg border border-input bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
           placeholder="Buscar por nombre, RIF o contacto..."
         />
       </div>
@@ -176,10 +176,7 @@ watch(showInactive, loadSuppliers);
     </div>
 
     <!-- Table -->
-    <div
-      v-else-if="!loading"
-      class="bg-card border border-border rounded-xl overflow-hidden"
-    >
+    <div v-else-if="!loading" class="border bg-card rounded-xl overflow-hidden">
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-border bg-muted/30">

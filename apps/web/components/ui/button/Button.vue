@@ -1,6 +1,13 @@
 <script setup lang="ts">
 interface Props {
-  variant?: "default" | "cta" | "outline" | "ghost" | "destructive";
+  variant?:
+    | "default"
+    | "cta"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "destructive"
+    | "link";
   size?: "sm" | "md" | "lg" | "icon";
   disabled?: boolean;
   type?: "button" | "submit" | "reset";
@@ -15,19 +22,21 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const variantClasses: Record<string, string> = {
-  default: "bg-primary text-white hover:opacity-90",
-  cta: "bg-cta text-white hover:opacity-90",
+  default: "bg-primary text-primary-foreground hover:bg-primary/90",
+  cta: "bg-primary text-primary-foreground hover:bg-primary/90",
   outline:
-    "border-2 border-primary text-primary bg-transparent hover:bg-primary hover:text-white",
-  ghost: "bg-transparent text-primary hover:bg-primary/10",
-  destructive: "bg-red-600 text-white hover:bg-red-700",
+    "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+  secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+  ghost: "hover:bg-accent hover:text-accent-foreground",
+  destructive: "bg-destructive/10 text-destructive hover:bg-destructive/20",
+  link: "text-foreground underline-offset-4 hover:underline",
 };
 
 const sizeClasses: Record<string, string> = {
-  sm: "h-9 px-3 text-sm",
-  md: "h-11 px-6 text-base",
-  lg: "h-12 px-8 text-lg",
-  icon: "h-11 w-11 p-0",
+  sm: "h-8 px-2.5 text-xs",
+  md: "h-9 px-3 text-sm",
+  lg: "h-10 px-4 text-sm",
+  icon: "size-9",
 };
 </script>
 
@@ -36,10 +45,9 @@ const sizeClasses: Record<string, string> = {
     :type="props.type"
     :disabled="props.disabled"
     :class="[
-      'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-all duration-200 cursor-pointer focus-visible:outline-2 focus-visible:outline-primary focus-visible:outline-offset-2',
+      'inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0',
       variantClasses[props.variant],
       sizeClasses[props.size],
-      props.disabled && 'opacity-50 cursor-not-allowed pointer-events-none',
       props.class,
     ]"
   >

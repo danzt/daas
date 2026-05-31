@@ -29,9 +29,9 @@ const emit = defineEmits<{
     :value="props.modelValue"
     :disabled="props.disabled"
     :class="[
-      'w-full h-11 px-4 border border-gray-200 rounded-lg text-base transition-all duration-200 bg-white',
-      'focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer',
-      props.disabled && 'opacity-50 cursor-not-allowed bg-gray-50',
+      'w-full h-9 px-3 border border-input bg-background rounded-md text-sm transition-all duration-200',
+      'focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 cursor-pointer',
+      props.disabled && 'opacity-50 cursor-not-allowed bg-muted',
       props.class,
     ]"
     @change="

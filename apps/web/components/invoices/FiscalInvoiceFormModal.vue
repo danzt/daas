@@ -232,7 +232,7 @@ function handleClose() {
           <!-- Header -->
           <div class="flex items-center justify-between px-6 py-5 border-b">
             <div>
-              <h2 class="text-xl font-bold font-heading text-text-brand">
+              <h2 class="text-xl font-bold font-heading text-foreground">
                 Nueva Factura Fiscal
               </h2>
               <p class="text-xs text-muted-foreground mt-0.5">
@@ -259,7 +259,7 @@ function handleClose() {
 
             <!-- Customer -->
             <div>
-              <p class="text-sm font-bold text-text-brand mb-3">Cliente</p>
+              <p class="text-sm font-bold text-foreground mb-3">Cliente</p>
               <div class="grid grid-cols-3 gap-4">
                 <div>
                   <label
@@ -284,7 +284,7 @@ function handleClose() {
                     type="text"
                     placeholder="V-12345678"
                     :disabled="customerIdType === 'anonymous'"
-                    class="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/20 placeholder:text-gray-400 disabled:bg-muted disabled:text-muted-foreground"
+                    class="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/20 placeholder:text-muted-foreground disabled:bg-muted disabled:text-muted-foreground"
                   />
                 </div>
                 <div>
@@ -297,7 +297,7 @@ function handleClose() {
                     v-model="customerName"
                     type="text"
                     placeholder="Consumidor Final"
-                    class="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/20 placeholder:text-gray-400"
+                    class="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/20 placeholder:text-muted-foreground"
                   />
                 </div>
               </div>
@@ -306,7 +306,7 @@ function handleClose() {
             <!-- Lines -->
             <div>
               <div class="flex items-center justify-between mb-3">
-                <p class="text-sm font-bold text-text-brand">Líneas</p>
+                <p class="text-sm font-bold text-foreground">Líneas</p>
                 <button
                   type="button"
                   class="flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer"
@@ -348,7 +348,7 @@ function handleClose() {
                       step="0.001"
                       placeholder="Cant."
                       :class="[
-                        'w-full h-10 px-3 border rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400',
+                        'w-full h-10 px-3 border rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground',
                         errors[`line_${i}_qty`]
                           ? 'border-red-400'
                           : 'focus:border-primary',
@@ -363,7 +363,7 @@ function handleClose() {
                       step="0.01"
                       placeholder="Precio"
                       :class="[
-                        'w-full h-10 px-3 border rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400',
+                        'w-full h-10 px-3 border rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground',
                         errors[`line_${i}_price`]
                           ? 'border-red-400'
                           : 'focus:border-primary',
@@ -377,7 +377,7 @@ function handleClose() {
                   </div>
                   <div class="flex items-center gap-2 pt-1">
                     <span
-                      class="w-24 text-sm font-semibold text-right text-text-brand tabular-nums"
+                      class="w-24 text-sm font-semibold text-right text-foreground tabular-nums"
                     >
                       {{ lineSubtotal(line).toFixed(2) }}
                     </span>
@@ -403,7 +403,7 @@ function handleClose() {
                   <span class="tabular-nums">{{ totals.tax.toFixed(2) }}</span>
                 </div>
                 <div
-                  class="flex justify-between text-base font-bold text-text-brand pt-1 border-t"
+                  class="flex justify-between text-base font-bold text-foreground pt-1 border-t"
                 >
                   <span>Total</span>
                   <span class="tabular-nums font-heading">{{
@@ -415,7 +415,7 @@ function handleClose() {
 
             <!-- Notes -->
             <div>
-              <label class="block text-sm font-bold text-text-brand mb-1.5">
+              <label class="block text-sm font-bold text-foreground mb-1.5">
                 Notas
                 <span class="font-normal text-muted-foreground"
                   >(opcional)</span
@@ -425,7 +425,7 @@ function handleClose() {
                 v-model="notes"
                 rows="2"
                 placeholder="Observaciones..."
-                class="w-full px-4 py-3 border rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400 resize-none"
+                class="w-full px-4 py-3 border rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground resize-none"
               />
             </div>
           </div>
@@ -442,7 +442,7 @@ function handleClose() {
             <button
               type="button"
               :disabled="saving"
-              class="flex items-center gap-2 h-10 px-6 bg-cta text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer disabled:opacity-50"
+              class="flex items-center gap-2 h-10 px-6 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer disabled:opacity-50"
               @click="handleSave"
             >
               <Loader2 v-if="saving" class="w-4 h-4 animate-spin" />

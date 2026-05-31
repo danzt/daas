@@ -143,7 +143,7 @@ onMounted(load);
 
     <template v-else-if="supplier">
       <!-- Info card -->
-      <div class="bg-card border border-border rounded-xl p-6">
+      <div class="border bg-card rounded-xl p-6">
         <div class="flex items-start justify-between gap-4">
           <div class="flex items-center gap-4">
             <div
@@ -242,7 +242,7 @@ onMounted(load);
 
         <div
           v-if="orders.length === 0"
-          class="bg-card border border-border rounded-xl flex flex-col items-center justify-center py-12 text-muted-foreground gap-2"
+          class="border bg-card rounded-xl flex flex-col items-center justify-center py-12 text-muted-foreground gap-2"
         >
           <ShoppingCart class="w-10 h-10 opacity-30" />
           <p class="text-sm">Sin órdenes de compra para este proveedor</p>
@@ -254,10 +254,7 @@ onMounted(load);
           </NuxtLink>
         </div>
 
-        <div
-          v-else
-          class="bg-card border border-border rounded-xl overflow-hidden"
-        >
+        <div v-else class="border bg-card rounded-xl overflow-hidden">
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-border bg-muted/30">

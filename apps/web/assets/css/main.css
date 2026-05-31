@@ -1,71 +1,61 @@
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600;700&family=Fira+Sans:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
 
-/* ── DaaS Design Tokens ─────────────────────────────────────────────────────
-   Aligned with shadcn/ui HSL convention so components can use
-   hsl(var(--primary)) etc.
-   ─────────────────────────────────────────────────────────────────────────── */
+/* ── DaaS Design Tokens — based on next-shadcn-admin-dashboard-baseui
+   Neutral grayscale (oklch). Light + dark theme. ────────────────────── */
+
 :root {
-  /* Legacy direct tokens — kept for backward compat */
-  --color-primary: #7C3AED;
-  --color-secondary: #A78BFA;
-  --color-cta: #F97316;
-  --color-background: hsl(273 100% 98%);
-  --color-text: hsl(262 83% 19%);
+  --radius: 0.625rem;
 
-  /* shadcn-style HSL semantic tokens */
-  --background: 273 100% 98%;       /* #FAF5FF */
-  --foreground: 262 83% 19%;        /* near-black purple */
+  /* Neutral light */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
 
-  --card: 0 0% 100%;
-  --card-foreground: 262 83% 19%;
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
 
-  --popover: 0 0% 100%;
-  --popover-foreground: 262 83% 19%;
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
 
-  --primary: 262 79% 56%;           /* #7C3AED */
-  --primary-foreground: 0 0% 100%;
+  --primary: oklch(0.44 0.28 293);
+  --primary-foreground: oklch(0.985 0 0);
 
-  --secondary: 270 60% 95%;
-  --secondary-foreground: 262 79% 40%;
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
 
-  --muted: 270 30% 96%;
-  --muted-foreground: 262 15% 52%;
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
 
-  --accent: 25 95% 53%;             /* #F97316 orange CTA */
-  --accent-foreground: 0 0% 100%;
+  --accent: oklch(0.952 0.018 293);
+  --accent-foreground: oklch(0.28 0.16 293);
 
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 100%;
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
 
-  --border: 270 25% 90%;
-  --input: 270 25% 90%;
-  --ring: 262 79% 56%;
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.44 0.28 293);
 
-  --radius: 0.5rem;
+  --chart-1: oklch(0.44 0.28 293);
+  --chart-2: oklch(0.60 0.22 293);
+  --chart-3: oklch(0.72 0.14 293);
+  --chart-4: oklch(0.84 0.08 293);
+  --chart-5: oklch(0.95 0.02 293);
 
-  /* Sidebar-specific tokens */
-  --sidebar-background: 0 0% 100%;
-  --sidebar-foreground: 262 83% 19%;
-  --sidebar-primary: 262 79% 56%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 270 50% 97%;
-  --sidebar-accent-foreground: 262 79% 35%;
-  --sidebar-border: 270 20% 92%;
-
-  /* Spacing */
-  --space-xs: 0.25rem;
-  --space-sm: 0.5rem;
-  --space-md: 1rem;
-  --space-lg: 1.5rem;
-  --space-xl: 2rem;
-  --space-2xl: 3rem;
-  --space-3xl: 4rem;
+  --sidebar: oklch(0.980 0.014 293);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.44 0.28 293);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.952 0.018 293);
+  --sidebar-accent-foreground: oklch(0.28 0.16 293);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.44 0.28 293);
 }
 
-/* ── Base ───────────────────────────────────────────────────────────────────── */
+
+/* ── Base ──────────────────────────────────────────────────────────── */
 
 *, *::before, *::after {
-  border-color: hsl(var(--border));
+  border-color: var(--border);
 }
 
 html {
@@ -73,18 +63,18 @@ html {
 }
 
 body {
-  font-family: 'Fira Sans', sans-serif;
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
+  font-family: 'Geist', system-ui, sans-serif;
+  background-color: var(--background);
+  color: var(--foreground);
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'Fira Code', monospace;
+code, pre, .font-mono {
+  font-family: 'Geist Mono', ui-monospace, monospace;
 }
 
 *:focus-visible {
-  outline: 2px solid hsl(var(--ring));
+  outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 

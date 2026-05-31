@@ -20,8 +20,8 @@ const isActive = computed(() => activeValue?.value === props.value);
     :class="[
       'px-4 py-2.5 text-sm font-semibold transition-all duration-200 cursor-pointer border-b-2 -mb-px focus-visible:outline-2 focus-visible:outline-primary',
       isActive
-        ? 'border-primary text-primary'
-        : 'border-transparent text-gray-500 hover:text-primary hover:border-primary/40',
+        ? 'border-foreground text-foreground'
+        : 'border-transparent text-muted-foreground hover:text-foreground hover:border-border',
       props.class,
     ]"
     @click="setTab?.(props.value)"

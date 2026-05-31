@@ -258,7 +258,7 @@ onMounted(load);
     <template v-else-if="sales && inventory && purchases">
       <!-- Summary KPIs -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-card border border-border rounded-xl p-5">
+        <div class="border bg-card rounded-xl p-5">
           <div class="flex items-center justify-between mb-3">
             <p class="text-sm text-muted-foreground">Ingresos</p>
             <div class="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
@@ -277,7 +277,7 @@ onMounted(load);
           </p>
         </div>
 
-        <div class="bg-card border border-border rounded-xl p-5">
+        <div class="border bg-card rounded-xl p-5">
           <div class="flex items-center justify-between mb-3">
             <p class="text-sm text-muted-foreground">Compras</p>
             <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
@@ -293,7 +293,7 @@ onMounted(load);
           </p>
         </div>
 
-        <div class="bg-card border border-border rounded-xl p-5">
+        <div class="border bg-card rounded-xl p-5">
           <div class="flex items-center justify-between mb-3">
             <p class="text-sm text-muted-foreground">Productos</p>
             <div class="p-2 bg-primary/10 rounded-lg">
@@ -309,7 +309,7 @@ onMounted(load);
           </p>
         </div>
 
-        <div class="bg-card border border-border rounded-xl p-5">
+        <div class="border bg-card rounded-xl p-5">
           <div class="flex items-center justify-between mb-3">
             <p class="text-sm text-muted-foreground">Facturas internas</p>
             <div class="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
@@ -364,7 +364,7 @@ onMounted(load);
           </button>
         </div>
         <!-- Revenue chart -->
-        <div class="bg-card border border-border rounded-xl p-6">
+        <div class="border bg-card rounded-xl p-6">
           <h3 class="font-semibold text-foreground mb-4">Ingresos por día</h3>
           <div
             v-if="sales.by_day.length === 0"
@@ -398,7 +398,7 @@ onMounted(load);
         </div>
 
         <!-- Top products -->
-        <div class="bg-card border border-border rounded-xl overflow-hidden">
+        <div class="border bg-card rounded-xl overflow-hidden">
           <div class="px-6 py-4 border-b border-border">
             <h3 class="font-semibold text-foreground">
               Top productos por ventas
@@ -503,7 +503,7 @@ onMounted(load);
           </div>
         </div>
 
-        <div class="bg-card border border-border rounded-xl overflow-hidden">
+        <div class="border bg-card rounded-xl overflow-hidden">
           <table class="w-full text-sm">
             <thead>
               <tr class="border-b border-border bg-muted/30">
@@ -600,19 +600,19 @@ onMounted(load);
         </div>
         <!-- Summary bar -->
         <div class="grid grid-cols-3 gap-4">
-          <div class="bg-card border border-border rounded-xl p-4 text-center">
+          <div class="border bg-card rounded-xl p-4 text-center">
             <p class="text-sm text-muted-foreground">Total gastado</p>
             <p class="text-xl font-bold text-foreground font-mono mt-1">
               {{ fmtCurrency(purchases.total_spend) }}
             </p>
           </div>
-          <div class="bg-card border border-border rounded-xl p-4 text-center">
+          <div class="border bg-card rounded-xl p-4 text-center">
             <p class="text-sm text-muted-foreground">Órdenes</p>
             <p class="text-xl font-bold text-foreground mt-1">
               {{ purchases.total_orders }}
             </p>
           </div>
-          <div class="bg-card border border-border rounded-xl p-4 text-center">
+          <div class="border bg-card rounded-xl p-4 text-center">
             <p class="text-sm text-muted-foreground">Recibidas</p>
             <p class="text-xl font-bold text-emerald-600 mt-1">
               {{ purchases.received_orders }}
@@ -621,7 +621,7 @@ onMounted(load);
         </div>
 
         <!-- By supplier -->
-        <div class="bg-card border border-border rounded-xl overflow-hidden">
+        <div class="border bg-card rounded-xl overflow-hidden">
           <div class="px-6 py-4 border-b border-border">
             <h3 class="font-semibold text-foreground">Gasto por proveedor</h3>
           </div>

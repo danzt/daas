@@ -152,7 +152,7 @@ onMounted(() => {
     <div class="mb-8 flex items-center gap-4">
       <NuxtLink
         to="/inventory"
-        class="w-9 h-9 rounded-lg border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50 transition-all duration-200 cursor-pointer"
+        class="w-9 h-9 rounded-lg border border-input flex items-center justify-center text-muted-foreground hover:bg-gray-50 transition-all duration-200 cursor-pointer"
       >
         <ArrowLeft class="w-4 h-4" />
       </NuxtLink>
@@ -163,23 +163,25 @@ onMounted(() => {
           <History class="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 class="text-2xl font-bold font-heading text-text-brand">
+          <h1 class="text-2xl font-bold font-heading text-foreground">
             Historial de movimientos
           </h1>
-          <p class="text-gray-500 text-sm">Entradas, salidas y ajustes</p>
+          <p class="text-muted-foreground text-sm">
+            Entradas, salidas y ajustes
+          </p>
         </div>
       </div>
     </div>
 
     <!-- Filters -->
     <div
-      class="bg-white rounded-xl border border-gray-100 shadow-sm px-6 py-4 mb-4"
+      class="rounded-xl border bg-card border-border shadow-sm px-6 py-4 mb-4"
     >
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-3">
         <!-- Product filter -->
         <select
           v-model="filterProduct"
-          class="h-10 px-3 border border-gray-200 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-white"
+          class="h-10 px-3 border border-input rounded-lg text-sm text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-white"
         >
           <option value="">Todos los productos</option>
           <option v-for="p in products" :key="p.id" :value="p.id">
@@ -190,7 +192,7 @@ onMounted(() => {
         <!-- Type filter -->
         <select
           v-model="filterType"
-          class="h-10 px-3 border border-gray-200 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-white"
+          class="h-10 px-3 border border-input rounded-lg text-sm text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-white"
         >
           <option value="">Todos los tipos</option>
           <option value="entry">Entradas</option>
@@ -202,21 +204,21 @@ onMounted(() => {
         <input
           v-model="filterFrom"
           type="date"
-          class="h-10 px-3 border border-gray-200 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+          class="h-10 px-3 border border-input rounded-lg text-sm text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
         />
 
         <!-- To date -->
         <input
           v-model="filterTo"
           type="date"
-          class="h-10 px-3 border border-gray-200 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
+          class="h-10 px-3 border border-input rounded-lg text-sm text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
         />
       </div>
 
       <div class="flex items-center justify-end gap-2">
         <button
           type="button"
-          class="h-9 px-4 border border-gray-200 text-sm font-semibold text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-200 cursor-pointer"
+          class="h-9 px-4 border border-input text-sm font-semibold text-muted-foreground rounded-lg hover:bg-gray-50 transition-all duration-200 cursor-pointer"
           @click="clearFilters"
         >
           Limpiar
@@ -232,11 +234,11 @@ onMounted(() => {
     </div>
 
     <!-- Content card -->
-    <div class="bg-white rounded-xl border border-gray-100 shadow-sm">
+    <div class="rounded-xl border bg-card border-border shadow-sm">
       <div
-        class="px-6 py-4 border-b border-gray-100 flex items-center justify-between"
+        class="px-6 py-4 border-b border-border flex items-center justify-between"
       >
-        <h2 class="text-base font-bold font-heading text-text-brand">
+        <h2 class="text-base font-bold font-heading text-foreground">
           {{ movements.length }} movimiento{{
             movements.length !== 1 ? "s" : ""
           }}
@@ -258,7 +260,7 @@ onMounted(() => {
         <p class="text-red-600 font-medium">{{ loadError }}</p>
         <button
           type="button"
-          class="mt-4 h-9 px-4 border border-gray-200 text-sm font-semibold text-gray-600 rounded-lg hover:bg-gray-50 cursor-pointer"
+          class="mt-4 h-9 px-4 border border-input text-sm font-semibold text-muted-foreground rounded-lg hover:bg-gray-50 cursor-pointer"
           @click="fetchMovements"
         >
           Reintentar
@@ -268,10 +270,10 @@ onMounted(() => {
       <!-- Empty -->
       <div v-else-if="movements.length === 0" class="px-6 py-16 text-center">
         <FolderOpen class="w-12 h-12 text-gray-200 mx-auto mb-4" />
-        <h3 class="text-base font-semibold text-gray-600 mb-1">
+        <h3 class="text-base font-semibold text-muted-foreground mb-1">
           Sin movimientos
         </h3>
-        <p class="text-sm text-gray-400">
+        <p class="text-sm text-muted-foreground">
           No hay movimientos registrados con los filtros aplicados
         </p>
       </div>
@@ -311,15 +313,15 @@ onMounted(() => {
           <div class="flex-1 min-w-0">
             <div class="flex items-start justify-between gap-2">
               <div>
-                <p class="text-sm font-semibold text-text-brand">
+                <p class="text-sm font-semibold text-foreground">
                   {{
                     productMap[mov.product_id]?.name ??
                     mov.product_id.slice(0, 8) + "..."
                   }}
                 </p>
-                <p class="text-xs text-gray-500 mt-0.5">
+                <p class="text-xs text-muted-foreground mt-0.5">
                   {{ refTypeLabel(mov.reference_type) }}
-                  <span v-if="mov.notes" class="text-gray-400">
+                  <span v-if="mov.notes" class="text-muted-foreground">
                     · {{ mov.notes }}</span
                   >
                 </p>
@@ -332,7 +334,7 @@ onMounted(() => {
                   {{ typeLabel(mov.type) }}
                   {{ mov.type === "exit" ? "-" : "+" }}{{ mov.quantity }}
                 </span>
-                <p class="text-xs text-gray-400 mt-1">
+                <p class="text-xs text-muted-foreground mt-1">
                   {{ formatDate(mov.created_at) }}
                 </p>
               </div>

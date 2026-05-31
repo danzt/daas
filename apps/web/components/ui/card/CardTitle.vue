@@ -6,7 +6,10 @@ defineProps<Props>();
 </script>
 
 <template>
-  <h2 :class="['text-xl font-bold text-text-brand font-heading', $props.class]">
+  <div
+    data-slot="card-title"
+    :class="['text-base leading-snug font-medium', $props.class]"
+  >
     <slot />
-  </h2>
+  </div>
 </template>

@@ -168,15 +168,17 @@ onMounted(fetchAll);
           <Warehouse class="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 class="text-2xl font-bold font-heading text-text-brand">
+          <h1 class="text-2xl font-bold font-heading text-foreground">
             Inventario
           </h1>
-          <p class="text-gray-500 text-sm">Stock actual y movimientos</p>
+          <p class="text-muted-foreground text-sm">
+            Stock actual y movimientos
+          </p>
         </div>
       </div>
       <NuxtLink
         to="/inventory/movements"
-        class="flex items-center gap-2 h-10 px-4 border border-gray-200 text-sm font-semibold text-gray-600 rounded-lg hover:bg-gray-50 transition-all duration-200 cursor-pointer"
+        class="flex items-center gap-2 h-10 px-4 border border-input text-sm font-semibold text-muted-foreground rounded-lg hover:bg-gray-50 transition-all duration-200 cursor-pointer"
       >
         <History class="w-4 h-4" />
         Historial
@@ -185,57 +187,49 @@ onMounted(fetchAll);
 
     <!-- Stats cards -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-      <div
-        class="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4"
-      >
+      <div class="rounded-xl border bg-card border-border shadow-sm px-5 py-4">
         <p
-          class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1"
+          class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
         >
           Total productos
         </p>
-        <p class="text-2xl font-bold font-heading text-text-brand">
+        <p class="text-2xl font-bold font-heading text-foreground">
           {{ stats.total }}
         </p>
       </div>
-      <div
-        class="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4"
-      >
+      <div class="rounded-xl border bg-card border-border shadow-sm px-5 py-4">
         <p
-          class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1"
+          class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
         >
           Stock bajo
         </p>
         <p
           class="text-2xl font-bold font-heading"
-          :class="stats.low > 0 ? 'text-orange-600' : 'text-text-brand'"
+          :class="stats.low > 0 ? 'text-orange-600' : 'text-foreground'"
         >
           {{ stats.low }}
         </p>
       </div>
-      <div
-        class="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4"
-      >
+      <div class="rounded-xl border bg-card border-border shadow-sm px-5 py-4">
         <p
-          class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1"
+          class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
         >
           Sin stock
         </p>
         <p
           class="text-2xl font-bold font-heading"
-          :class="stats.outOfStock > 0 ? 'text-red-600' : 'text-text-brand'"
+          :class="stats.outOfStock > 0 ? 'text-red-600' : 'text-foreground'"
         >
           {{ stats.outOfStock }}
         </p>
       </div>
-      <div
-        class="bg-white rounded-xl border border-gray-100 shadow-sm px-5 py-4"
-      >
+      <div class="rounded-xl border bg-card border-border shadow-sm px-5 py-4">
         <p
-          class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1"
+          class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
         >
           Valor del inventario
         </p>
-        <p class="text-2xl font-bold font-heading text-text-brand">
+        <p class="text-2xl font-bold font-heading text-foreground">
           ${{ stats.totalValue.toFixed(2) }}
         </p>
       </div>
@@ -243,19 +237,19 @@ onMounted(fetchAll);
 
     <!-- Filters -->
     <div
-      class="bg-white rounded-xl border border-gray-100 shadow-sm px-6 py-4 mb-4 flex flex-col sm:flex-row gap-3"
+      class="rounded-xl border bg-card border-border shadow-sm px-6 py-4 mb-4 flex flex-col sm:flex-row gap-3"
     >
       <div class="flex-1">
         <input
           v-model="searchQuery"
           type="text"
           placeholder="Buscar por nombre, SKU o código..."
-          class="w-full h-10 px-4 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-gray-400 transition-all duration-200"
+          class="w-full h-10 px-4 border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-muted-foreground transition-all duration-200"
         />
       </div>
       <select
         v-model="selectedCategory"
-        class="h-10 px-3 border border-gray-200 rounded-lg text-sm text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-white"
+        class="h-10 px-3 border border-input rounded-lg text-sm text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200 bg-white"
       >
         <option value="">Todas las categorías</option>
         <option v-for="cat in categories" :key="cat.id" :value="cat.id">
@@ -268,7 +262,7 @@ onMounted(fetchAll);
           'h-10 px-4 flex items-center gap-2 text-sm font-semibold rounded-lg border transition-all duration-200 cursor-pointer',
           lowStockOnly
             ? 'bg-orange-50 border-orange-300 text-orange-700'
-            : 'border-gray-200 text-gray-600 hover:bg-gray-50',
+            : 'border-input text-muted-foreground hover:bg-gray-50',
         ]"
         @click="lowStockOnly = !lowStockOnly"
       >
@@ -278,16 +272,16 @@ onMounted(fetchAll);
     </div>
 
     <!-- Table card -->
-    <div class="bg-white rounded-xl border border-gray-100 shadow-sm">
+    <div class="rounded-xl border bg-card border-border shadow-sm">
       <div
-        class="px-6 py-4 border-b border-gray-100 flex items-center justify-between"
+        class="px-6 py-4 border-b border-border flex items-center justify-between"
       >
-        <h2 class="text-base font-bold font-heading text-text-brand">
+        <h2 class="text-base font-bold font-heading text-foreground">
           {{ filteredRows.length }} producto{{
             filteredRows.length !== 1 ? "s" : ""
           }}
         </h2>
-        <div class="flex items-center gap-2 text-xs text-gray-400">
+        <div class="flex items-center gap-2 text-xs text-muted-foreground">
           <SlidersHorizontal class="w-3.5 h-3.5" />
           <span>Stock bajo &lt; {{ LOW_STOCK_THRESHOLD }} unidades</span>
         </div>
@@ -308,7 +302,7 @@ onMounted(fetchAll);
         <p class="text-red-600 font-medium">{{ loadError }}</p>
         <button
           type="button"
-          class="mt-4 h-9 px-4 border border-gray-200 text-sm font-semibold text-gray-600 rounded-lg hover:bg-gray-50 cursor-pointer"
+          class="mt-4 h-9 px-4 border border-input text-sm font-semibold text-muted-foreground rounded-lg hover:bg-gray-50 cursor-pointer"
           @click="fetchAll"
         >
           Reintentar
@@ -318,10 +312,10 @@ onMounted(fetchAll);
       <!-- Empty -->
       <div v-else-if="filteredRows.length === 0" class="px-6 py-16 text-center">
         <FolderOpen class="w-12 h-12 text-gray-200 mx-auto mb-4" />
-        <h3 class="text-base font-semibold text-gray-600 mb-1">
+        <h3 class="text-base font-semibold text-muted-foreground mb-1">
           Sin resultados
         </h3>
-        <p class="text-sm text-gray-400">
+        <p class="text-sm text-muted-foreground">
           {{
             rows.length === 0
               ? "No hay productos en el inventario aún"
@@ -334,24 +328,24 @@ onMounted(fetchAll);
       <div v-else class="overflow-x-auto">
         <table class="w-full text-sm">
           <thead>
-            <tr class="border-b border-gray-100">
+            <tr class="border-b border-border">
               <th
-                class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide"
+                class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
               >
                 Producto
               </th>
               <th
-                class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden md:table-cell"
+                class="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden md:table-cell"
               >
                 Categoría
               </th>
               <th
-                class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell"
+                class="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden lg:table-cell"
               >
                 Precio
               </th>
               <th
-                class="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide"
+                class="px-4 py-3 text-center text-xs font-semibold text-muted-foreground uppercase tracking-wide"
               >
                 <span class="flex items-center justify-center gap-1">
                   <ArrowUpDown class="w-3 h-3" />
@@ -359,13 +353,13 @@ onMounted(fetchAll);
                 </span>
               </th>
               <th
-                class="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide hidden lg:table-cell"
+                class="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide hidden lg:table-cell"
               >
                 Actualizado
               </th>
               <th
                 v-if="store.isOwner"
-                class="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wide"
+                class="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wide"
               >
                 Acciones
               </th>
@@ -380,12 +374,12 @@ onMounted(fetchAll);
               <!-- Product -->
               <td class="px-6 py-4">
                 <div>
-                  <p class="font-semibold text-text-brand">
+                  <p class="font-semibold text-foreground">
                     {{ row.product?.name ?? "—" }}
                   </p>
                   <p
                     v-if="row.product?.sku"
-                    class="text-xs text-gray-400 font-mono mt-0.5"
+                    class="text-xs text-muted-foreground font-mono mt-0.5"
                   >
                     {{ row.product.sku }}
                   </p>
@@ -394,7 +388,7 @@ onMounted(fetchAll);
 
               <!-- Category -->
               <td class="px-4 py-4 hidden md:table-cell">
-                <span class="text-gray-500">
+                <span class="text-muted-foreground">
                   {{
                     categories.find((c) => c.id === row.product?.category_id)
                       ?.name ?? "—"
@@ -404,7 +398,7 @@ onMounted(fetchAll);
 
               <!-- Price -->
               <td class="px-4 py-4 hidden lg:table-cell">
-                <span class="font-medium text-text-brand">
+                <span class="font-medium text-foreground">
                   ${{
                     row.product?.is_fiscal
                       ? (row.product?.fiscal_price ?? 0).toFixed(2)
@@ -413,7 +407,7 @@ onMounted(fetchAll);
                 </span>
                 <span
                   v-if="row.product?.is_fiscal"
-                  class="ml-1 text-xs text-gray-400"
+                  class="ml-1 text-xs text-muted-foreground"
                 >
                   +{{ row.product?.tax_rate ?? 0 }}% IVA
                 </span>
@@ -430,7 +424,9 @@ onMounted(fetchAll);
               </td>
 
               <!-- Updated at -->
-              <td class="px-4 py-4 text-xs text-gray-400 hidden lg:table-cell">
+              <td
+                class="px-4 py-4 text-xs text-muted-foreground hidden lg:table-cell"
+              >
                 {{ formatDate(row.last_updated_at) }}
               </td>
 
@@ -438,7 +434,7 @@ onMounted(fetchAll);
               <td v-if="store.isOwner" class="px-4 py-4 text-right">
                 <button
                   type="button"
-                  class="h-8 px-3 text-xs font-semibold border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-100 transition-all duration-200 cursor-pointer"
+                  class="h-8 px-3 text-xs font-semibold border border-input rounded-lg text-muted-foreground hover:bg-gray-100 transition-all duration-200 cursor-pointer"
                   @click="openAdjust(row)"
                 >
                   Ajustar

@@ -10,13 +10,11 @@ import {
   Settings,
   LogOut,
   ChevronRight,
-  Menu,
-  X,
-  Tag,
-  History,
   Bell,
   Search,
-  ChevronsUpDown,
+  Command,
+  PanelLeft,
+  RefreshCw,
 } from "lucide-vue-next";
 import { useAuthStore } from "~/stores/auth";
 
@@ -25,136 +23,118 @@ const router = useRouter();
 const route = useRoute();
 
 const sidebarOpen = ref(true);
-const mobileSidebarOpen = ref(false);
+const openGroups = ref<Set<string>>(new Set());
+
+interface NavSubItem {
+  title: string;
+  url: string;
+}
 
 interface NavItem {
-  label: string;
+  title: string;
+  url: string;
   icon: Component;
-  to: string;
-  children?: { label: string; to: string }[];
+  subItems?: NavSubItem[];
 }
 
 interface NavGroup {
-  id: string;
+  id: number;
   label: string;
   items: NavItem[];
 }
 
-const navGroups: NavGroup[] = [
+const sidebarItems: NavGroup[] = [
   {
-    id: "main",
+    id: 1,
     label: "Principal",
-    items: [{ label: "Dashboard", icon: LayoutDashboard, to: "/dashboard" }],
+    items: [{ title: "Dashboard", url: "/dashboard", icon: LayoutDashboard }],
   },
   {
-    id: "catalog",
+    id: 2,
     label: "Catálogo",
     items: [
       {
-        label: "Productos",
+        title: "Productos",
+        url: "/products",
         icon: Package,
-        to: "/products",
-        children: [
-          { label: "Lista de productos", to: "/products" },
-          { label: "Categorías", to: "/products/categories" },
+        subItems: [
+          { title: "Lista de productos", url: "/products" },
+          { title: "Categorías", url: "/products/categories" },
         ],
       },
       {
-        label: "Inventario",
+        title: "Inventario",
+        url: "/inventory",
         icon: Warehouse,
-        to: "/inventory",
-        children: [
-          { label: "Stock actual", to: "/inventory" },
-          { label: "Movimientos", to: "/inventory/movements" },
+        subItems: [
+          { title: "Stock", url: "/inventory" },
+          { title: "Movimientos", url: "/inventory/movements" },
         ],
       },
     ],
   },
   {
-    id: "sales",
+    id: 3,
     label: "Ventas",
     items: [
       {
-        label: "Ventas",
+        title: "Órdenes de venta",
+        url: "/sales-orders",
         icon: ShoppingCart,
-        to: "/sales-orders",
-        children: [{ label: "Órdenes de venta", to: "/sales-orders" }],
       },
       {
-        label: "Facturas",
+        title: "Facturas",
+        url: "/invoices",
         icon: FileText,
-        to: "/invoices",
-        children: [
-          { label: "Facturas internas", to: "/invoices" },
-          { label: "Facturas fiscales", to: "/invoices/fiscal" },
+        subItems: [
+          { title: "Todas las facturas", url: "/invoices" },
+          { title: "Fiscales", url: "/invoices/fiscal" },
         ],
       },
     ],
   },
   {
-    id: "ops",
+    id: 4,
     label: "Operaciones",
     items: [
       {
-        label: "Proveedores",
+        title: "Proveedores",
+        url: "/suppliers",
         icon: Truck,
-        to: "/suppliers",
-        children: [
-          { label: "Lista de proveedores", to: "/suppliers" },
-          { label: "Órdenes de compra", to: "/suppliers/purchase-orders" },
+        subItems: [
+          { title: "Lista de proveedores", url: "/suppliers" },
+          { title: "Órdenes de compra", url: "/suppliers/purchase-orders" },
         ],
       },
     ],
   },
   {
-    id: "reports",
+    id: 5,
     label: "Análisis",
-    items: [
-      {
-        label: "Reportes",
-        icon: BarChart2,
-        to: "/reports",
-        children: [
-          { label: "Ventas", to: "/reports" },
-          { label: "Inventario", to: "/reports?tab=inventory" },
-          { label: "Compras", to: "/reports?tab=purchases" },
-        ],
-      },
-    ],
+    items: [{ title: "Reportes", url: "/reports", icon: BarChart2 }],
   },
 ];
 
-// Track which collapsible items are open
-const openItems = ref<Record<string, boolean>>({});
+function isActive(url: string) {
+  return route.path === url || route.path.startsWith(url + "/");
+}
 
-function isItemActive(item: NavItem): boolean {
-  if (item.children) {
-    return item.children.some((c) => route.path.startsWith(c.to));
+function toggleGroup(url: string) {
+  if (openGroups.value.has(url)) {
+    openGroups.value.delete(url);
+  } else {
+    openGroups.value.add(url);
   }
-  return route.path === item.to || route.path.startsWith(item.to + "/");
 }
 
-function isChildActive(to: string): boolean {
-  return route.path === to || route.path.startsWith(to + "/");
-}
-
-function toggleItem(id: string) {
-  openItems.value[id] = !openItems.value[id];
-}
-
-function isItemOpen(item: NavItem): boolean {
-  const key = item.to;
-  if (key in openItems.value) return openItems.value[key];
-  return isItemActive(item);
+function isGroupOpen(item: NavItem) {
+  if (openGroups.value.has(item.url)) return true;
+  return item.subItems?.some((s) => isActive(s.url)) ?? false;
 }
 
 async function handleLogout() {
   await store.logout();
-  router.push("/auth/login");
-}
-
-function closeMobile() {
-  mobileSidebarOpen.value = false;
+  await navigateTo("/auth/login");
 }
 
 const userInitials = computed(() => {
@@ -162,434 +142,208 @@ const userInitials = computed(() => {
   return email.slice(0, 2).toUpperCase();
 });
 
+const tenantLabel = computed(
+  () => store.tenant?.name || store.user?.email || "",
+);
 const roleLabel = computed(() =>
   store.user?.role === "owner" ? "Propietario" : "Empleado",
 );
+
+onMounted(() => {
+  const handleKeyboard = (e: KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === "b") {
+      e.preventDefault();
+      sidebarOpen.value = !sidebarOpen.value;
+    }
+  };
+  window.addEventListener("keydown", handleKeyboard);
+  onUnmounted(() => window.removeEventListener("keydown", handleKeyboard));
+});
 </script>
 
 <template>
-  <div class="flex h-screen bg-[hsl(var(--background))] overflow-hidden">
-    <!-- ═══ Desktop Sidebar ═══════════════════════════════════════════════════ -->
+  <div class="flex h-screen overflow-hidden bg-background">
+    <!-- ── Sidebar ─────────────────────────────────────── -->
     <aside
-      :class="[
-        'hidden md:flex flex-col border-r bg-sidebar border-sidebar-border transition-all duration-300 ease-in-out',
-        sidebarOpen ? 'w-64' : 'w-16',
-      ]"
+      class="flex flex-col shrink-0 border-r border-border bg-sidebar transition-all duration-200 overflow-hidden"
+      :class="sidebarOpen ? 'w-64' : 'w-14'"
     >
       <!-- Logo -->
-      <div
-        class="flex items-center h-14 px-4 border-b border-sidebar-border flex-shrink-0"
-      >
-        <div
-          class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0"
-        >
-          <span class="text-white text-xs font-bold font-heading">D</span>
-        </div>
-        <Transition
-          enter-active-class="transition-all duration-200"
-          enter-from-class="opacity-0 translate-x-2"
-          enter-to-class="opacity-100 translate-x-0"
-          leave-active-class="transition-all duration-100"
-          leave-from-class="opacity-100"
-          leave-to-class="opacity-0"
-        >
+      <div class="flex h-12 shrink-0 items-center border-b border-border px-3">
+        <div class="flex items-center gap-2 min-w-0">
+          <Command class="size-4 shrink-0 text-primary" />
           <span
             v-if="sidebarOpen"
-            class="ml-3 text-lg font-bold font-heading text-[hsl(var(--foreground))]"
+            class="font-bold text-sm truncate text-primary tracking-tight"
+            >DaaS</span
           >
-            DaaS
-          </span>
-        </Transition>
+        </div>
       </div>
 
-      <!-- Navigation -->
-      <nav class="flex-1 overflow-y-auto py-3 px-2">
-        <div v-for="group in navGroups" :key="group.id" class="mb-4">
-          <!-- Group label -->
-          <Transition
-            enter-active-class="transition-opacity duration-200"
-            enter-from-class="opacity-0"
-            enter-to-class="opacity-100"
-            leave-active-class="transition-opacity duration-100"
-            leave-from-class="opacity-100"
-            leave-to-class="opacity-0"
+      <!-- Nav -->
+      <nav class="flex-1 overflow-y-auto py-2 px-2">
+        <div v-for="group in sidebarItems" :key="group.id" class="mb-4">
+          <p
+            v-if="sidebarOpen"
+            class="mb-1 px-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
           >
-            <p
-              v-if="sidebarOpen"
-              class="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground px-3 mb-1"
-            >
-              {{ group.label }}
-            </p>
-            <div v-else class="h-4 mb-1 flex items-center justify-center">
-              <div class="w-4 h-px bg-sidebar-border" />
-            </div>
-          </Transition>
+            {{ group.label }}
+          </p>
+          <div v-else class="mb-1 h-4" />
 
-          <!-- Items -->
-          <div v-for="item in group.items" :key="item.to" class="mb-0.5">
-            <!-- Item with children -->
-            <template v-if="item.children && sidebarOpen">
-              <button
-                type="button"
-                :class="[
-                  'w-full flex items-center gap-2.5 h-9 px-3 rounded-md text-sm font-medium transition-colors duration-150 cursor-pointer group',
-                  isItemActive(item)
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-[hsl(var(--sidebar-foreground))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                ]"
-                @click="toggleItem(item.to)"
-              >
-                <component
-                  :is="item.icon"
-                  class="w-4 h-4 flex-shrink-0"
-                  :class="
-                    isItemActive(item)
-                      ? 'text-primary'
-                      : 'text-muted-foreground group-hover:text-sidebar-accent-foreground'
-                  "
-                />
-                <span class="flex-1 text-left">{{ item.label }}</span>
-                <ChevronRight
-                  class="w-3.5 h-3.5 transition-transform duration-200 text-muted-foreground"
-                  :class="isItemOpen(item) ? 'rotate-90' : ''"
-                />
-              </button>
-              <!-- Children -->
-              <Transition
-                enter-active-class="transition-all duration-200 overflow-hidden"
-                enter-from-class="max-h-0 opacity-0"
-                enter-to-class="max-h-40 opacity-100"
-                leave-active-class="transition-all duration-150 overflow-hidden"
-                leave-from-class="max-h-40 opacity-100"
-                leave-to-class="max-h-0 opacity-0"
-              >
-                <div
-                  v-if="isItemOpen(item)"
-                  class="ml-4 mt-0.5 border-l border-sidebar-border pl-3 space-y-0.5"
+          <ul class="space-y-0.5">
+            <li v-for="item in group.items" :key="item.url">
+              <!-- Item with subitems -->
+              <template v-if="item.subItems">
+                <button
+                  type="button"
+                  class="w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors text-foreground hover:bg-accent"
+                  :class="isActive(item.url) ? 'bg-accent font-medium' : ''"
+                  :title="!sidebarOpen ? item.title : undefined"
+                  @click="toggleGroup(item.url)"
                 >
-                  <NuxtLink
-                    v-for="child in item.children"
-                    :key="child.to"
-                    :to="child.to"
-                    :class="[
-                      'flex items-center h-8 px-2 rounded-md text-sm transition-colors duration-150',
-                      isChildActive(child.to)
-                        ? 'text-primary font-medium'
-                        : 'text-muted-foreground hover:text-[hsl(var(--foreground))] hover:bg-sidebar-accent',
-                    ]"
-                  >
-                    {{ child.label }}
-                  </NuxtLink>
-                </div>
-              </Transition>
-            </template>
+                  <component :is="item.icon" class="size-4 shrink-0" />
+                  <span v-if="sidebarOpen" class="flex-1 text-left truncate">{{
+                    item.title
+                  }}</span>
+                  <ChevronRight
+                    v-if="sidebarOpen"
+                    class="size-3.5 shrink-0 text-muted-foreground transition-transform duration-150"
+                    :class="isGroupOpen(item) ? 'rotate-90' : ''"
+                  />
+                </button>
+                <ul
+                  v-if="sidebarOpen && isGroupOpen(item)"
+                  class="mt-0.5 ml-4 space-y-0.5 border-l border-border pl-2"
+                >
+                  <li v-for="sub in item.subItems" :key="sub.url">
+                    <NuxtLink
+                      :to="sub.url"
+                      class="block rounded-md px-2 py-1.5 text-sm transition-colors"
+                      :class="
+                        isActive(sub.url)
+                          ? 'bg-accent text-accent-foreground font-medium'
+                          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
+                      "
+                    >
+                      {{ sub.title }}
+                    </NuxtLink>
+                  </li>
+                </ul>
+              </template>
 
-            <!-- Simple item -->
-            <NuxtLink
-              v-else
-              :to="item.to"
-              :title="!sidebarOpen ? item.label : undefined"
-              :class="[
-                'flex items-center gap-2.5 h-9 rounded-md text-sm font-medium transition-colors duration-150 group',
-                sidebarOpen ? 'px-3' : 'px-2.5 justify-center',
-                isItemActive(item)
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-[hsl(var(--sidebar-foreground))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-              ]"
-            >
-              <component
-                :is="item.icon"
-                class="w-4 h-4 flex-shrink-0"
+              <!-- Simple item -->
+              <NuxtLink
+                v-else
+                :to="item.url"
+                class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors"
                 :class="
-                  isItemActive(item)
-                    ? 'text-primary'
-                    : 'text-muted-foreground group-hover:text-sidebar-accent-foreground'
+                  isActive(item.url)
+                    ? 'bg-accent text-accent-foreground font-medium'
+                    : 'text-foreground hover:bg-accent'
                 "
-              />
-              <span v-if="sidebarOpen">{{ item.label }}</span>
-            </NuxtLink>
-          </div>
+                :title="!sidebarOpen ? item.title : undefined"
+              >
+                <component :is="item.icon" class="size-4 shrink-0" />
+                <span v-if="sidebarOpen" class="truncate">{{
+                  item.title
+                }}</span>
+              </NuxtLink>
+            </li>
+          </ul>
         </div>
       </nav>
 
-      <!-- Settings link -->
-      <div class="px-2 pb-2 border-t border-sidebar-border pt-2">
+      <!-- Footer -->
+      <div class="shrink-0 border-t border-border p-2 space-y-0.5">
         <NuxtLink
           to="/settings"
+          class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors"
+          :class="
+            isActive('/settings')
+              ? 'bg-accent text-accent-foreground font-medium'
+              : 'text-foreground hover:bg-accent'
+          "
           :title="!sidebarOpen ? 'Configuración' : undefined"
-          :class="[
-            'flex items-center gap-2.5 h-9 rounded-md text-sm font-medium transition-colors duration-150 group',
-            sidebarOpen ? 'px-3' : 'px-2.5 justify-center',
-            route.path.startsWith('/settings')
-              ? 'bg-primary/10 text-primary'
-              : 'text-[hsl(var(--sidebar-foreground))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-          ]"
         >
-          <Settings
-            class="w-4 h-4 flex-shrink-0"
-            :class="
-              route.path.startsWith('/settings')
-                ? 'text-primary'
-                : 'text-muted-foreground group-hover:text-sidebar-accent-foreground'
-            "
-          />
-          <span v-if="sidebarOpen">Configuración</span>
+          <Settings class="size-4 shrink-0" />
+          <span v-if="sidebarOpen" class="truncate">Configuración</span>
         </NuxtLink>
-      </div>
 
-      <!-- User footer -->
-      <div class="px-2 pb-3 border-t border-sidebar-border pt-3">
-        <div
-          v-if="sidebarOpen"
-          class="flex items-center gap-2.5 px-2 py-2 rounded-lg hover:bg-sidebar-accent transition-colors duration-150 group cursor-default"
-        >
+        <div class="flex items-center gap-2 rounded-md px-2 py-1.5">
           <div
-            class="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0 text-white text-xs font-bold"
+            class="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground text-xs font-semibold"
           >
             {{ userInitials }}
           </div>
-          <div class="flex-1 min-w-0">
-            <p
-              class="text-xs font-semibold text-[hsl(var(--foreground))] truncate"
-            >
-              {{ store.tenant?.name || store.user?.email }}
-            </p>
-            <p class="text-[10px] text-muted-foreground">{{ roleLabel }}</p>
+          <div
+            v-if="sidebarOpen"
+            class="grid flex-1 min-w-0 text-sm leading-tight"
+          >
+            <span class="truncate font-medium text-foreground">{{
+              tenantLabel
+            }}</span>
+            <span class="truncate text-xs text-muted-foreground">{{
+              roleLabel
+            }}</span>
           </div>
           <button
+            v-if="sidebarOpen"
             type="button"
             title="Cerrar sesión"
-            class="w-7 h-7 flex items-center justify-center rounded-md text-muted-foreground hover:text-destructive hover:bg-red-50 transition-colors duration-150 cursor-pointer opacity-0 group-hover:opacity-100"
+            class="ml-auto rounded-md p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
             @click="handleLogout"
           >
-            <LogOut class="w-3.5 h-3.5" />
+            <LogOut class="size-4" />
           </button>
         </div>
-        <button
-          v-else
-          type="button"
-          title="Cerrar sesión"
-          class="w-full flex justify-center items-center h-9 rounded-md text-muted-foreground hover:text-destructive hover:bg-red-50 transition-colors duration-150 cursor-pointer"
-          @click="handleLogout"
-        >
-          <LogOut class="w-4 h-4" />
-        </button>
       </div>
     </aside>
 
-    <!-- ═══ Main area ═════════════════════════════════════════════════════════ -->
-    <div class="flex-1 flex flex-col min-h-0 overflow-hidden">
-      <!-- Header -->
+    <!-- ── Main area ───────────────────────────────────── -->
+    <div class="flex flex-1 flex-col min-w-0 overflow-hidden">
+      <!-- Top header -->
       <header
-        class="h-14 flex items-center justify-between px-4 lg:px-6 border-b bg-[hsl(var(--card))] flex-shrink-0"
+        class="flex h-12 shrink-0 items-center border-b border-border bg-sidebar"
       >
-        <!-- Left: sidebar toggle + breadcrumb area -->
-        <div class="flex items-center gap-3">
-          <!-- Desktop toggle -->
-          <button
-            type="button"
-            class="hidden md:flex w-8 h-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-[hsl(var(--foreground))] transition-colors duration-150 cursor-pointer"
-            @click="sidebarOpen = !sidebarOpen"
-          >
-            <Menu class="w-4 h-4" />
-          </button>
-          <!-- Mobile toggle -->
-          <button
-            type="button"
-            class="md:hidden w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted cursor-pointer"
-            @click="mobileSidebarOpen = true"
-          >
-            <Menu class="w-4 h-4" />
-          </button>
-
-          <!-- Logo on mobile -->
-          <span class="md:hidden text-base font-bold font-heading text-primary">
-            DaaS
-          </span>
-        </div>
-
-        <!-- Right: actions -->
-        <div class="flex items-center gap-2">
-          <button
-            type="button"
-            class="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted transition-colors duration-150 cursor-pointer"
-          >
-            <Bell class="w-4 h-4" />
-          </button>
-          <!-- User avatar -->
-          <button
-            type="button"
-            class="flex items-center gap-2 pl-1 pr-2 h-8 rounded-lg hover:bg-muted transition-colors duration-150 cursor-pointer"
-            @click="handleLogout"
-          >
-            <div
-              class="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-white text-[10px] font-bold"
+        <div class="flex w-full items-center justify-between px-4">
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="inline-flex size-7 items-center justify-center rounded-md text-foreground hover:bg-accent transition-colors"
+              @click="sidebarOpen = !sidebarOpen"
             >
-              {{ userInitials }}
-            </div>
-            <span
-              class="hidden sm:block text-xs font-medium text-[hsl(var(--foreground))] max-w-[120px] truncate"
+              <PanelLeft class="size-4" />
+            </button>
+            <div class="h-4 w-px bg-border" />
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-2.5 h-7 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
             >
-              {{ store.tenant?.name || store.user?.email }}
-            </span>
-          </button>
+              <Search class="size-3.5" />
+              <span>Buscar…</span>
+              <kbd
+                class="ml-2 hidden sm:inline-flex items-center gap-0.5 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
+              >
+                <span>⌘</span>K
+              </kbd>
+            </button>
+          </div>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              class="inline-flex size-7 items-center justify-center rounded-md text-foreground hover:bg-accent transition-colors"
+            >
+              <Bell class="size-4" />
+            </button>
+          </div>
         </div>
       </header>
 
       <!-- Page content -->
       <main class="flex-1 overflow-y-auto">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <slot />
-        </div>
+        <slot />
       </main>
     </div>
-
-    <!-- ═══ Mobile drawer ══════════════════════════════════════════════════════ -->
-    <Transition
-      enter-active-class="transition-opacity duration-300"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="transition-opacity duration-200"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
-    >
-      <div v-if="mobileSidebarOpen" class="md:hidden fixed inset-0 z-50">
-        <div
-          class="absolute inset-0 bg-black/40 backdrop-blur-sm"
-          @click="closeMobile"
-        />
-        <Transition
-          enter-active-class="transition-transform duration-300"
-          enter-from-class="-translate-x-full"
-          enter-to-class="translate-x-0"
-          leave-active-class="transition-transform duration-200"
-          leave-from-class="translate-x-0"
-          leave-to-class="-translate-x-full"
-        >
-          <aside
-            v-if="mobileSidebarOpen"
-            class="relative w-72 h-full bg-sidebar flex flex-col shadow-xl"
-          >
-            <!-- Mobile header -->
-            <div
-              class="flex items-center justify-between h-14 px-4 border-b border-sidebar-border"
-            >
-              <div class="flex items-center gap-2.5">
-                <div
-                  class="w-8 h-8 rounded-lg bg-primary flex items-center justify-center"
-                >
-                  <span class="text-white text-xs font-bold font-heading"
-                    >D</span
-                  >
-                </div>
-                <span
-                  class="text-lg font-bold font-heading text-[hsl(var(--foreground))]"
-                  >DaaS</span
-                >
-              </div>
-              <button
-                type="button"
-                class="w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:bg-muted cursor-pointer"
-                @click="closeMobile"
-              >
-                <X class="w-4 h-4" />
-              </button>
-            </div>
-
-            <!-- Mobile nav -->
-            <nav class="flex-1 overflow-y-auto py-3 px-2">
-              <div v-for="group in navGroups" :key="group.id" class="mb-4">
-                <p
-                  class="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground px-3 mb-1"
-                >
-                  {{ group.label }}
-                </p>
-                <div v-for="item in group.items" :key="item.to" class="mb-0.5">
-                  <template v-if="item.children">
-                    <button
-                      type="button"
-                      :class="[
-                        'w-full flex items-center gap-2.5 h-9 px-3 rounded-md text-sm font-medium transition-colors duration-150 cursor-pointer group',
-                        isItemActive(item)
-                          ? 'bg-primary/10 text-primary'
-                          : 'text-[hsl(var(--sidebar-foreground))] hover:bg-sidebar-accent',
-                      ]"
-                      @click="toggleItem(item.to)"
-                    >
-                      <component
-                        :is="item.icon"
-                        class="w-4 h-4 flex-shrink-0 text-muted-foreground"
-                      />
-                      <span class="flex-1 text-left">{{ item.label }}</span>
-                      <ChevronRight
-                        class="w-3.5 h-3.5 text-muted-foreground transition-transform duration-200"
-                        :class="isItemOpen(item) ? 'rotate-90' : ''"
-                      />
-                    </button>
-                    <div
-                      v-if="isItemOpen(item)"
-                      class="ml-4 mt-0.5 border-l border-sidebar-border pl-3 space-y-0.5"
-                    >
-                      <NuxtLink
-                        v-for="child in item.children"
-                        :key="child.to"
-                        :to="child.to"
-                        :class="[
-                          'flex items-center h-8 px-2 rounded-md text-sm transition-colors duration-150',
-                          isChildActive(child.to)
-                            ? 'text-primary font-medium'
-                            : 'text-muted-foreground hover:text-[hsl(var(--foreground))]',
-                        ]"
-                        @click="closeMobile"
-                      >
-                        {{ child.label }}
-                      </NuxtLink>
-                    </div>
-                  </template>
-
-                  <NuxtLink
-                    v-else
-                    :to="item.to"
-                    :class="[
-                      'flex items-center gap-2.5 h-9 px-3 rounded-md text-sm font-medium transition-colors duration-150 group',
-                      isItemActive(item)
-                        ? 'bg-primary/10 text-primary'
-                        : 'text-[hsl(var(--sidebar-foreground))] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
-                    ]"
-                    @click="closeMobile"
-                  >
-                    <component
-                      :is="item.icon"
-                      class="w-4 h-4 flex-shrink-0 text-muted-foreground"
-                    />
-                    <span>{{ item.label }}</span>
-                  </NuxtLink>
-                </div>
-              </div>
-            </nav>
-
-            <!-- Mobile footer -->
-            <div class="px-2 pb-4 pt-2 border-t border-sidebar-border">
-              <NuxtLink
-                to="/settings"
-                class="flex items-center gap-2.5 h-9 px-3 rounded-md text-sm font-medium text-[hsl(var(--sidebar-foreground))] hover:bg-sidebar-accent transition-colors duration-150"
-                @click="closeMobile"
-              >
-                <Settings class="w-4 h-4 text-muted-foreground" />
-                Configuración
-              </NuxtLink>
-              <button
-                type="button"
-                class="w-full mt-1 flex items-center gap-2.5 h-9 px-3 rounded-md text-sm font-medium text-destructive hover:bg-red-50 transition-colors duration-150 cursor-pointer"
-                @click="handleLogout"
-              >
-                <LogOut class="w-4 h-4" />
-                Cerrar sesión
-              </button>
-            </div>
-          </aside>
-        </Transition>
-      </div>
-    </Transition>
   </div>
 </template>

@@ -133,7 +133,7 @@ function formatCurrency(value: number) {
     <!-- Back nav -->
     <button
       type="button"
-      class="flex items-center gap-2 text-sm text-muted-foreground hover:text-text-brand transition-colors cursor-pointer"
+      class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
       @click="router.push('/invoices')"
     >
       <ArrowLeft class="w-4 h-4" />
@@ -162,7 +162,7 @@ function formatCurrency(value: number) {
 
     <template v-else-if="invoice">
       <!-- Header card -->
-      <div class="bg-card rounded-xl border shadow-sm p-6">
+      <div class="rounded-xl border bg-card shadow-sm p-6">
         <div
           class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4"
         >
@@ -175,7 +175,7 @@ function formatCurrency(value: number) {
             </div>
             <div>
               <div class="flex items-center gap-3">
-                <h1 class="text-xl font-bold font-heading text-text-brand">
+                <h1 class="text-xl font-bold font-heading text-foreground">
                   {{ invoice.correlative || "Borrador" }}
                 </h1>
                 <span
@@ -252,18 +252,18 @@ function formatCurrency(value: number) {
       <!-- 2-col layout: customer + lines -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Customer info -->
-        <div class="bg-card rounded-xl border shadow-sm p-5">
-          <h2 class="text-sm font-bold text-text-brand mb-4">Cliente</h2>
+        <div class="rounded-xl border bg-card shadow-sm p-5">
+          <h2 class="text-sm font-bold text-foreground mb-4">Cliente</h2>
           <div class="space-y-3">
             <div>
               <p class="text-xs text-muted-foreground">Nombre</p>
-              <p class="text-sm font-semibold text-text-brand">
+              <p class="text-sm font-semibold text-foreground">
                 {{ invoice.customer_name || "Consumidor Final" }}
               </p>
             </div>
             <div>
               <p class="text-xs text-muted-foreground">Identificación</p>
-              <p class="text-sm font-semibold text-text-brand">
+              <p class="text-sm font-semibold text-foreground">
                 {{
                   CUSTOMER_ID_LABELS[invoice.customer_id_type] ??
                   invoice.customer_id_type
@@ -275,17 +275,17 @@ function formatCurrency(value: number) {
             </div>
             <div v-if="invoice.notes">
               <p class="text-xs text-muted-foreground">Notas</p>
-              <p class="text-sm text-text-brand">{{ invoice.notes }}</p>
+              <p class="text-sm text-foreground">{{ invoice.notes }}</p>
             </div>
           </div>
         </div>
 
         <!-- Lines table -->
         <div
-          class="lg:col-span-2 bg-card rounded-xl border shadow-sm overflow-hidden"
+          class="lg:col-span-2 rounded-xl border bg-card shadow-sm overflow-hidden"
         >
           <div class="px-5 py-4 border-b">
-            <h2 class="text-sm font-bold text-text-brand">Detalle</h2>
+            <h2 class="text-sm font-bold text-foreground">Detalle</h2>
           </div>
           <table class="w-full">
             <thead>
@@ -319,7 +319,7 @@ function formatCurrency(value: number) {
                 class="hover:bg-muted/20 transition-colors"
               >
                 <td class="px-5 py-3">
-                  <p class="text-sm font-medium text-text-brand">
+                  <p class="text-sm font-medium text-foreground">
                     {{ line.description }}
                   </p>
                 </td>
@@ -335,7 +335,7 @@ function formatCurrency(value: number) {
                 </td>
                 <td class="px-5 py-3 text-right">
                   <span
-                    class="text-sm font-semibold tabular-nums text-text-brand"
+                    class="text-sm font-semibold tabular-nums text-foreground"
                   >
                     {{ formatCurrency(line.subtotal) }}
                   </span>
@@ -346,12 +346,12 @@ function formatCurrency(value: number) {
               <tr class="border-t-2 bg-muted/20">
                 <td
                   colspan="3"
-                  class="px-5 py-4 text-right text-sm font-bold text-text-brand"
+                  class="px-5 py-4 text-right text-sm font-bold text-foreground"
                 >
                   Total
                 </td>
                 <td
-                  class="px-5 py-4 text-right text-lg font-bold font-heading text-text-brand tabular-nums"
+                  class="px-5 py-4 text-right text-lg font-bold font-heading text-foreground tabular-nums"
                 >
                   {{ formatCurrency(invoice.total) }}
                 </td>
@@ -385,14 +385,14 @@ function formatCurrency(value: number) {
           <div
             class="relative z-10 w-full max-w-md bg-white rounded-xl shadow-xl p-6"
           >
-            <h3 class="text-lg font-bold font-heading text-text-brand mb-1">
+            <h3 class="text-lg font-bold font-heading text-foreground mb-1">
               Cancelar factura
             </h3>
             <p class="text-sm text-muted-foreground mb-5">
               Esta acción revertirá el stock descontado. ¿Confirmar?
             </p>
             <div class="mb-5">
-              <label class="block text-sm font-semibold text-text-brand mb-1.5">
+              <label class="block text-sm font-semibold text-foreground mb-1.5">
                 Motivo
                 <span class="font-normal text-muted-foreground"
                   >(opcional)</span
@@ -402,7 +402,7 @@ function formatCurrency(value: number) {
                 v-model="cancelNotes"
                 rows="2"
                 placeholder="Motivo de cancelación..."
-                class="w-full px-4 py-3 border rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400 resize-none"
+                class="w-full px-4 py-3 border rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground resize-none"
               />
             </div>
             <div class="flex justify-end gap-3">

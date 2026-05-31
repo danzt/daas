@@ -10,6 +10,9 @@ import {
   FolderOpen,
   ChevronRight,
 } from "lucide-vue-next";
+import { Sheet, SheetHeader, SheetFooter } from "~/components/ui/sheet";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
 import { useApiFetch } from "~/composables/useAuth";
 import type { Supplier } from "~/components/suppliers/SupplierFormModal.vue";
 import type { Product } from "~/components/products/ProductFormModal.vue";
@@ -257,19 +260,19 @@ onMounted(load);
 
     <!-- Stats -->
     <div class="grid grid-cols-3 gap-4">
-      <div class="bg-card border border-border rounded-xl p-4">
+      <div class="border bg-card rounded-xl p-4">
         <p class="text-sm text-muted-foreground">Borradores</p>
         <p class="text-2xl font-bold text-foreground mt-1">
           {{ counts.draft }}
         </p>
       </div>
-      <div class="bg-card border border-border rounded-xl p-4">
+      <div class="border bg-card rounded-xl p-4">
         <p class="text-sm text-muted-foreground">Ordenadas</p>
         <p class="text-2xl font-bold text-blue-600 mt-1">
           {{ counts.ordered }}
         </p>
       </div>
-      <div class="bg-card border border-border rounded-xl p-4">
+      <div class="border bg-card rounded-xl p-4">
         <p class="text-sm text-muted-foreground">Recibidas</p>
         <p class="text-2xl font-bold text-emerald-600 mt-1">
           {{ counts.received }}
@@ -285,7 +288,7 @@ onMounted(load);
         />
         <input
           v-model="searchQuery"
-          class="w-full h-10 pl-9 pr-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
+          class="w-full h-10 pl-9 pr-3 rounded-lg border border-input bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
           placeholder="Buscar por proveedor..."
         />
       </div>
@@ -346,10 +349,7 @@ onMounted(load);
     </div>
 
     <!-- Table -->
-    <div
-      v-else-if="!loading"
-      class="bg-card border border-border rounded-xl overflow-hidden"
-    >
+    <div v-else-if="!loading" class="border bg-card rounded-xl overflow-hidden">
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-border bg-muted/30">
@@ -421,221 +421,184 @@ onMounted(load);
     </div>
 
     <!-- New PO slide-over -->
-    <Teleport to="body">
-      <Transition name="modal">
-        <div
-          v-if="formOpen"
-          class="fixed inset-0 z-50 flex items-start justify-end bg-black/40"
-          @click.self="formOpen = false"
-        >
-          <div
-            class="bg-card border-l border-border h-full w-full max-w-xl flex flex-col shadow-2xl overflow-hidden"
-          >
-            <!-- Slide header -->
-            <div
-              class="flex items-center justify-between px-6 py-4 border-b border-border shrink-0"
-            >
-              <div class="flex items-center gap-3">
-                <div class="p-2 bg-primary/10 rounded-lg">
-                  <ShoppingCart class="w-5 h-5 text-primary" />
-                </div>
-                <h2 class="text-lg font-semibold text-foreground">
-                  Nueva orden de compra
-                </h2>
-              </div>
-              <button
-                class="p-2 rounded-lg hover:bg-muted transition-colors text-muted-foreground"
-                @click="formOpen = false"
-              >
-                <X class="w-4 h-4" />
-              </button>
-            </div>
-
-            <!-- Slide body -->
-            <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-              <div
-                v-if="saveError"
-                class="bg-destructive/10 border border-destructive/30 text-destructive text-sm rounded-lg px-4 py-3"
-              >
-                {{ saveError }}
-              </div>
-
-              <!-- Supplier -->
-              <div class="space-y-1.5">
-                <label class="text-sm font-medium text-foreground"
-                  >Proveedor <span class="text-destructive">*</span></label
-                >
-                <select
-                  v-model="form.supplier_id"
-                  class="w-full h-10 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                >
-                  <option value="">Seleccionar proveedor...</option>
-                  <option
-                    v-for="sup in suppliers"
-                    :key="sup.id"
-                    :value="sup.id"
-                  >
-                    {{ sup.name }}
-                  </option>
-                </select>
-              </div>
-
-              <!-- Notes -->
-              <div class="space-y-1.5">
-                <label class="text-sm font-medium text-foreground">Notas</label>
-                <textarea
-                  v-model="form.notes"
-                  rows="2"
-                  class="w-full px-3 py-2 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
-                  placeholder="Observaciones de la orden..."
-                />
-              </div>
-
-              <!-- Lines -->
-              <div class="space-y-3">
-                <div class="flex items-center justify-between">
-                  <label class="text-sm font-medium text-foreground"
-                    >Líneas <span class="text-destructive">*</span></label
-                  >
-                  <button
-                    class="text-xs text-primary hover:underline flex items-center gap-1"
-                    @click="addLine"
-                  >
-                    <Plus class="w-3 h-3" />
-                    Agregar línea
-                  </button>
-                </div>
-
-                <div
-                  v-for="(line, idx) in form.lines"
-                  :key="idx"
-                  class="bg-muted/30 border border-border rounded-lg p-4 space-y-3"
-                >
-                  <div class="flex items-center justify-between">
-                    <span class="text-xs font-medium text-muted-foreground"
-                      >Línea {{ idx + 1 }}</span
-                    >
-                    <button
-                      class="p-1 rounded hover:bg-muted text-muted-foreground transition-colors"
-                      @click="removeLine(idx)"
-                    >
-                      <Trash2 class="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-
-                  <div class="space-y-1.5">
-                    <label class="text-xs font-medium text-muted-foreground"
-                      >Producto</label
-                    >
-                    <select
-                      v-model="line.product_id"
-                      class="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                      @change="onProductChange(line)"
-                    >
-                      <option value="">Seleccionar producto...</option>
-                      <option
-                        v-for="prod in products"
-                        :key="prod.id"
-                        :value="prod.id"
-                      >
-                        {{ prod.name }}
-                      </option>
-                    </select>
-                  </div>
-
-                  <div class="space-y-1.5">
-                    <label class="text-xs font-medium text-muted-foreground"
-                      >Descripción</label
-                    >
-                    <input
-                      v-model="line.description"
-                      class="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                      placeholder="Descripción en la orden..."
-                    />
-                  </div>
-
-                  <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1.5">
-                      <label class="text-xs font-medium text-muted-foreground"
-                        >Cantidad</label
-                      >
-                      <input
-                        v-model.number="line.quantity"
-                        type="number"
-                        min="0.001"
-                        step="any"
-                        class="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                      />
-                    </div>
-                    <div class="space-y-1.5">
-                      <label class="text-xs font-medium text-muted-foreground"
-                        >Costo unitario</label
-                      >
-                      <input
-                        v-model.number="line.unit_cost"
-                        type="number"
-                        min="0"
-                        step="any"
-                        class="w-full h-9 px-3 rounded-lg border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
-                      />
-                    </div>
-                  </div>
-
-                  <div class="text-right text-xs text-muted-foreground">
-                    Subtotal:
-                    <span class="font-mono font-medium text-foreground">{{
-                      fmtCurrency(line.quantity * line.unit_cost)
-                    }}</span>
-                  </div>
-                </div>
-
-                <!-- Total -->
-                <div
-                  v-if="form.lines.length > 0"
-                  class="flex items-center justify-between px-4 py-3 bg-primary/5 rounded-lg border border-primary/20"
-                >
-                  <span class="text-sm font-medium text-foreground">Total</span>
-                  <span class="font-mono font-bold text-primary text-lg">{{
-                    fmtCurrency(formTotal)
-                  }}</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Slide footer -->
-            <div
-              class="flex items-center justify-end gap-3 px-6 py-4 border-t border-border shrink-0"
-            >
-              <button
-                class="px-4 py-2 text-sm rounded-lg border border-border hover:bg-muted transition-colors text-foreground"
-                @click="formOpen = false"
-              >
-                Cancelar
-              </button>
-              <button
-                :disabled="saving"
-                class="flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-                @click="createPO"
-              >
-                <Loader2 v-if="saving" class="w-4 h-4 animate-spin" />
-                <Save v-else class="w-4 h-4" />
-                {{ saving ? "Creando..." : "Crear orden" }}
-              </button>
-            </div>
+    <Sheet v-model:open="formOpen">
+      <SheetHeader>
+        <div class="flex items-center gap-3">
+          <div class="p-2 bg-primary/10 rounded-lg">
+            <ShoppingCart class="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h2 class="text-base font-semibold text-foreground">
+              Nueva orden de compra
+            </h2>
+            <p class="text-xs text-muted-foreground mt-0.5">
+              Completá los datos del pedido al proveedor
+            </p>
           </div>
         </div>
-      </Transition>
-    </Teleport>
+        <button
+          class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-muted-foreground"
+          @click="formOpen = false"
+        >
+          <X class="w-4 h-4" />
+        </button>
+      </SheetHeader>
+
+      <!-- Body -->
+      <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+        <div
+          v-if="saveError"
+          class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg px-4 py-3"
+        >
+          {{ saveError }}
+        </div>
+
+        <!-- Supplier -->
+        <div class="space-y-1.5">
+          <label class="text-sm font-medium text-foreground"
+            >Proveedor <span class="text-red-500">*</span></label
+          >
+          <select
+            v-model="form.supplier_id"
+            class="w-full h-11 px-3 border border-input bg-white rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="">Seleccionar proveedor...</option>
+            <option v-for="sup in suppliers" :key="sup.id" :value="sup.id">
+              {{ sup.name }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Notes -->
+        <div class="space-y-1.5">
+          <label class="text-sm font-medium text-foreground">Notas</label>
+          <textarea
+            v-model="form.notes"
+            rows="2"
+            class="w-full px-3 py-2 border border-input bg-white rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+            placeholder="Observaciones de la orden..."
+          />
+        </div>
+
+        <!-- Lines -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <label class="text-sm font-medium text-foreground"
+              >Líneas <span class="text-red-500">*</span></label
+            >
+            <button
+              class="text-xs text-primary hover:underline flex items-center gap-1"
+              @click="addLine"
+            >
+              <Plus class="w-3 h-3" />
+              Agregar línea
+            </button>
+          </div>
+
+          <div
+            v-for="(line, idx) in form.lines"
+            :key="idx"
+            class="bg-gray-50 border border-border rounded-lg p-4 space-y-3"
+          >
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-medium text-muted-foreground"
+                >Línea {{ idx + 1 }}</span
+              >
+              <button
+                class="p-1 rounded hover:bg-gray-100 text-muted-foreground transition-colors"
+                @click="removeLine(idx)"
+              >
+                <Trash2 class="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="text-xs font-medium text-muted-foreground"
+                >Producto</label
+              >
+              <select
+                v-model="line.product_id"
+                class="w-full h-9 px-3 border border-input bg-white rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                @change="onProductChange(line)"
+              >
+                <option value="">Seleccionar producto...</option>
+                <option
+                  v-for="prod in products"
+                  :key="prod.id"
+                  :value="prod.id"
+                >
+                  {{ prod.name }}
+                </option>
+              </select>
+            </div>
+
+            <div class="space-y-1.5">
+              <label class="text-xs font-medium text-muted-foreground"
+                >Descripción</label
+              >
+              <Input
+                v-model="line.description"
+                class="h-9"
+                placeholder="Descripción en la orden..."
+              />
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="space-y-1.5">
+                <label class="text-xs font-medium text-muted-foreground"
+                  >Cantidad</label
+                >
+                <Input
+                  v-model="line.quantity"
+                  type="number"
+                  min="0.001"
+                  step="any"
+                  class="h-9"
+                />
+              </div>
+              <div class="space-y-1.5">
+                <label class="text-xs font-medium text-muted-foreground"
+                  >Costo unitario</label
+                >
+                <Input
+                  v-model="line.unit_cost"
+                  type="number"
+                  min="0"
+                  step="any"
+                  class="h-9"
+                />
+              </div>
+            </div>
+
+            <div class="text-right text-xs text-muted-foreground">
+              Subtotal:
+              <span class="font-mono font-medium text-foreground">{{
+                fmtCurrency(line.quantity * line.unit_cost)
+              }}</span>
+            </div>
+          </div>
+
+          <!-- Total -->
+          <div
+            v-if="form.lines.length > 0"
+            class="flex items-center justify-between px-4 py-3 bg-primary/5 rounded-lg border border-primary/20"
+          >
+            <span class="text-sm font-medium text-foreground">Total</span>
+            <span class="font-mono font-bold text-primary text-lg">{{
+              fmtCurrency(formTotal)
+            }}</span>
+          </div>
+        </div>
+      </div>
+
+      <SheetFooter>
+        <Button variant="outline" @click="formOpen = false">Cancelar</Button>
+        <Button :disabled="saving" @click="createPO">
+          <Loader2 v-if="saving" class="w-4 h-4 animate-spin" />
+          <Save v-else class="w-4 h-4" />
+          {{ saving ? "Creando..." : "Crear orden" }}
+        </Button>
+      </SheetFooter>
+    </Sheet>
   </div>
 </template>
-
-<style scoped>
-.modal-enter-active,
-.modal-leave-active {
-  transition: opacity 0.2s ease;
-}
-.modal-enter-from,
-.modal-leave-to {
-  opacity: 0;
-}
-</style>

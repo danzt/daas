@@ -175,7 +175,7 @@ onMounted(async () => {
           <Package class="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 class="text-2xl font-bold font-heading text-text-brand">
+          <h1 class="text-2xl font-bold font-heading text-foreground">
             Productos
           </h1>
           <p class="text-muted-foreground text-sm">
@@ -186,7 +186,7 @@ onMounted(async () => {
       <button
         v-if="store.isOwner"
         type="button"
-        class="flex items-center gap-2 h-10 px-5 bg-cta text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
+        class="flex items-center gap-2 h-10 px-5 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
         @click="openCreate"
       >
         <Plus class="w-4 h-4" />
@@ -196,17 +196,17 @@ onMounted(async () => {
 
     <!-- Stats row -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <div class="bg-card rounded-xl border shadow-sm px-5 py-4">
+      <div class="rounded-xl border bg-card shadow-sm px-5 py-4">
         <p
           class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
         >
           Total
         </p>
-        <p class="text-2xl font-bold font-heading text-text-brand">
+        <p class="text-2xl font-bold font-heading text-foreground">
           {{ totalProducts }}
         </p>
       </div>
-      <div class="bg-card rounded-xl border shadow-sm px-5 py-4">
+      <div class="rounded-xl border bg-card shadow-sm px-5 py-4">
         <p
           class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
         >
@@ -216,7 +216,7 @@ onMounted(async () => {
           {{ fiscalCount }}
         </p>
       </div>
-      <div class="bg-card rounded-xl border shadow-sm px-5 py-4">
+      <div class="rounded-xl border bg-card shadow-sm px-5 py-4">
         <p
           class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
         >
@@ -226,7 +226,7 @@ onMounted(async () => {
           {{ internalCount }}
         </p>
       </div>
-      <div class="bg-card rounded-xl border shadow-sm px-5 py-4">
+      <div class="rounded-xl border bg-card shadow-sm px-5 py-4">
         <p
           class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
         >
@@ -239,7 +239,7 @@ onMounted(async () => {
     </div>
 
     <!-- Filter bar -->
-    <div class="bg-card rounded-xl border shadow-sm px-5 py-4 mb-4">
+    <div class="rounded-xl border bg-card shadow-sm px-5 py-4 mb-4">
       <div class="flex flex-col sm:flex-row gap-3 flex-wrap items-center">
         <!-- Search -->
         <div class="relative flex-1 min-w-48">
@@ -250,7 +250,7 @@ onMounted(async () => {
             v-model="searchQuery"
             type="text"
             placeholder="Buscar por nombre o SKU..."
-            class="w-full h-10 pl-9 pr-4 border rounded-lg text-sm transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground bg-card"
+            class="w-full h-10 pl-9 pr-4 border rounded-lg text-sm transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground bg-white"
           />
         </div>
 
@@ -289,8 +289,8 @@ onMounted(async () => {
             :class="[
               'px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer',
               typeFilter === tab.value
-                ? 'bg-card text-primary shadow-sm'
-                : 'text-muted-foreground hover:text-text-brand',
+                ? 'bg-white text-primary shadow-sm'
+                : 'text-muted-foreground hover:text-foreground',
             ]"
             @click="typeFilter = tab.value"
           >
@@ -301,7 +301,7 @@ onMounted(async () => {
     </div>
 
     <!-- Table card -->
-    <div class="bg-card rounded-xl border shadow-sm">
+    <div class="rounded-xl border bg-card shadow-sm">
       <!-- Loading skeleton -->
       <div v-if="loading" class="px-6 py-5 space-y-3">
         <div
@@ -336,7 +336,7 @@ onMounted(async () => {
         <button
           v-if="store.isOwner"
           type="button"
-          class="inline-flex items-center gap-2 h-10 px-5 bg-cta text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
+          class="inline-flex items-center gap-2 h-10 px-5 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
           @click="openCreate"
         >
           <Plus class="w-4 h-4" />
@@ -400,7 +400,7 @@ onMounted(async () => {
             >
               <!-- Name + SKU -->
               <td class="px-6 py-4">
-                <p class="text-sm font-semibold text-text-brand">
+                <p class="text-sm font-semibold text-foreground">
                   {{ product.name }}
                 </p>
                 <p
@@ -431,7 +431,7 @@ onMounted(async () => {
               </td>
 
               <!-- Price -->
-              <td class="px-6 py-4 text-sm font-mono text-text-brand">
+              <td class="px-6 py-4 text-sm font-mono text-foreground">
                 {{ formatPrice(product) }}
                 <span
                   v-if="product.is_fiscal && product.tax_rate != null"

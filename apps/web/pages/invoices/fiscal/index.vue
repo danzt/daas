@@ -151,7 +151,7 @@ function formatCurrency(value: number) {
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
-        <h1 class="text-2xl font-bold font-heading text-text-brand">
+        <h1 class="text-2xl font-bold font-heading text-foreground">
           Facturas Fiscales
         </h1>
         <p class="text-sm text-muted-foreground mt-0.5">
@@ -160,7 +160,7 @@ function formatCurrency(value: number) {
       </div>
       <button
         type="button"
-        class="flex items-center gap-2 h-10 px-5 bg-cta text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
+        class="flex items-center gap-2 h-10 px-5 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
         @click="formModalOpen = true"
       >
         <Plus class="w-4 h-4" />
@@ -170,7 +170,7 @@ function formatCurrency(value: number) {
 
     <!-- Stats -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      <div class="bg-card rounded-xl border shadow-sm px-5 py-4">
+      <div class="rounded-xl border bg-card shadow-sm px-5 py-4">
         <div class="flex items-center gap-3">
           <div
             class="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0"
@@ -179,7 +179,7 @@ function formatCurrency(value: number) {
           </div>
           <div>
             <p
-              class="text-2xl font-bold font-heading text-text-brand tabular-nums"
+              class="text-2xl font-bold font-heading text-foreground tabular-nums"
             >
               {{ issuedCount }}
             </p>
@@ -188,7 +188,7 @@ function formatCurrency(value: number) {
         </div>
       </div>
 
-      <div class="bg-card rounded-xl border shadow-sm px-5 py-4">
+      <div class="rounded-xl border bg-card shadow-sm px-5 py-4">
         <div class="flex items-center gap-3">
           <div
             class="w-9 h-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0"
@@ -197,7 +197,7 @@ function formatCurrency(value: number) {
           </div>
           <div>
             <p
-              class="text-2xl font-bold font-heading text-text-brand tabular-nums"
+              class="text-2xl font-bold font-heading text-foreground tabular-nums"
             >
               {{ pendingCount }}
             </p>
@@ -206,7 +206,7 @@ function formatCurrency(value: number) {
         </div>
       </div>
 
-      <div class="bg-card rounded-xl border shadow-sm px-5 py-4">
+      <div class="rounded-xl border bg-card shadow-sm px-5 py-4">
         <div class="flex items-center gap-3">
           <div
             class="w-9 h-9 rounded-lg bg-orange-50 flex items-center justify-center flex-shrink-0"
@@ -215,7 +215,7 @@ function formatCurrency(value: number) {
           </div>
           <div>
             <p
-              class="text-2xl font-bold font-heading text-text-brand tabular-nums"
+              class="text-2xl font-bold font-heading text-foreground tabular-nums"
             >
               {{ failedCount }}
             </p>
@@ -224,7 +224,7 @@ function formatCurrency(value: number) {
         </div>
       </div>
 
-      <div class="bg-card rounded-xl border shadow-sm px-5 py-4">
+      <div class="rounded-xl border bg-card shadow-sm px-5 py-4">
         <div class="flex items-center gap-3">
           <div
             class="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0"
@@ -233,7 +233,7 @@ function formatCurrency(value: number) {
           </div>
           <div>
             <p
-              class="text-2xl font-bold font-heading text-text-brand tabular-nums"
+              class="text-2xl font-bold font-heading text-foreground tabular-nums"
             >
               {{ cancelledCount }}
             </p>
@@ -244,7 +244,7 @@ function formatCurrency(value: number) {
     </div>
 
     <!-- Filters + Table -->
-    <div class="bg-card rounded-xl border shadow-sm">
+    <div class="rounded-xl border bg-card shadow-sm">
       <div class="px-5 py-4 border-b flex flex-col sm:flex-row gap-3">
         <div class="flex items-center gap-1 bg-muted rounded-lg p-1">
           <button
@@ -254,7 +254,7 @@ function formatCurrency(value: number) {
             :class="[
               'px-3 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer',
               statusFilter === tab.key
-                ? 'bg-card text-text-brand shadow-sm'
+                ? 'bg-white text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground',
             ]"
             @click="statusFilter = tab.key"
@@ -277,7 +277,7 @@ function formatCurrency(value: number) {
             v-model="searchQuery"
             type="text"
             placeholder="Buscar por número fiscal o cliente..."
-            class="w-full h-9 pl-9 pr-4 border rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400"
+            class="w-full h-9 pl-9 pr-4 border rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground"
           />
         </div>
       </div>
@@ -311,7 +311,7 @@ function formatCurrency(value: number) {
             <FolderOpen class="w-7 h-7 text-muted-foreground/40" />
           </div>
           <div class="text-center">
-            <p class="text-sm font-semibold text-text-brand">
+            <p class="text-sm font-semibold text-foreground">
               {{
                 invoices.length === 0
                   ? "Aún no hay facturas fiscales"
@@ -329,7 +329,7 @@ function formatCurrency(value: number) {
           <button
             v-if="invoices.length === 0"
             type="button"
-            class="flex items-center gap-2 h-9 px-4 bg-cta text-white text-xs font-semibold rounded-lg hover:opacity-90 transition-all cursor-pointer"
+            class="flex items-center gap-2 h-9 px-4 bg-primary text-white text-xs font-semibold rounded-lg hover:opacity-90 transition-all cursor-pointer"
             @click="formModalOpen = true"
           >
             <Plus class="w-3.5 h-3.5" />
@@ -389,12 +389,12 @@ function formatCurrency(value: number) {
               class="hover:bg-muted/30 transition-colors duration-150"
             >
               <td class="px-5 py-4">
-                <span class="text-sm font-semibold font-mono text-text-brand">
+                <span class="text-sm font-semibold font-mono text-foreground">
                   {{ inv.fiscal_number || "—" }}
                 </span>
               </td>
               <td class="px-5 py-4">
-                <p class="text-sm text-text-brand">
+                <p class="text-sm text-foreground">
                   {{ inv.customer_name || "Consumidor Final" }}
                 </p>
                 <p
@@ -417,7 +417,7 @@ function formatCurrency(value: number) {
               </td>
               <td class="px-4 py-4 text-right">
                 <span
-                  class="text-sm font-semibold tabular-nums text-text-brand"
+                  class="text-sm font-semibold tabular-nums text-foreground"
                 >
                   {{ formatCurrency(inv.total) }}
                 </span>
@@ -444,7 +444,7 @@ function formatCurrency(value: number) {
               <td class="px-5 py-4 text-right">
                 <NuxtLink
                   :to="`/invoices/fiscal/${inv.id}`"
-                  class="inline-flex items-center gap-1.5 h-8 px-3 border text-xs font-semibold text-muted-foreground rounded-lg hover:bg-muted hover:text-text-brand transition-all duration-200"
+                  class="inline-flex items-center gap-1.5 h-8 px-3 border text-xs font-semibold text-muted-foreground rounded-lg hover:bg-muted hover:text-foreground transition-all duration-200"
                 >
                   <Eye class="w-3.5 h-3.5" />
                   Ver

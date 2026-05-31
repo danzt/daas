@@ -168,7 +168,7 @@ function formatTaxRate(rate: number) {
   <div class="p-6 space-y-6">
     <button
       type="button"
-      class="flex items-center gap-2 text-sm text-muted-foreground hover:text-text-brand transition-colors cursor-pointer"
+      class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
       @click="router.push('/invoices/fiscal')"
     >
       <ArrowLeft class="w-4 h-4" />
@@ -195,7 +195,7 @@ function formatTaxRate(rate: number) {
 
     <template v-else-if="invoice">
       <!-- Header card -->
-      <div class="bg-card rounded-xl border shadow-sm p-6">
+      <div class="rounded-xl border bg-card shadow-sm p-6">
         <div
           class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4"
         >
@@ -208,7 +208,7 @@ function formatTaxRate(rate: number) {
             <div>
               <div class="flex items-center gap-3 flex-wrap">
                 <h1
-                  class="text-xl font-bold font-heading text-text-brand font-mono"
+                  class="text-xl font-bold font-heading text-foreground font-mono"
                 >
                   {{ invoice.fiscal_number ?? "Sin número fiscal" }}
                 </h1>
@@ -327,18 +327,18 @@ function formatTaxRate(rate: number) {
       <!-- 2-col: customer info + lines -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Customer -->
-        <div class="bg-card rounded-xl border shadow-sm p-5">
-          <h2 class="text-sm font-bold text-text-brand mb-4">Cliente</h2>
+        <div class="rounded-xl border bg-card shadow-sm p-5">
+          <h2 class="text-sm font-bold text-foreground mb-4">Cliente</h2>
           <div class="space-y-3">
             <div>
               <p class="text-xs text-muted-foreground">Nombre</p>
-              <p class="text-sm font-semibold text-text-brand">
+              <p class="text-sm font-semibold text-foreground">
                 {{ invoice.customer_name || "Consumidor Final" }}
               </p>
             </div>
             <div>
               <p class="text-xs text-muted-foreground">Identificación</p>
-              <p class="text-sm font-semibold text-text-brand">
+              <p class="text-sm font-semibold text-foreground">
                 {{
                   CUSTOMER_ID_LABELS[invoice.customer_id_type] ??
                   invoice.customer_id_type
@@ -350,17 +350,17 @@ function formatTaxRate(rate: number) {
             </div>
             <div v-if="invoice.notes">
               <p class="text-xs text-muted-foreground">Notas</p>
-              <p class="text-sm text-text-brand">{{ invoice.notes }}</p>
+              <p class="text-sm text-foreground">{{ invoice.notes }}</p>
             </div>
           </div>
         </div>
 
         <!-- Lines + totals -->
         <div
-          class="lg:col-span-2 bg-card rounded-xl border shadow-sm overflow-hidden"
+          class="lg:col-span-2 rounded-xl border bg-card shadow-sm overflow-hidden"
         >
           <div class="px-5 py-4 border-b">
-            <h2 class="text-sm font-bold text-text-brand">Detalle con IVA</h2>
+            <h2 class="text-sm font-bold text-foreground">Detalle con IVA</h2>
           </div>
           <table class="w-full">
             <thead>
@@ -399,7 +399,7 @@ function formatTaxRate(rate: number) {
                 class="hover:bg-muted/20 transition-colors"
               >
                 <td class="px-5 py-3">
-                  <p class="text-sm font-medium text-text-brand">
+                  <p class="text-sm font-medium text-foreground">
                     {{ line.description }}
                   </p>
                 </td>
@@ -419,14 +419,14 @@ function formatTaxRate(rate: number) {
                   >
                     {{ formatTaxRate(line.tax_rate) }}
                     <br />
-                    <span class="text-text-brand">{{
+                    <span class="text-foreground">{{
                       formatCurrency(line.tax_amount)
                     }}</span>
                   </span>
                 </td>
                 <td class="px-5 py-3 text-right">
                   <span
-                    class="text-sm font-semibold tabular-nums text-text-brand"
+                    class="text-sm font-semibold tabular-nums text-foreground"
                   >
                     {{ formatCurrency(line.subtotal) }}
                   </span>
@@ -463,12 +463,12 @@ function formatTaxRate(rate: number) {
               <tr class="border-t">
                 <td
                   colspan="4"
-                  class="px-5 py-4 text-right text-sm font-bold text-text-brand"
+                  class="px-5 py-4 text-right text-sm font-bold text-foreground"
                 >
                   Total
                 </td>
                 <td
-                  class="px-5 py-4 text-right text-lg font-bold font-heading text-text-brand tabular-nums"
+                  class="px-5 py-4 text-right text-lg font-bold font-heading text-foreground tabular-nums"
                 >
                   {{ formatCurrency(invoice.total) }}
                 </td>
@@ -502,7 +502,7 @@ function formatTaxRate(rate: number) {
           <div
             class="relative z-10 w-full max-w-md bg-white rounded-xl shadow-xl p-6"
           >
-            <h3 class="text-lg font-bold font-heading text-text-brand mb-1">
+            <h3 class="text-lg font-bold font-heading text-foreground mb-1">
               Cancelar factura fiscal
             </h3>
             <p class="text-sm text-muted-foreground mb-5">
@@ -510,7 +510,7 @@ function formatTaxRate(rate: number) {
               ¿Confirmar?
             </p>
             <div class="mb-5">
-              <label class="block text-sm font-semibold text-text-brand mb-1.5">
+              <label class="block text-sm font-semibold text-foreground mb-1.5">
                 Motivo
                 <span class="font-normal text-muted-foreground"
                   >(opcional)</span
@@ -520,7 +520,7 @@ function formatTaxRate(rate: number) {
                 v-model="cancelNotes"
                 rows="2"
                 placeholder="Motivo de cancelación..."
-                class="w-full px-4 py-3 border rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400 resize-none"
+                class="w-full px-4 py-3 border rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground resize-none"
               />
             </div>
             <div class="flex justify-end gap-3">

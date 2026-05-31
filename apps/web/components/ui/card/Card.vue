@@ -7,8 +7,9 @@ defineProps<Props>();
 
 <template>
   <div
+    data-slot="card"
     :class="[
-      'bg-white rounded-xl border border-gray-100 shadow-md',
+      'flex flex-col gap-4 overflow-hidden rounded-xl bg-card py-4 text-sm text-card-foreground ring-1 ring-foreground/10',
       $props.class,
     ]"
   >

@@ -1,6 +1,12 @@
 <script setup lang="ts">
 interface Props {
-  variant?: "default" | "success" | "warning" | "danger" | "secondary";
+  variant?:
+    | "default"
+    | "success"
+    | "warning"
+    | "danger"
+    | "secondary"
+    | "outline";
   class?: string;
 }
 
@@ -9,18 +15,20 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const variantClasses: Record<string, string> = {
-  default: "bg-primary/10 text-primary",
-  success: "bg-green-100 text-green-700",
-  warning: "bg-yellow-100 text-yellow-700",
-  danger: "bg-red-100 text-red-700",
-  secondary: "bg-gray-100 text-gray-600",
+  default: "bg-primary text-primary-foreground",
+  secondary: "bg-secondary text-secondary-foreground",
+  outline: "border bg-background text-foreground",
+  success:
+    "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+  warning: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+  danger: "bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300",
 };
 </script>
 
 <template>
   <span
     :class="[
-      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold',
+      'inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium whitespace-nowrap',
       variantClasses[props.variant],
       props.class,
     ]"

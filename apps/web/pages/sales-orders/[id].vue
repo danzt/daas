@@ -170,7 +170,7 @@ onMounted(load);
 
     <template v-else-if="order">
       <!-- Header card -->
-      <div class="bg-card border border-border rounded-xl p-6 space-y-5">
+      <div class="border bg-card rounded-xl p-6 space-y-5">
         <!-- Status + total -->
         <div class="flex items-start justify-between gap-4 flex-wrap">
           <div>
@@ -344,7 +344,7 @@ onMounted(load);
       </div>
 
       <!-- Lines table -->
-      <div class="bg-card border border-border rounded-xl overflow-hidden">
+      <div class="border bg-card rounded-xl overflow-hidden">
         <div class="px-6 py-4 border-b border-border">
           <h3 class="font-semibold text-foreground">
             Líneas de la orden ({{ order.lines?.length ?? 0 }})
