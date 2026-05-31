@@ -428,16 +428,16 @@ onMounted(load);
             <ShoppingCart class="w-5 h-5 text-primary" />
           </div>
           <div>
-            <h2 class="text-base font-semibold text-gray-900">
+            <h2 class="text-base font-semibold text-foreground">
               Nueva orden de compra
             </h2>
-            <p class="text-xs text-gray-400 mt-0.5">
+            <p class="text-xs text-muted-foreground mt-0.5">
               Completá los datos del pedido al proveedor
             </p>
           </div>
         </div>
         <button
-          class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-400"
+          class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-muted-foreground"
           @click="formOpen = false"
         >
           <X class="w-4 h-4" />
@@ -455,12 +455,12 @@ onMounted(load);
 
         <!-- Supplier -->
         <div class="space-y-1.5">
-          <label class="text-sm font-medium text-gray-700"
+          <label class="text-sm font-medium text-foreground"
             >Proveedor <span class="text-red-500">*</span></label
           >
           <select
             v-model="form.supplier_id"
-            class="w-full h-11 px-3 border border-gray-200 bg-white rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            class="w-full h-11 px-3 border border-input bg-white rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
           >
             <option value="">Seleccionar proveedor...</option>
             <option v-for="sup in suppliers" :key="sup.id" :value="sup.id">
@@ -471,11 +471,11 @@ onMounted(load);
 
         <!-- Notes -->
         <div class="space-y-1.5">
-          <label class="text-sm font-medium text-gray-700">Notas</label>
+          <label class="text-sm font-medium text-foreground">Notas</label>
           <textarea
             v-model="form.notes"
             rows="2"
-            class="w-full px-3 py-2 border border-gray-200 bg-white rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+            class="w-full px-3 py-2 border border-input bg-white rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
             placeholder="Observaciones de la orden..."
           />
         </div>
@@ -483,7 +483,7 @@ onMounted(load);
         <!-- Lines -->
         <div class="space-y-3">
           <div class="flex items-center justify-between">
-            <label class="text-sm font-medium text-gray-700"
+            <label class="text-sm font-medium text-foreground"
               >Líneas <span class="text-red-500">*</span></label
             >
             <button
@@ -498,14 +498,14 @@ onMounted(load);
           <div
             v-for="(line, idx) in form.lines"
             :key="idx"
-            class="bg-gray-50 border border-gray-100 rounded-lg p-4 space-y-3"
+            class="bg-gray-50 border border-border rounded-lg p-4 space-y-3"
           >
             <div class="flex items-center justify-between">
-              <span class="text-xs font-medium text-gray-400"
+              <span class="text-xs font-medium text-muted-foreground"
                 >Línea {{ idx + 1 }}</span
               >
               <button
-                class="p-1 rounded hover:bg-gray-100 text-gray-400 transition-colors"
+                class="p-1 rounded hover:bg-gray-100 text-muted-foreground transition-colors"
                 @click="removeLine(idx)"
               >
                 <Trash2 class="w-3.5 h-3.5" />
@@ -513,10 +513,12 @@ onMounted(load);
             </div>
 
             <div class="space-y-1.5">
-              <label class="text-xs font-medium text-gray-500">Producto</label>
+              <label class="text-xs font-medium text-muted-foreground"
+                >Producto</label
+              >
               <select
                 v-model="line.product_id"
-                class="w-full h-9 px-3 border border-gray-200 bg-white rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+                class="w-full h-9 px-3 border border-input bg-white rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
                 @change="onProductChange(line)"
               >
                 <option value="">Seleccionar producto...</option>
@@ -531,7 +533,7 @@ onMounted(load);
             </div>
 
             <div class="space-y-1.5">
-              <label class="text-xs font-medium text-gray-500"
+              <label class="text-xs font-medium text-muted-foreground"
                 >Descripción</label
               >
               <Input
@@ -543,7 +545,7 @@ onMounted(load);
 
             <div class="grid grid-cols-2 gap-3">
               <div class="space-y-1.5">
-                <label class="text-xs font-medium text-gray-500"
+                <label class="text-xs font-medium text-muted-foreground"
                   >Cantidad</label
                 >
                 <Input
@@ -555,7 +557,7 @@ onMounted(load);
                 />
               </div>
               <div class="space-y-1.5">
-                <label class="text-xs font-medium text-gray-500"
+                <label class="text-xs font-medium text-muted-foreground"
                   >Costo unitario</label
                 >
                 <Input
@@ -568,9 +570,9 @@ onMounted(load);
               </div>
             </div>
 
-            <div class="text-right text-xs text-gray-400">
+            <div class="text-right text-xs text-muted-foreground">
               Subtotal:
-              <span class="font-mono font-medium text-gray-700">{{
+              <span class="font-mono font-medium text-foreground">{{
                 fmtCurrency(line.quantity * line.unit_cost)
               }}</span>
             </div>
@@ -581,7 +583,7 @@ onMounted(load);
             v-if="form.lines.length > 0"
             class="flex items-center justify-between px-4 py-3 bg-primary/5 rounded-lg border border-primary/20"
           >
-            <span class="text-sm font-medium text-gray-700">Total</span>
+            <span class="text-sm font-medium text-foreground">Total</span>
             <span class="font-mono font-bold text-primary text-lg">{{
               fmtCurrency(formTotal)
             }}</span>

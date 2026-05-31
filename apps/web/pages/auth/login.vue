@@ -74,18 +74,20 @@ async function handleSubmit() {
     <!-- Brand -->
     <div class="text-center mb-8">
       <h1 class="text-4xl font-bold font-heading text-primary">DaaS</h1>
-      <p class="text-sm text-gray-500 mt-1 font-body">
+      <p class="text-sm text-muted-foreground mt-1 font-body">
         Gestión de inventario empresarial
       </p>
     </div>
 
     <!-- Card -->
-    <div class="bg-white rounded-xl border border-gray-100 shadow-md">
+    <div class="rounded-xl border bg-card border-border shadow-md">
       <div class="px-6 pt-6 pb-2">
         <h2 class="text-2xl font-bold font-heading text-foreground">
           Iniciar sesión
         </h2>
-        <p class="text-sm text-gray-500 mt-1">Accedé a tu cuenta de empresa</p>
+        <p class="text-sm text-muted-foreground mt-1">
+          Accedé a tu cuenta de empresa
+        </p>
       </div>
 
       <form
@@ -111,8 +113,8 @@ async function handleSubmit() {
             :class="[
               'w-full h-11 px-4 border rounded-lg text-base transition-all duration-200',
               'focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
-              'placeholder:text-gray-400',
-              emailError ? 'border-red-400' : 'border-gray-200',
+              'placeholder:text-muted-foreground',
+              emailError ? 'border-red-400' : 'border-input',
               loading && 'opacity-50 cursor-not-allowed',
             ]"
           />
@@ -140,14 +142,14 @@ async function handleSubmit() {
               :class="[
                 'w-full h-11 px-4 pr-11 border rounded-lg text-base transition-all duration-200',
                 'focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
-                'placeholder:text-gray-400',
-                passwordError ? 'border-red-400' : 'border-gray-200',
+                'placeholder:text-muted-foreground',
+                passwordError ? 'border-red-400' : 'border-input',
                 loading && 'opacity-50 cursor-not-allowed',
               ]"
             />
             <button
               type="button"
-              class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 transition-colors duration-200 cursor-pointer"
+              class="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-muted-foreground transition-colors duration-200 cursor-pointer"
               :aria-label="
                 showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'
               "
@@ -182,7 +184,7 @@ async function handleSubmit() {
         </button>
 
         <!-- Register link -->
-        <p class="text-center text-sm text-gray-500">
+        <p class="text-center text-sm text-muted-foreground">
           No tenés cuenta?
           <NuxtLink
             to="/auth/register"

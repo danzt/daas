@@ -176,7 +176,7 @@ onMounted(() => {
     </div>
 
     <!-- Content card -->
-    <div class="bg-white rounded-xl border shadow-sm">
+    <div class="rounded-xl border bg-card shadow-sm">
       <!-- Table header -->
       <div class="px-6 py-4 border-b flex items-center justify-between">
         <h2 class="text-base font-bold font-heading text-foreground">

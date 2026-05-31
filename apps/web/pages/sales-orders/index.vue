@@ -104,7 +104,7 @@ const formTotal = computed(() =>
 
 // ─── Status config ────────────────────────────────────────────────────────────
 const STATUS_CONFIG: Record<string, { label: string; class: string }> = {
-  draft: { label: "Borrador", class: "bg-gray-100 text-gray-600" },
+  draft: { label: "Borrador", class: "bg-gray-100 text-muted-foreground" },
   confirmed: { label: "Confirmada", class: "bg-blue-100 text-blue-700" },
   invoiced: { label: "Facturada", class: "bg-emerald-100 text-emerald-700" },
   cancelled: { label: "Cancelada", class: "bg-red-100 text-red-600" },
@@ -255,7 +255,9 @@ onMounted(load);
     <!-- Stats -->
     <div class="grid grid-cols-3 gap-4">
       <div class="border bg-card rounded-xl p-4 shadow-sm">
-        <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">
+        <p
+          class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+        >
           Borradores
         </p>
         <p class="text-3xl font-bold text-foreground mt-1">
@@ -263,7 +265,9 @@ onMounted(load);
         </p>
       </div>
       <div class="border bg-card rounded-xl p-4 shadow-sm">
-        <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">
+        <p
+          class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+        >
           Confirmadas
         </p>
         <p class="text-3xl font-bold text-blue-600 mt-1">
@@ -271,7 +275,9 @@ onMounted(load);
         </p>
       </div>
       <div class="border bg-card rounded-xl p-4 shadow-sm">
-        <p class="text-xs font-semibold uppercase tracking-wide text-gray-400">
+        <p
+          class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+        >
           Facturadas
         </p>
         <p class="text-3xl font-bold text-emerald-600 mt-1">
@@ -284,11 +290,11 @@ onMounted(load);
     <div class="flex items-center gap-3 flex-wrap">
       <div class="relative flex-1 min-w-48">
         <Search
-          class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+          class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
         />
         <input
           v-model="searchQuery"
-          class="w-full h-10 pl-9 pr-3 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+          class="w-full h-10 pl-9 pr-3 rounded-lg border border-input bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
           placeholder="Buscar por cliente..."
         />
       </div>
@@ -300,7 +306,7 @@ onMounted(load);
             'px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
             statusFilter === tab.key
               ? 'bg-white text-foreground shadow-sm'
-              : 'text-gray-500 hover:text-foreground',
+              : 'text-muted-foreground hover:text-foreground',
           ]"
           @click="statusFilter = tab.key"
         >
@@ -320,7 +326,7 @@ onMounted(load);
     <!-- Loading -->
     <div
       v-if="loading"
-      class="flex items-center justify-center py-20 text-gray-400"
+      class="flex items-center justify-center py-20 text-muted-foreground"
     >
       <Loader2 class="w-6 h-6 animate-spin mr-2" />
       Cargando órdenes...
@@ -329,7 +335,7 @@ onMounted(load);
     <!-- Empty -->
     <div
       v-else-if="!loading && filteredOrders.length === 0"
-      class="flex flex-col items-center justify-center py-20 text-gray-400 gap-3"
+      class="flex flex-col items-center justify-center py-20 text-muted-foreground gap-3"
     >
       <FolderOpen class="w-12 h-12 opacity-30" />
       <p class="text-sm">
@@ -355,24 +361,24 @@ onMounted(load);
     >
       <table class="w-full text-sm">
         <thead>
-          <tr class="border-b border-gray-100 bg-gray-50/50">
+          <tr class="border-b border-border bg-gray-50/50">
             <th
-              class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-400"
+              class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
             >
               Cliente
             </th>
             <th
-              class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-400"
+              class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
             >
               Estado
             </th>
             <th
-              class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-400 hidden md:table-cell"
+              class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground hidden md:table-cell"
             >
               Fecha
             </th>
             <th
-              class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-400"
+              class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground"
             >
               Total
             </th>
@@ -391,7 +397,7 @@ onMounted(load);
               </p>
               <p
                 v-if="order.notes"
-                class="text-xs text-gray-400 truncate max-w-48 mt-0.5"
+                class="text-xs text-muted-foreground truncate max-w-48 mt-0.5"
               >
                 {{ order.notes }}
               </p>
@@ -406,7 +412,9 @@ onMounted(load);
                 {{ STATUS_CONFIG[order.status]?.label }}
               </span>
             </td>
-            <td class="px-4 py-3 text-gray-400 hidden md:table-cell text-xs">
+            <td
+              class="px-4 py-3 text-muted-foreground hidden md:table-cell text-xs"
+            >
               {{ fmtDate(order.created_at) }}
             </td>
             <td
@@ -417,7 +425,7 @@ onMounted(load);
             <td class="px-4 py-3 text-right">
               <NuxtLink
                 :to="`/sales-orders/${order.id}`"
-                class="opacity-0 group-hover:opacity-100 inline-flex p-1.5 rounded-lg hover:bg-gray-100 transition-all text-gray-400"
+                class="opacity-0 group-hover:opacity-100 inline-flex p-1.5 rounded-lg hover:bg-gray-100 transition-all text-muted-foreground"
               >
                 <ChevronRight class="w-4 h-4" />
               </NuxtLink>
@@ -437,16 +445,16 @@ onMounted(load);
           <ShoppingBag class="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h2 class="text-base font-semibold text-gray-900">
+          <h2 class="text-base font-semibold text-foreground">
             Nueva orden de venta
           </h2>
-          <p class="text-xs text-gray-400 mt-0.5">
+          <p class="text-xs text-muted-foreground mt-0.5">
             Completá los datos del cliente y las líneas
           </p>
         </div>
       </div>
       <button
-        class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-400"
+        class="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-muted-foreground"
         @click="sheetOpen = false"
       >
         <X class="w-4 h-4" />
@@ -465,7 +473,9 @@ onMounted(load);
 
       <!-- Customer section -->
       <section class="space-y-4">
-        <h3 class="text-xs font-semibold uppercase tracking-wide text-gray-400">
+        <h3
+          class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+        >
           Datos del cliente
         </h3>
 
@@ -483,7 +493,7 @@ onMounted(load);
             <select
               id="customer_id_type"
               v-model="form.customer_id_type"
-              class="w-full h-11 px-4 border border-gray-200 rounded-lg text-base bg-white focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+              class="w-full h-11 px-4 border border-input rounded-lg text-base bg-white focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
             >
               <option value="anonymous">Anónimo</option>
               <option value="cedula">Cédula</option>
@@ -508,7 +518,7 @@ onMounted(load);
             id="notes"
             v-model="form.notes"
             rows="2"
-            class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm bg-white focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none placeholder:text-gray-400"
+            class="w-full px-4 py-2.5 border border-input rounded-lg text-sm bg-white focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none placeholder:text-muted-foreground"
             placeholder="Observaciones opcionales..."
           />
         </div>
@@ -518,7 +528,7 @@ onMounted(load);
       <section class="space-y-3">
         <div class="flex items-center justify-between">
           <h3
-            class="text-xs font-semibold uppercase tracking-wide text-gray-400"
+            class="text-xs font-semibold uppercase tracking-wide text-muted-foreground"
           >
             Líneas
             <span class="text-red-500 normal-case font-normal tracking-normal"
@@ -537,14 +547,14 @@ onMounted(load);
         <div
           v-for="(line, idx) in form.lines"
           :key="idx"
-          class="border border-gray-100 rounded-xl p-4 space-y-3 bg-gray-50/50"
+          class="border border-border rounded-xl p-4 space-y-3 bg-gray-50/50"
         >
           <div class="flex items-center justify-between">
-            <span class="text-xs font-semibold text-gray-400"
+            <span class="text-xs font-semibold text-muted-foreground"
               >Línea {{ idx + 1 }}</span
             >
             <button
-              class="p-1 rounded-md hover:bg-gray-200 text-gray-400 transition-colors"
+              class="p-1 rounded-md hover:bg-gray-200 text-muted-foreground transition-colors"
               @click="removeLine(idx)"
             >
               <Trash2 class="w-3.5 h-3.5" />
@@ -556,7 +566,7 @@ onMounted(load);
             <Label>Producto</Label>
             <select
               v-model="line.product_id"
-              class="w-full h-11 px-4 border border-gray-200 rounded-lg text-sm bg-white focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
+              class="w-full h-11 px-4 border border-input rounded-lg text-sm bg-white focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 cursor-pointer"
               @change="onProductChange(line)"
             >
               <option value="">Seleccionar producto...</option>
@@ -598,9 +608,9 @@ onMounted(load);
           </div>
 
           <div class="flex justify-end">
-            <span class="text-xs text-gray-400">
+            <span class="text-xs text-muted-foreground">
               Subtotal:
-              <span class="font-mono font-semibold text-gray-700 ml-1">
+              <span class="font-mono font-semibold text-foreground ml-1">
                 {{ fmtCurrency(line.quantity * line.unit_price) }}
               </span>
             </span>

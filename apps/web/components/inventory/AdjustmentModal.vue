@@ -122,14 +122,14 @@ watch(
         >
           <!-- Header -->
           <div
-            class="flex items-center justify-between px-6 py-5 border-b border-gray-100"
+            class="flex items-center justify-between px-6 py-5 border-b border-border"
           >
             <h2 class="text-xl font-bold font-heading text-foreground">
               Ajuste de Stock
             </h2>
             <button
               type="button"
-              class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all duration-200 cursor-pointer"
+              class="p-1.5 rounded-lg text-muted-foreground hover:text-muted-foreground hover:bg-gray-100 transition-all duration-200 cursor-pointer"
               @click="close"
             >
               <X class="w-5 h-5" />
@@ -141,14 +141,14 @@ watch(
             <!-- Product info -->
             <div class="rounded-lg bg-gray-50 px-4 py-3">
               <p
-                class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5"
+                class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5"
               >
                 Producto
               </p>
               <p class="text-sm font-semibold text-foreground">
                 {{ productName }}
               </p>
-              <p class="text-xs text-gray-500 mt-0.5">
+              <p class="text-xs text-muted-foreground mt-0.5">
                 Stock actual:
                 <span class="font-semibold text-foreground">{{
                   currentStock
@@ -174,7 +174,7 @@ watch(
                 class="block text-sm font-semibold text-foreground mb-1.5"
               >
                 Delta <span class="text-red-500">*</span>
-                <span class="text-gray-400 font-normal ml-1">
+                <span class="text-muted-foreground font-normal ml-1">
                   (positivo = entrada, negativo = salida)
                 </span>
               </label>
@@ -186,10 +186,10 @@ watch(
                 placeholder="Ej: 10 o -5"
                 :class="[
                   'w-full h-11 px-4 border rounded-lg text-base transition-all duration-200',
-                  'focus:outline-none focus:ring-2 placeholder:text-gray-400',
+                  'focus:outline-none focus:ring-2 placeholder:text-muted-foreground',
                   deltaError
                     ? 'border-red-400 focus:border-red-400 focus:ring-red-200'
-                    : 'border-gray-200 focus:border-primary focus:ring-primary/20',
+                    : 'border-input focus:border-primary focus:ring-primary/20',
                 ]"
               />
               <p v-if="deltaError" class="mt-1 text-xs text-red-500">
@@ -219,7 +219,7 @@ watch(
                 >
                   {{ currentStock }} → {{ newStock.toFixed(3) }}
                 </span>
-                <span class="text-gray-500 ml-1">
+                <span class="text-muted-foreground ml-1">
                   ({{ isIncrease ? "+" : "" }}{{ delta }})
                 </span>
               </div>
@@ -252,10 +252,10 @@ watch(
                 placeholder="Ej: Conteo físico, merma, devolución de proveedor..."
                 :class="[
                   'w-full px-4 py-3 border rounded-lg text-base transition-all duration-200 resize-none',
-                  'focus:outline-none focus:ring-2 placeholder:text-gray-400',
+                  'focus:outline-none focus:ring-2 placeholder:text-muted-foreground',
                   notesError
                     ? 'border-red-400 focus:border-red-400 focus:ring-red-200'
-                    : 'border-gray-200 focus:border-primary focus:ring-primary/20',
+                    : 'border-input focus:border-primary focus:ring-primary/20',
                 ]"
               />
               <p v-if="notesError" class="mt-1 text-xs text-red-500">
@@ -266,11 +266,11 @@ watch(
 
           <!-- Footer -->
           <div
-            class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3"
+            class="px-6 py-4 border-t border-border flex items-center justify-end gap-3"
           >
             <button
               type="button"
-              class="h-10 px-5 border border-gray-200 text-gray-600 text-sm font-semibold rounded-lg hover:bg-gray-50 transition-all duration-200 cursor-pointer"
+              class="h-10 px-5 border border-input text-muted-foreground text-sm font-semibold rounded-lg hover:bg-gray-50 transition-all duration-200 cursor-pointer"
               @click="close"
             >
               Cancelar

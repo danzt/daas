@@ -196,7 +196,7 @@ onMounted(async () => {
 
     <!-- Stats row -->
     <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      <div class="bg-white rounded-xl border shadow-sm px-5 py-4">
+      <div class="rounded-xl border bg-card shadow-sm px-5 py-4">
         <p
           class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
         >
@@ -206,7 +206,7 @@ onMounted(async () => {
           {{ totalProducts }}
         </p>
       </div>
-      <div class="bg-white rounded-xl border shadow-sm px-5 py-4">
+      <div class="rounded-xl border bg-card shadow-sm px-5 py-4">
         <p
           class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
         >
@@ -216,7 +216,7 @@ onMounted(async () => {
           {{ fiscalCount }}
         </p>
       </div>
-      <div class="bg-white rounded-xl border shadow-sm px-5 py-4">
+      <div class="rounded-xl border bg-card shadow-sm px-5 py-4">
         <p
           class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
         >
@@ -226,7 +226,7 @@ onMounted(async () => {
           {{ internalCount }}
         </p>
       </div>
-      <div class="bg-white rounded-xl border shadow-sm px-5 py-4">
+      <div class="rounded-xl border bg-card shadow-sm px-5 py-4">
         <p
           class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
         >
@@ -239,7 +239,7 @@ onMounted(async () => {
     </div>
 
     <!-- Filter bar -->
-    <div class="bg-white rounded-xl border shadow-sm px-5 py-4 mb-4">
+    <div class="rounded-xl border bg-card shadow-sm px-5 py-4 mb-4">
       <div class="flex flex-col sm:flex-row gap-3 flex-wrap items-center">
         <!-- Search -->
         <div class="relative flex-1 min-w-48">
@@ -301,7 +301,7 @@ onMounted(async () => {
     </div>
 
     <!-- Table card -->
-    <div class="bg-white rounded-xl border shadow-sm">
+    <div class="rounded-xl border bg-card shadow-sm">
       <!-- Loading skeleton -->
       <div v-if="loading" class="px-6 py-5 space-y-3">
         <div

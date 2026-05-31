@@ -162,7 +162,7 @@ function formatCurrency(value: number) {
 
     <template v-else-if="invoice">
       <!-- Header card -->
-      <div class="bg-white rounded-xl border shadow-sm p-6">
+      <div class="rounded-xl border bg-card shadow-sm p-6">
         <div
           class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4"
         >
@@ -252,7 +252,7 @@ function formatCurrency(value: number) {
       <!-- 2-col layout: customer + lines -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Customer info -->
-        <div class="bg-white rounded-xl border shadow-sm p-5">
+        <div class="rounded-xl border bg-card shadow-sm p-5">
           <h2 class="text-sm font-bold text-foreground mb-4">Cliente</h2>
           <div class="space-y-3">
             <div>
@@ -282,7 +282,7 @@ function formatCurrency(value: number) {
 
         <!-- Lines table -->
         <div
-          class="lg:col-span-2 bg-white rounded-xl border shadow-sm overflow-hidden"
+          class="lg:col-span-2 rounded-xl border bg-card shadow-sm overflow-hidden"
         >
           <div class="px-5 py-4 border-b">
             <h2 class="text-sm font-bold text-foreground">Detalle</h2>
@@ -402,7 +402,7 @@ function formatCurrency(value: number) {
                 v-model="cancelNotes"
                 rows="2"
                 placeholder="Motivo de cancelación..."
-                class="w-full px-4 py-3 border rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400 resize-none"
+                class="w-full px-4 py-3 border rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground resize-none"
               />
             </div>
             <div class="flex justify-end gap-3">

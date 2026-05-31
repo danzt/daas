@@ -152,7 +152,7 @@ function formatCurrency(value: number) {
 
     <!-- Stats -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      <div class="bg-white rounded-xl border shadow-sm px-5 py-4">
+      <div class="rounded-xl border bg-card shadow-sm px-5 py-4">
         <div class="flex items-center gap-3">
           <div
             class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"
@@ -170,7 +170,7 @@ function formatCurrency(value: number) {
         </div>
       </div>
 
-      <div class="bg-white rounded-xl border shadow-sm px-5 py-4">
+      <div class="rounded-xl border bg-card shadow-sm px-5 py-4">
         <div class="flex items-center gap-3">
           <div
             class="w-9 h-9 rounded-lg bg-muted flex items-center justify-center flex-shrink-0"
@@ -188,7 +188,7 @@ function formatCurrency(value: number) {
         </div>
       </div>
 
-      <div class="bg-white rounded-xl border shadow-sm px-5 py-4">
+      <div class="rounded-xl border bg-card shadow-sm px-5 py-4">
         <div class="flex items-center gap-3">
           <div
             class="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0"
@@ -206,7 +206,7 @@ function formatCurrency(value: number) {
         </div>
       </div>
 
-      <div class="bg-white rounded-xl border shadow-sm px-5 py-4">
+      <div class="rounded-xl border bg-card shadow-sm px-5 py-4">
         <div class="flex items-center gap-3">
           <div
             class="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0"
@@ -226,7 +226,7 @@ function formatCurrency(value: number) {
     </div>
 
     <!-- Filters -->
-    <div class="bg-white rounded-xl border shadow-sm">
+    <div class="rounded-xl border bg-card shadow-sm">
       <div class="px-5 py-4 border-b flex flex-col sm:flex-row gap-3">
         <!-- Status tabs -->
         <div class="flex items-center gap-1 bg-muted rounded-lg p-1">
@@ -255,7 +255,7 @@ function formatCurrency(value: number) {
             v-model="searchQuery"
             type="text"
             placeholder="Buscar por correlativo o cliente..."
-            class="w-full h-9 pl-9 pr-4 border rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400"
+            class="w-full h-9 pl-9 pr-4 border rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground"
           />
         </div>
       </div>

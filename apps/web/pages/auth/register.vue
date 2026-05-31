@@ -113,19 +113,21 @@ const selectedCountryLabel = computed(
     <!-- Brand -->
     <div class="text-center mb-8">
       <h1 class="text-4xl font-bold font-heading text-primary">DaaS</h1>
-      <p class="text-sm text-gray-500 mt-1 font-body">Registrá tu empresa</p>
+      <p class="text-sm text-muted-foreground mt-1 font-body">
+        Registrá tu empresa
+      </p>
     </div>
 
     <!-- Card -->
-    <div class="bg-white rounded-xl border border-gray-100 shadow-md">
+    <div class="rounded-xl border bg-card border-border shadow-md">
       <!-- Header with step indicator -->
-      <div class="px-6 pt-6 pb-4 border-b border-gray-100">
+      <div class="px-6 pt-6 pb-4 border-b border-border">
         <div class="flex items-center justify-between mb-3">
           <h2 class="text-xl font-bold font-heading text-foreground">
             {{ step === 1 ? "Datos de la empresa" : "Detalles de cuenta" }}
           </h2>
           <span
-            class="text-xs font-semibold text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full"
+            class="text-xs font-semibold text-muted-foreground bg-gray-100 px-2.5 py-1 rounded-full"
           >
             {{ step }} de 2
           </span>
@@ -166,8 +168,8 @@ const selectedCountryLabel = computed(
             autocomplete="organization"
             :class="[
               'w-full h-11 px-4 border rounded-lg text-base transition-all duration-200',
-              'focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400',
-              errors.businessName ? 'border-red-400' : 'border-gray-200',
+              'focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground',
+              errors.businessName ? 'border-red-400' : 'border-input',
             ]"
           />
           <p v-if="errors.businessName" class="text-xs text-red-500 mt-1">
@@ -189,7 +191,7 @@ const selectedCountryLabel = computed(
             :class="[
               'w-full h-11 px-4 border rounded-lg text-base transition-all duration-200 bg-white cursor-pointer',
               'focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20',
-              errors.countryCode ? 'border-red-400' : 'border-gray-200',
+              errors.countryCode ? 'border-red-400' : 'border-input',
             ]"
           >
             <option value="" disabled>Seleccioná un país...</option>
@@ -222,8 +224,8 @@ const selectedCountryLabel = computed(
             autocomplete="email"
             :class="[
               'w-full h-11 px-4 border rounded-lg text-base transition-all duration-200',
-              'focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400',
-              errors.ownerEmail ? 'border-red-400' : 'border-gray-200',
+              'focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground',
+              errors.ownerEmail ? 'border-red-400' : 'border-input',
             ]"
           />
           <p v-if="errors.ownerEmail" class="text-xs text-red-500 mt-1">
@@ -248,13 +250,13 @@ const selectedCountryLabel = computed(
               autocomplete="new-password"
               :class="[
                 'w-full h-11 px-4 pr-11 border rounded-lg text-base transition-all duration-200',
-                'focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400',
-                errors.password ? 'border-red-400' : 'border-gray-200',
+                'focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground',
+                errors.password ? 'border-red-400' : 'border-input',
               ]"
             />
             <button
               type="button"
-              class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 transition-colors duration-200 cursor-pointer"
+              class="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-muted-foreground transition-colors duration-200 cursor-pointer"
               @click="showPassword = !showPassword"
             >
               <component :is="showPassword ? EyeOff : Eye" class="w-4 h-4" />
@@ -282,13 +284,13 @@ const selectedCountryLabel = computed(
               autocomplete="new-password"
               :class="[
                 'w-full h-11 px-4 pr-11 border rounded-lg text-base transition-all duration-200',
-                'focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400',
-                errors.confirmPassword ? 'border-red-400' : 'border-gray-200',
+                'focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground',
+                errors.confirmPassword ? 'border-red-400' : 'border-input',
               ]"
             />
             <button
               type="button"
-              class="absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 hover:text-gray-600 transition-colors duration-200 cursor-pointer"
+              class="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-muted-foreground transition-colors duration-200 cursor-pointer"
               @click="showConfirmPassword = !showConfirmPassword"
             >
               <component
@@ -323,7 +325,7 @@ const selectedCountryLabel = computed(
           class="rounded-lg bg-background border border-primary/20 p-4 space-y-2"
         >
           <p
-            class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2"
+            class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2"
           >
             Resumen
           </p>
@@ -333,7 +335,7 @@ const selectedCountryLabel = computed(
               <p class="text-sm font-semibold text-foreground">
                 {{ businessName }}
               </p>
-              <p class="text-xs text-gray-500">
+              <p class="text-xs text-muted-foreground">
                 {{ selectedCountryLabel }}
               </p>
             </div>
@@ -353,7 +355,7 @@ const selectedCountryLabel = computed(
             class="block text-sm font-semibold text-foreground mb-1.5"
           >
             <span>ID Fiscal</span>
-            <span class="text-gray-400 font-normal ml-1">
+            <span class="text-muted-foreground font-normal ml-1">
               ({{ countryCode === "VE" ? "RIF — requerido" : "opcional" }})
             </span>
           </label>
@@ -366,11 +368,11 @@ const selectedCountryLabel = computed(
             "
             :class="[
               'w-full h-11 px-4 border rounded-lg text-base transition-all duration-200',
-              'focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400',
-              'border-gray-200',
+              'focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground',
+              'border-input',
             ]"
           />
-          <p class="text-xs text-gray-400 mt-1">
+          <p class="text-xs text-muted-foreground mt-1">
             Podrás modificarlo luego en Configuración.
           </p>
         </div>
@@ -409,7 +411,7 @@ const selectedCountryLabel = computed(
 
       <!-- Login link -->
       <div class="px-6 pb-5 text-center">
-        <p class="text-sm text-gray-500">
+        <p class="text-sm text-muted-foreground">
           Ya tenés cuenta?
           <NuxtLink
             to="/auth/login"

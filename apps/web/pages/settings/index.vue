@@ -230,7 +230,7 @@ onMounted(() => {
 
     <!-- Tab: Empresa -->
     <div v-if="activeTab === 'empresa'">
-      <div class="bg-white rounded-xl border shadow-sm max-w-2xl">
+      <div class="rounded-xl border bg-card shadow-sm max-w-2xl">
         <div class="px-6 py-5 border-b flex items-center justify-between">
           <h2 class="text-lg font-bold font-heading text-foreground">
             Perfil de empresa
@@ -351,7 +351,7 @@ onMounted(() => {
 
     <!-- Tab: Usuarios -->
     <div v-if="activeTab === 'usuarios'">
-      <div class="bg-white rounded-xl border shadow-sm">
+      <div class="rounded-xl border bg-card shadow-sm">
         <div class="px-6 py-5 border-b flex items-center justify-between">
           <h2 class="text-lg font-bold font-heading text-foreground">
             Usuarios del tenant
@@ -559,7 +559,7 @@ onMounted(() => {
 
     <!-- Tab: Integraciones -->
     <div v-if="activeTab === 'integraciones'">
-      <div class="bg-white rounded-xl border shadow-sm max-w-2xl">
+      <div class="rounded-xl border bg-card shadow-sm max-w-2xl">
         <div class="px-6 py-5 border-b flex items-center justify-between">
           <div class="flex items-center gap-3">
             <div

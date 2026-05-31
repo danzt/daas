@@ -284,7 +284,7 @@ function handleClose() {
                     type="text"
                     placeholder="V-12345678"
                     :disabled="customerIdType === 'anonymous'"
-                    class="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/20 placeholder:text-gray-400 disabled:bg-muted disabled:text-muted-foreground"
+                    class="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/20 placeholder:text-muted-foreground disabled:bg-muted disabled:text-muted-foreground"
                   />
                 </div>
                 <div>
@@ -297,7 +297,7 @@ function handleClose() {
                     v-model="customerName"
                     type="text"
                     placeholder="Consumidor Final"
-                    class="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/20 placeholder:text-gray-400"
+                    class="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/20 placeholder:text-muted-foreground"
                   />
                 </div>
               </div>
@@ -348,7 +348,7 @@ function handleClose() {
                       step="0.001"
                       placeholder="Cant."
                       :class="[
-                        'w-full h-10 px-3 border rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400',
+                        'w-full h-10 px-3 border rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground',
                         errors[`line_${i}_qty`]
                           ? 'border-red-400'
                           : 'focus:border-primary',
@@ -363,7 +363,7 @@ function handleClose() {
                       step="0.01"
                       placeholder="Precio"
                       :class="[
-                        'w-full h-10 px-3 border rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400',
+                        'w-full h-10 px-3 border rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground',
                         errors[`line_${i}_price`]
                           ? 'border-red-400'
                           : 'focus:border-primary',
@@ -425,7 +425,7 @@ function handleClose() {
                 v-model="notes"
                 rows="2"
                 placeholder="Observaciones..."
-                class="w-full px-4 py-3 border rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400 resize-none"
+                class="w-full px-4 py-3 border rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground resize-none"
               />
             </div>
           </div>

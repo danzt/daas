@@ -221,14 +221,14 @@ function handleClose() {
         >
           <!-- Header -->
           <div
-            class="flex items-center justify-between px-6 py-5 border-b border-gray-100"
+            class="flex items-center justify-between px-6 py-5 border-b border-border"
           >
             <h2 class="text-xl font-bold font-heading text-foreground">
               {{ title }}
             </h2>
             <button
               type="button"
-              class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all duration-200 cursor-pointer"
+              class="p-1.5 rounded-lg text-muted-foreground hover:text-muted-foreground hover:bg-gray-100 transition-all duration-200 cursor-pointer"
               @click="handleClose"
             >
               <X class="w-5 h-5" />
@@ -251,14 +251,14 @@ function handleClose() {
               :class="
                 isFiscal
                   ? 'border-primary bg-primary/5'
-                  : 'border-gray-200 bg-gray-50'
+                  : 'border-input bg-gray-50'
               "
             >
               <div>
                 <p class="text-sm font-bold text-foreground">
                   Tipo de producto
                 </p>
-                <p class="text-xs text-gray-500 mt-0.5">
+                <p class="text-xs text-muted-foreground mt-0.5">
                   {{
                     isFiscal
                       ? "Fiscal — emite comprobante, lleva IVA"
@@ -269,13 +269,15 @@ function handleClose() {
               <div class="flex items-center gap-3">
                 <span
                   class="text-sm font-semibold"
-                  :class="isFiscal ? 'text-gray-400' : 'text-foreground'"
+                  :class="
+                    isFiscal ? 'text-muted-foreground' : 'text-foreground'
+                  "
                   >Interno</span
                 >
                 <Switch v-model="isFiscal" class="flex-shrink-0" />
                 <span
                   class="text-sm font-semibold"
-                  :class="isFiscal ? 'text-primary' : 'text-gray-400'"
+                  :class="isFiscal ? 'text-primary' : 'text-muted-foreground'"
                   >Fiscal</span
                 >
               </div>
@@ -296,10 +298,10 @@ function handleClose() {
                 placeholder="Nombre del producto"
                 :class="[
                   'w-full h-11 px-4 border rounded-lg text-base transition-all duration-200',
-                  'focus:outline-none focus:ring-2 placeholder:text-gray-400',
+                  'focus:outline-none focus:ring-2 placeholder:text-muted-foreground',
                   errors.name
                     ? 'border-red-400 focus:border-red-400 focus:ring-red-200'
-                    : 'border-gray-200 focus:border-primary focus:ring-primary/20',
+                    : 'border-input focus:border-primary focus:ring-primary/20',
                 ]"
               />
               <p v-if="errors.name" class="mt-1 text-xs text-red-500">
@@ -321,7 +323,7 @@ function handleClose() {
                   v-model="sku"
                   type="text"
                   placeholder="PROD-001"
-                  class="w-full h-11 px-4 border border-gray-200 rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400"
+                  class="w-full h-11 px-4 border border-input rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground"
                 />
               </div>
               <div>
@@ -336,7 +338,7 @@ function handleClose() {
                   v-model="barcode"
                   type="text"
                   placeholder="7590000000000"
-                  class="w-full h-11 px-4 border border-gray-200 rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400"
+                  class="w-full h-11 px-4 border border-input rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground"
                 />
               </div>
             </div>
@@ -359,10 +361,10 @@ function handleClose() {
                   placeholder="0.00"
                   :class="[
                     'w-full h-11 px-4 border rounded-lg text-base transition-all duration-200',
-                    'focus:outline-none focus:ring-2 placeholder:text-gray-400',
+                    'focus:outline-none focus:ring-2 placeholder:text-muted-foreground',
                     errors.fiscalPrice
                       ? 'border-red-400 focus:border-red-400 focus:ring-red-200'
-                      : 'border-gray-200 focus:border-primary focus:ring-primary/20',
+                      : 'border-input focus:border-primary focus:ring-primary/20',
                   ]"
                 />
                 <p v-if="errors.fiscalPrice" class="mt-1 text-xs text-red-500">
@@ -405,10 +407,10 @@ function handleClose() {
                 placeholder="0.00"
                 :class="[
                   'w-full h-11 px-4 border rounded-lg text-base transition-all duration-200',
-                  'focus:outline-none focus:ring-2 placeholder:text-gray-400',
+                  'focus:outline-none focus:ring-2 placeholder:text-muted-foreground',
                   errors.internalPrice
                     ? 'border-red-400 focus:border-red-400 focus:ring-red-200'
-                    : 'border-gray-200 focus:border-primary focus:ring-primary/20',
+                    : 'border-input focus:border-primary focus:ring-primary/20',
                 ]"
               />
               <p v-if="errors.internalPrice" class="mt-1 text-xs text-red-500">
@@ -445,7 +447,7 @@ function handleClose() {
                 v-model="description"
                 rows="3"
                 placeholder="Descripción opcional del producto..."
-                class="w-full px-4 py-3 border border-gray-200 rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-gray-400 resize-none"
+                class="w-full px-4 py-3 border border-input rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground resize-none"
               />
             </div>
 
@@ -455,7 +457,7 @@ function handleClose() {
                 <p class="text-sm font-semibold text-foreground">
                   Estado del producto
                 </p>
-                <p class="text-xs text-gray-500 mt-0.5">
+                <p class="text-xs text-muted-foreground mt-0.5">
                   {{
                     active ? "Activo — visible en ventas" : "Inactivo — oculto"
                   }}
@@ -467,11 +469,11 @@ function handleClose() {
 
           <!-- Footer -->
           <div
-            class="px-6 py-4 border-t border-gray-100 flex items-center justify-end gap-3"
+            class="px-6 py-4 border-t border-border flex items-center justify-end gap-3"
           >
             <button
               type="button"
-              class="h-10 px-5 border border-gray-200 text-gray-600 text-sm font-semibold rounded-lg hover:bg-gray-50 transition-all duration-200 cursor-pointer"
+              class="h-10 px-5 border border-input text-muted-foreground text-sm font-semibold rounded-lg hover:bg-gray-50 transition-all duration-200 cursor-pointer"
               @click="handleClose"
             >
               Cancelar

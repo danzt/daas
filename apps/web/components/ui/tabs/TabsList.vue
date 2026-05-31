@@ -6,10 +6,7 @@ defineProps<Props>();
 </script>
 
 <template>
-  <div
-    :class="['flex border-b border-gray-200 gap-1', $props.class]"
-    role="tablist"
-  >
+  <div :class="['flex border-b gap-1', $props.class]" role="tablist">
     <slot />
   </div>
 </template>
