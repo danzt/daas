@@ -210,247 +210,236 @@ function handleClose() {
 
 <template>
   <Teleport to="body">
-    <Transition
-      enter-active-class="transition-opacity duration-200"
-      enter-from-class="opacity-0"
-      enter-to-class="opacity-100"
-      leave-active-class="transition-opacity duration-200"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
+    <div
+      v-if="modelValue"
+      class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 overflow-y-auto"
+      role="dialog"
+      aria-modal="true"
     >
+      <div class="absolute inset-0 bg-black/50" @click="handleClose" />
+
       <div
-        v-if="modelValue"
-        class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 overflow-y-auto"
-        role="dialog"
-        aria-modal="true"
+        class="relative z-10 w-full max-w-2xl bg-white rounded-xl shadow-xl mb-10"
       >
-        <div class="absolute inset-0 bg-black/50" @click="handleClose" />
+        <!-- Header -->
+        <div class="flex items-center justify-between px-6 py-5 border-b">
+          <div>
+            <h2 class="text-xl font-bold font-heading text-foreground">
+              Nueva Factura Fiscal
+            </h2>
+            <p class="text-xs text-muted-foreground mt-0.5">
+              Documento SENIAT — solo productos fiscales
+            </p>
+          </div>
+          <button
+            type="button"
+            class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200 cursor-pointer"
+            @click="handleClose"
+          >
+            <X class="w-5 h-5" />
+          </button>
+        </div>
 
-        <div
-          class="relative z-10 w-full max-w-2xl bg-white rounded-xl shadow-xl mb-10"
-        >
-          <!-- Header -->
-          <div class="flex items-center justify-between px-6 py-5 border-b">
-            <div>
-              <h2 class="text-xl font-bold font-heading text-foreground">
-                Nueva Factura Fiscal
-              </h2>
-              <p class="text-xs text-muted-foreground mt-0.5">
-                Documento SENIAT — solo productos fiscales
-              </p>
-            </div>
-            <button
-              type="button"
-              class="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-all duration-200 cursor-pointer"
-              @click="handleClose"
-            >
-              <X class="w-5 h-5" />
-            </button>
+        <!-- Body -->
+        <div class="px-6 py-5 space-y-6">
+          <div
+            v-if="serverError"
+            class="rounded-lg bg-red-50 border border-red-200 px-4 py-3"
+          >
+            <p class="text-sm text-red-600">{{ serverError }}</p>
           </div>
 
-          <!-- Body -->
-          <div class="px-6 py-5 space-y-6">
-            <div
-              v-if="serverError"
-              class="rounded-lg bg-red-50 border border-red-200 px-4 py-3"
-            >
-              <p class="text-sm text-red-600">{{ serverError }}</p>
+          <!-- Customer -->
+          <div>
+            <p class="text-sm font-bold text-foreground mb-3">Cliente</p>
+            <div class="grid grid-cols-3 gap-4">
+              <div>
+                <label
+                  class="block text-xs font-semibold text-muted-foreground mb-1.5"
+                >
+                  Tipo ID
+                </label>
+                <Select
+                  v-model="customerIdType"
+                  :options="CUSTOMER_ID_TYPES"
+                  placeholder="Tipo..."
+                />
+              </div>
+              <div>
+                <label
+                  class="block text-xs font-semibold text-muted-foreground mb-1.5"
+                >
+                  Número
+                </label>
+                <input
+                  v-model="customerIdNumber"
+                  type="text"
+                  placeholder="V-12345678"
+                  :disabled="customerIdType === 'anonymous'"
+                  class="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/20 placeholder:text-muted-foreground disabled:bg-muted disabled:text-muted-foreground"
+                />
+              </div>
+              <div>
+                <label
+                  class="block text-xs font-semibold text-muted-foreground mb-1.5"
+                >
+                  Nombre
+                </label>
+                <input
+                  v-model="customerName"
+                  type="text"
+                  placeholder="Consumidor Final"
+                  class="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/20 placeholder:text-muted-foreground"
+                />
+              </div>
             </div>
+          </div>
 
-            <!-- Customer -->
-            <div>
-              <p class="text-sm font-bold text-foreground mb-3">Cliente</p>
-              <div class="grid grid-cols-3 gap-4">
+          <!-- Lines -->
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <p class="text-sm font-bold text-foreground">Líneas</p>
+              <button
+                type="button"
+                class="flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer"
+                @click="addLine"
+              >
+                <Plus class="w-3.5 h-3.5" />
+                Agregar línea
+              </button>
+            </div>
+            <p v-if="errors.lines" class="text-xs text-red-500 mb-2">
+              {{ errors.lines }}
+            </p>
+
+            <div class="space-y-3">
+              <div
+                v-for="(line, i) in lines"
+                :key="line._key"
+                class="grid grid-cols-[1fr_auto_auto_auto_auto] gap-2 items-start"
+              >
                 <div>
-                  <label
-                    class="block text-xs font-semibold text-muted-foreground mb-1.5"
-                  >
-                    Tipo ID
-                  </label>
                   <Select
-                    v-model="customerIdType"
-                    :options="CUSTOMER_ID_TYPES"
-                    placeholder="Tipo..."
+                    v-model="line.product_id"
+                    :options="productOptions"
+                    placeholder="Producto fiscal..."
+                    @update:model-value="onProductChange(line)"
+                  />
+                  <p
+                    v-if="errors[`line_${i}_product`]"
+                    class="mt-0.5 text-xs text-red-500"
+                  >
+                    {{ errors[`line_${i}_product`] }}
+                  </p>
+                </div>
+                <div class="w-20">
+                  <input
+                    v-model="line.quantity"
+                    type="number"
+                    min="0.001"
+                    step="0.001"
+                    placeholder="Cant."
+                    :class="[
+                      'w-full h-10 px-3 border rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground',
+                      errors[`line_${i}_qty`]
+                        ? 'border-red-400'
+                        : 'focus:border-primary',
+                    ]"
                   />
                 </div>
-                <div>
-                  <label
-                    class="block text-xs font-semibold text-muted-foreground mb-1.5"
-                  >
-                    Número
-                  </label>
+                <div class="w-28">
                   <input
-                    v-model="customerIdNumber"
-                    type="text"
-                    placeholder="V-12345678"
-                    :disabled="customerIdType === 'anonymous'"
-                    class="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/20 placeholder:text-muted-foreground disabled:bg-muted disabled:text-muted-foreground"
+                    v-model="line.unit_price"
+                    type="number"
+                    min="0.01"
+                    step="0.01"
+                    placeholder="Precio"
+                    :class="[
+                      'w-full h-10 px-3 border rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground',
+                      errors[`line_${i}_price`]
+                        ? 'border-red-400'
+                        : 'focus:border-primary',
+                    ]"
                   />
                 </div>
-                <div>
-                  <label
-                    class="block text-xs font-semibold text-muted-foreground mb-1.5"
+                <div class="w-20 flex items-center h-10">
+                  <span class="text-xs text-muted-foreground font-mono">
+                    {{ formatTaxRate(line.tax_rate) }}
+                  </span>
+                </div>
+                <div class="flex items-center gap-2 pt-1">
+                  <span
+                    class="w-24 text-sm font-semibold text-right text-foreground tabular-nums"
                   >
-                    Nombre
-                  </label>
-                  <input
-                    v-model="customerName"
-                    type="text"
-                    placeholder="Consumidor Final"
-                    class="w-full h-10 px-3 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:border-primary focus:ring-primary/20 placeholder:text-muted-foreground"
-                  />
+                    {{ lineSubtotal(line).toFixed(2) }}
+                  </span>
+                  <button
+                    type="button"
+                    class="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 cursor-pointer"
+                    @click="removeLine(line._key)"
+                  >
+                    <Trash2 class="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             </div>
 
-            <!-- Lines -->
-            <div>
-              <div class="flex items-center justify-between mb-3">
-                <p class="text-sm font-bold text-foreground">Líneas</p>
-                <button
-                  type="button"
-                  class="flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 transition-colors cursor-pointer"
-                  @click="addLine"
-                >
-                  <Plus class="w-3.5 h-3.5" />
-                  Agregar línea
-                </button>
+            <!-- Totals breakdown -->
+            <div v-if="lines.length > 0" class="mt-4 pt-3 border-t space-y-1">
+              <div class="flex justify-between text-xs text-muted-foreground">
+                <span>Subtotal base</span>
+                <span class="tabular-nums">{{ totals.base.toFixed(2) }}</span>
               </div>
-              <p v-if="errors.lines" class="text-xs text-red-500 mb-2">
-                {{ errors.lines }}
-              </p>
-
-              <div class="space-y-3">
-                <div
-                  v-for="(line, i) in lines"
-                  :key="line._key"
-                  class="grid grid-cols-[1fr_auto_auto_auto_auto] gap-2 items-start"
-                >
-                  <div>
-                    <Select
-                      v-model="line.product_id"
-                      :options="productOptions"
-                      placeholder="Producto fiscal..."
-                      @update:model-value="onProductChange(line)"
-                    />
-                    <p
-                      v-if="errors[`line_${i}_product`]"
-                      class="mt-0.5 text-xs text-red-500"
-                    >
-                      {{ errors[`line_${i}_product`] }}
-                    </p>
-                  </div>
-                  <div class="w-20">
-                    <input
-                      v-model="line.quantity"
-                      type="number"
-                      min="0.001"
-                      step="0.001"
-                      placeholder="Cant."
-                      :class="[
-                        'w-full h-10 px-3 border rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground',
-                        errors[`line_${i}_qty`]
-                          ? 'border-red-400'
-                          : 'focus:border-primary',
-                      ]"
-                    />
-                  </div>
-                  <div class="w-28">
-                    <input
-                      v-model="line.unit_price"
-                      type="number"
-                      min="0.01"
-                      step="0.01"
-                      placeholder="Precio"
-                      :class="[
-                        'w-full h-10 px-3 border rounded-lg text-sm text-right focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground',
-                        errors[`line_${i}_price`]
-                          ? 'border-red-400'
-                          : 'focus:border-primary',
-                      ]"
-                    />
-                  </div>
-                  <div class="w-20 flex items-center h-10">
-                    <span class="text-xs text-muted-foreground font-mono">
-                      {{ formatTaxRate(line.tax_rate) }}
-                    </span>
-                  </div>
-                  <div class="flex items-center gap-2 pt-1">
-                    <span
-                      class="w-24 text-sm font-semibold text-right text-foreground tabular-nums"
-                    >
-                      {{ lineSubtotal(line).toFixed(2) }}
-                    </span>
-                    <button
-                      type="button"
-                      class="p-1.5 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200 cursor-pointer"
-                      @click="removeLine(line._key)"
-                    >
-                      <Trash2 class="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+              <div class="flex justify-between text-xs text-muted-foreground">
+                <span>IVA</span>
+                <span class="tabular-nums">{{ totals.tax.toFixed(2) }}</span>
               </div>
-
-              <!-- Totals breakdown -->
-              <div v-if="lines.length > 0" class="mt-4 pt-3 border-t space-y-1">
-                <div class="flex justify-between text-xs text-muted-foreground">
-                  <span>Subtotal base</span>
-                  <span class="tabular-nums">{{ totals.base.toFixed(2) }}</span>
-                </div>
-                <div class="flex justify-between text-xs text-muted-foreground">
-                  <span>IVA</span>
-                  <span class="tabular-nums">{{ totals.tax.toFixed(2) }}</span>
-                </div>
-                <div
-                  class="flex justify-between text-base font-bold text-foreground pt-1 border-t"
-                >
-                  <span>Total</span>
-                  <span class="tabular-nums font-heading">{{
-                    totals.total.toFixed(2)
-                  }}</span>
-                </div>
+              <div
+                class="flex justify-between text-base font-bold text-foreground pt-1 border-t"
+              >
+                <span>Total</span>
+                <span class="tabular-nums font-heading">{{
+                  totals.total.toFixed(2)
+                }}</span>
               </div>
-            </div>
-
-            <!-- Notes -->
-            <div>
-              <label class="block text-sm font-bold text-foreground mb-1.5">
-                Notas
-                <span class="font-normal text-muted-foreground"
-                  >(opcional)</span
-                >
-              </label>
-              <textarea
-                v-model="notes"
-                rows="2"
-                placeholder="Observaciones..."
-                class="w-full px-4 py-3 border rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground resize-none"
-              />
             </div>
           </div>
 
-          <!-- Footer -->
-          <div class="px-6 py-4 border-t flex items-center justify-end gap-3">
-            <button
-              type="button"
-              class="h-10 px-5 border text-muted-foreground text-sm font-semibold rounded-lg hover:bg-muted transition-all duration-200 cursor-pointer"
-              @click="handleClose"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              :disabled="saving"
-              class="flex items-center gap-2 h-10 px-6 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer disabled:opacity-50"
-              @click="handleSave"
-            >
-              <Loader2 v-if="saving" class="w-4 h-4 animate-spin" />
-              <span>{{ saving ? "Creando..." : "Crear borrador" }}</span>
-            </button>
+          <!-- Notes -->
+          <div>
+            <label class="block text-sm font-bold text-foreground mb-1.5">
+              Notas
+              <span class="font-normal text-muted-foreground">(opcional)</span>
+            </label>
+            <textarea
+              v-model="notes"
+              rows="2"
+              placeholder="Observaciones..."
+              class="w-full px-4 py-3 border rounded-lg text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground resize-none"
+            />
           </div>
         </div>
+
+        <!-- Footer -->
+        <div class="px-6 py-4 border-t flex items-center justify-end gap-3">
+          <button
+            type="button"
+            class="h-10 px-5 border text-muted-foreground text-sm font-semibold rounded-lg hover:bg-muted transition-all duration-200 cursor-pointer"
+            @click="handleClose"
+          >
+            Cancelar
+          </button>
+          <button
+            type="button"
+            :disabled="saving"
+            class="flex items-center gap-2 h-10 px-6 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer disabled:opacity-50"
+            @click="handleSave"
+          >
+            <Loader2 v-if="saving" class="w-4 h-4 animate-spin" />
+            <span>{{ saving ? "Creando..." : "Crear borrador" }}</span>
+          </button>
+        </div>
       </div>
-    </Transition>
+    </div>
   </Teleport>
 </template>
