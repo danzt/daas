@@ -19,6 +19,22 @@ import {
 } from "lucide-vue-next";
 import { usePublicFetch } from "~/composables/usePublicFetch";
 import { useFormatPrice } from "~/composables/useFormatPrice";
+import { useCartStore } from "~/stores/cart";
+
+const cartStore = useCartStore();
+
+function addToCart(product: ShopProduct) {
+  if (product.stock_qty === 0) return;
+  cartStore.addItem({
+    productId: product.id,
+    name: product.name,
+    price: effectivePrice(product),
+    qty: 1,
+    category: product.category,
+    is_fiscal: product.is_fiscal,
+    stock_qty: product.stock_qty,
+  });
+}
 
 definePageMeta({
   layout: "public",
@@ -642,13 +658,13 @@ onMounted(load);
                 <button
                   type="button"
                   :disabled="product.stock_qty === 0"
-                  class="w-full mt-2 px-3 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 disabled:opacity-50 disabled:cursor-not-allowed text-primary text-xs font-bold transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:hover:bg-primary/10"
+                  class="w-full mt-2 px-3 py-2 rounded-lg bg-primary/10 hover:bg-primary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed text-primary text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:hover:bg-primary/10 disabled:hover:text-primary"
                   :title="
                     product.stock_qty === 0
                       ? 'Producto agotado'
-                      : 'Carrito disponible próximamente'
+                      : 'Agregar al carrito'
                   "
-                  @click.prevent
+                  @click.prevent.stop="addToCart(product)"
                 >
                   <ShoppingCart class="w-3.5 h-3.5" />
                   Agregar
