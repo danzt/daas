@@ -124,6 +124,12 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 		storefront.GET("/healthz", func(c echo.Context) error {
 			return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 		})
+
+		// Public catalog endpoints (S6-T8).
+		shopSvc := app.NewShopService(cfg.Pool)
+		shopHandler := handler.NewShopHandler(shopSvc)
+		storefront.GET("/products", shopHandler.ListProducts)
+		storefront.GET("/products/:id", shopHandler.GetProduct)
 	}
 
 	return e
