@@ -13,7 +13,9 @@ import (
 	"github.com/rs/zerolog/log"
 
 	adapterhttp "github.com/danzt/daas/api/internal/adapter/http"
+	notifadapter "github.com/danzt/daas/api/internal/adapter/notification"
 	"github.com/danzt/daas/api/internal/config"
+	"github.com/danzt/daas/api/internal/domain/notification"
 )
 
 func main() {
@@ -96,6 +98,24 @@ func main() {
 	} else {
 		log.Warn().Msg("DATABASE_URL not set — database features will be unavailable")
 	}
+
+	// Notification service — constructed but NOT invoked in S6.
+	// EmailAdapter activates in S8 when payment/order notifications go live.
+	// When RESEND_API_KEY is unset (dev), fall back to NoopAdapter so the
+	// dependency graph still compiles.
+	var notifSvc notification.NotificationService
+	if resendKey := os.Getenv("RESEND_API_KEY"); resendKey != "" {
+		from := os.Getenv("RESEND_FROM_EMAIL")
+		if from == "" {
+			from = "noreply@daas.app"
+		}
+		notifSvc = notifadapter.NewEmailAdapter(resendKey, from)
+		log.Info().Str("from", from).Msg("notification service: EmailAdapter (Resend)")
+	} else {
+		notifSvc = notifadapter.NewNoopAdapter()
+		log.Info().Msg("notification service: NoopAdapter (RESEND_API_KEY unset)")
+	}
+	_ = notifSvc // wired but not used until S8
 
 	router := adapterhttp.NewRouterWithConfig(adapterhttp.RouterConfig{
 		SupabaseURL:    cfg.SupabaseURL,
