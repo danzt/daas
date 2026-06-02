@@ -17,6 +17,9 @@ import {
 } from "lucide-vue-next";
 import { usePublicFetch } from "~/composables/usePublicFetch";
 import { useFormatPrice } from "~/composables/useFormatPrice";
+import { useCartStore } from "~/stores/cart";
+
+const cartStore = useCartStore();
 
 definePageMeta({
   layout: "public",
@@ -98,9 +101,7 @@ function ratingBars(id: string): { star: number; pct: number }[] {
 }
 
 // Mock reviews
-function mockReviews(
-  id: string,
-): {
+function mockReviews(id: string): {
   author: string;
   stars: number;
   date: string;
@@ -176,6 +177,25 @@ function incQty() {
 }
 function decQty() {
   if (qty.value > 1) qty.value--;
+}
+
+function addToCart() {
+  if (!product.value || product.value.stock_qty === 0) return;
+  cartStore.addItem({
+    productId: product.value.id,
+    name: product.value.name,
+    price: effectivePrice(product.value),
+    qty: qty.value,
+    category: product.value.category,
+    is_fiscal: product.value.is_fiscal,
+    stock_qty: product.value.stock_qty,
+  });
+}
+
+const router = useRouter();
+function buyNow() {
+  addToCart();
+  router.push(`/t/${tenantSlug}/cart`);
 }
 </script>
 
@@ -425,7 +445,7 @@ function decQty() {
                 type="button"
                 :disabled="product.stock_qty === 0"
                 class="w-full px-5 py-3.5 rounded-xl bg-primary text-white text-base font-bold flex items-center justify-center gap-2 hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity cursor-pointer shadow-lg shadow-primary/20"
-                title="Carrito disponible próximamente"
+                @click="addToCart"
               >
                 <ShoppingCart class="w-5 h-5" />
                 Agregar al carrito
@@ -435,7 +455,7 @@ function decQty() {
                 type="button"
                 :disabled="product.stock_qty === 0"
                 class="w-full px-5 py-3.5 rounded-xl bg-amber-500 text-white text-base font-bold hover:bg-amber-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
-                title="Checkout disponible próximamente"
+                @click="buyNow"
               >
                 Comprar ahora
               </button>
@@ -761,6 +781,7 @@ function decQty() {
             type="button"
             :disabled="product.stock_qty === 0"
             class="flex-1 px-4 py-3 rounded-xl bg-primary text-white text-sm font-bold flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            @click="addToCart"
           >
             <ShoppingCart class="w-4 h-4" />
             Agregar

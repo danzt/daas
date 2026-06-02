@@ -6,6 +6,9 @@ export interface CartItem {
   name: string;
   price: number;
   qty: number;
+  category?: string;
+  is_fiscal?: boolean;
+  stock_qty?: number;
 }
 
 export const useCartStore = defineStore("cart", () => {
@@ -16,6 +19,9 @@ export const useCartStore = defineStore("cart", () => {
   const storageKey = computed(() => `daas_cart_${tenantSlug.value}`);
 
   const items = ref<CartItem[]>([]);
+  // Transient feedback flag — set briefly after addItem so the UI can flash an
+  // animation on the cart icon.
+  const lastAddedAt = ref<number>(0);
 
   function persist() {
     if (import.meta.server) return;
@@ -31,16 +37,33 @@ export const useCartStore = defineStore("cart", () => {
       } catch {
         // ignore malformed data
       }
+    } else {
+      items.value = [];
     }
   }
 
   function addItem(item: CartItem) {
     const existing = items.value.find((i) => i.productId === item.productId);
+    const maxQty = item.stock_qty ?? Number.MAX_SAFE_INTEGER;
     if (existing) {
-      existing.qty += item.qty;
+      existing.qty = Math.min(existing.qty + item.qty, maxQty);
+      // refresh metadata in case price/category changed
+      existing.price = item.price;
+      existing.category = item.category;
+      existing.is_fiscal = item.is_fiscal;
+      existing.stock_qty = item.stock_qty;
     } else {
-      items.value.push(item);
+      items.value.push({ ...item, qty: Math.min(item.qty, maxQty) });
     }
+    lastAddedAt.value = Date.now();
+    persist();
+  }
+
+  function updateQty(productId: string, qty: number) {
+    const item = items.value.find((i) => i.productId === productId);
+    if (!item) return;
+    const maxQty = item.stock_qty ?? Number.MAX_SAFE_INTEGER;
+    item.qty = Math.max(1, Math.min(qty, maxQty));
     persist();
   }
 
@@ -58,8 +81,26 @@ export const useCartStore = defineStore("cart", () => {
     items.value.reduce((sum, i) => sum + i.qty, 0),
   );
 
-  // Auto-restore on tenant slug change
-  watch(tenantSlug, () => restore(), { immediate: true });
+  const subtotal = computed(() =>
+    items.value.reduce((sum, i) => sum + i.price * i.qty, 0),
+  );
 
-  return { items, addItem, removeItem, clearCart, totalItems };
+  const isEmpty = computed(() => items.value.length === 0);
+
+  // Re-hydrate when the tenant slug changes between routes. The initial
+  // hydration is triggered explicitly by the public layout on the client.
+  watch(tenantSlug, restore);
+
+  return {
+    items,
+    lastAddedAt,
+    restore,
+    addItem,
+    updateQty,
+    removeItem,
+    clearCart,
+    totalItems,
+    subtotal,
+    isEmpty,
+  };
 });
