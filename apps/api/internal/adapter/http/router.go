@@ -35,7 +35,7 @@ func NewRouter() *echo.Echo {
 
 // NewRouterWithConfig builds the router with explicit dependencies.
 // Used in production (from main.go) and in integration tests.
-func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen
+func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 	e := echo.New()
 	e.HideBanner = true
 
@@ -106,6 +106,25 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen
 
 	// Routes
 	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler, fiscalInvoiceHandler, supplierHandler, reportHandler, saleHandler)
+
+	// Storefront public route group — no auth required.
+	// Rate limiter runs first (fast reject), then tenant resolver activates RLS.
+	// Handlers for catalog endpoints are wired in S6-T8.
+	if cfg.Pool != nil {
+		rateLimiter := mw.NewRateLimiter()
+		pathResolver := mw.NewPathResolver(cfg.Pool)
+		publicTenantMW := mw.NewPublicTenantMiddleware(pathResolver, cfg.Pool)
+
+		storefront := e.Group("/t/:tenantSlug/shop/v1")
+		storefront.Use(rateLimiter.Handle())
+		storefront.Use(publicTenantMW.Handle())
+
+		// Smoke-check healthz endpoint — verifies the middleware chain is wired
+		// correctly without requiring the full catalog handler (S6-T8).
+		storefront.GET("/healthz", func(c echo.Context) error {
+			return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
+		})
+	}
 
 	return e
 }
