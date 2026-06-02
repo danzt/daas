@@ -5,7 +5,7 @@ export default defineNuxtRouteMiddleware((to) => {
   // Hydrate from localStorage on first navigation (client-side)
   store.initFromStorage();
 
-  const publicPaths = ["/auth/login", "/auth/register"];
+  const publicPaths = ["/auth/login", "/auth/register", "/t/"];
   const isPublic = publicPaths.some((p) => to.path.startsWith(p));
 
   if (!store.isAuthenticated && !isPublic) {
