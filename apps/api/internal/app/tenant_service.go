@@ -115,11 +115,24 @@ func (s *TenantService) Register(ctx context.Context, req RegisterRequest) (*Reg
 }
 
 // createTenantDB inserts a tenant row within the transaction.
+//
+// A slug is generated atomically using the PL/pgSQL function generate_tenant_slug()
+// introduced by migration 000009. The CTE pre-allocates the tenant UUID so that
+// slug generation can reference the ID for conflict exclusion in the same statement.
+//
+// STORE-SLUG-6: slug MUST be generated in the same transaction as the tenant INSERT.
 func (s *TenantService) createTenantDB(ctx context.Context, tx pgx.Tx, req RegisterRequest) (*tenant.Tenant, error) {
 	row := tx.QueryRow(ctx,
-		`INSERT INTO tenants (name, fiscal_id, country_code)
-         VALUES ($1, $2, $3)
-         RETURNING id, name, fiscal_id, country_code, status, created_at, updated_at`,
+		`WITH new_id AS (
+             SELECT uuid_generate_v4() AS id
+         ),
+         inserted AS (
+             INSERT INTO tenants (id, name, fiscal_id, country_code, slug)
+             SELECT id, $1, $2, $3, generate_tenant_slug($1, id)
+             FROM new_id
+             RETURNING id, name, fiscal_id, country_code, status, created_at, updated_at
+         )
+         SELECT * FROM inserted`,
 		req.Name, req.FiscalID, req.CountryCode,
 	)
 
