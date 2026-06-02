@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
@@ -36,35 +37,59 @@ func main() {
 		if err != nil {
 			log.Fatal().Err(err).Msg("failed to parse database URL")
 		}
-		// Force IPv4 — resolves hostname to IPv4 addresses to avoid IPv6 routing issues
+		// Prefer IPv4 to avoid VPN/routing issues with IPv6-only Supabase hosts.
+		// Falls back to IPv6 if no A record exists (e.g. Supabase direct DB host
+		// only publishes AAAA). Dialer has a 10s timeout per attempt.
+		dialer := &net.Dialer{Timeout: 10 * time.Second}
 		poolCfg.ConnConfig.DialFunc = func(ctx context.Context, network, addr string) (net.Conn, error) {
 			host, port, err := net.SplitHostPort(addr)
 			if err != nil {
 				return nil, fmt.Errorf("split host port: %w", err)
 			}
-			ips, err := net.DefaultResolver.LookupNetIP(ctx, "ip4", host)
-			if err != nil || len(ips) == 0 {
-				return (&net.Dialer{}).DialContext(ctx, "tcp", addr)
-			}
-			var firstErr error
-			for _, ip := range ips {
-				target := net.JoinHostPort(ip.String(), port)
-				conn, err := (&net.Dialer{}).DialContext(ctx, "tcp4", target)
-				if err == nil {
-					return conn, nil
+			lookupCtx, cancel := context.WithTimeout(ctx, 10*time.Second)
+			defer cancel()
+
+			// Try IPv4 first.
+			if ips, err := net.DefaultResolver.LookupNetIP(lookupCtx, "ip4", host); err == nil && len(ips) > 0 {
+				var firstErr error
+				for _, ip := range ips {
+					target := net.JoinHostPort(ip.String(), port)
+					if conn, err := dialer.DialContext(ctx, "tcp4", target); err == nil {
+						return conn, nil
+					} else if firstErr == nil {
+						firstErr = err
+					}
 				}
-				if firstErr == nil {
-					firstErr = err
-				}
+				// IPv4 addresses found but all unreachable — don't fall through to IPv6.
+				return nil, fmt.Errorf("dial %s: all IPv4 addresses unreachable: %w", host, firstErr)
 			}
-			return nil, fmt.Errorf("dial %s: all IPv4 addresses unreachable: %w", host, firstErr)
+
+			// No IPv4 record — fall back to IPv6 (e.g. Supabase AAAA-only hosts).
+			if ips, err := net.DefaultResolver.LookupNetIP(lookupCtx, "ip6", host); err == nil && len(ips) > 0 {
+				var firstErr error
+				for _, ip := range ips {
+					target := net.JoinHostPort(ip.String(), port)
+					if conn, err := dialer.DialContext(ctx, "tcp6", target); err == nil {
+						return conn, nil
+					} else if firstErr == nil {
+						firstErr = err
+					}
+				}
+				return nil, fmt.Errorf("dial %s: all IPv6 addresses unreachable: %w", host, firstErr)
+			}
+
+			// Last resort: let the OS resolve normally.
+			return dialer.DialContext(ctx, "tcp", addr)
 		}
 		pool, err = pgxpool.NewWithConfig(ctx, poolCfg)
 		if err != nil {
 			log.Fatal().Err(err).Msg("failed to create database connection pool")
 		}
 		defer pool.Close()
-		if err := pool.Ping(ctx); err != nil {
+		// Ping with a 15s deadline so a slow/unreachable DB fails fast.
+		pingCtx, pingCancel := context.WithTimeout(ctx, 15*time.Second)
+		defer pingCancel()
+		if err := pool.Ping(pingCtx); err != nil {
 			log.Fatal().Err(err).Msg("failed to ping database")
 		}
 		log.Info().Msg("database connection pool ready")

@@ -138,7 +138,7 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="p-6 space-y-6">
+  <div class="p-4 sm:p-6 space-y-6">
     <!-- Back -->
     <div class="flex items-center gap-3">
       <NuxtLink
@@ -322,67 +322,75 @@ onMounted(load);
             Líneas de la orden ({{ po.lines?.length ?? 0 }})
           </h3>
         </div>
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="border-b border-border bg-muted/30">
-              <th class="px-4 py-3 text-left font-medium text-muted-foreground">
-                Descripción
-              </th>
-              <th
-                class="px-4 py-3 text-right font-medium text-muted-foreground"
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-border bg-muted/30">
+                <th
+                  class="px-4 py-3 text-left font-medium text-muted-foreground"
+                >
+                  Descripción
+                </th>
+                <th
+                  class="px-4 py-3 text-right font-medium text-muted-foreground"
+                >
+                  Cantidad
+                </th>
+                <th
+                  class="px-4 py-3 text-right font-medium text-muted-foreground hidden md:table-cell"
+                >
+                  Costo unit.
+                </th>
+                <th
+                  class="px-4 py-3 text-right font-medium text-muted-foreground"
+                >
+                  Subtotal
+                </th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border">
+              <tr
+                v-for="line in po.lines"
+                :key="line.id"
+                class="hover:bg-muted/20 transition-colors"
               >
-                Cantidad
-              </th>
-              <th
-                class="px-4 py-3 text-right font-medium text-muted-foreground hidden md:table-cell"
-              >
-                Costo unit.
-              </th>
-              <th
-                class="px-4 py-3 text-right font-medium text-muted-foreground"
-              >
-                Subtotal
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-border">
-            <tr
-              v-for="line in po.lines"
-              :key="line.id"
-              class="hover:bg-muted/20 transition-colors"
-            >
-              <td class="px-4 py-3 text-foreground">{{ line.description }}</td>
-              <td class="px-4 py-3 text-right font-mono text-muted-foreground">
-                {{ line.quantity_ordered }}
-              </td>
-              <td
-                class="px-4 py-3 text-right font-mono text-muted-foreground hidden md:table-cell"
-              >
-                {{ fmtCurrency(line.unit_cost) }}
-              </td>
-              <td
-                class="px-4 py-3 text-right font-mono font-medium text-foreground"
-              >
-                {{ fmtCurrency(line.subtotal) }}
-              </td>
-            </tr>
-          </tbody>
-          <tfoot>
-            <tr class="border-t-2 border-border bg-muted/20">
-              <td
-                colspan="3"
-                class="px-4 py-3 text-right text-sm font-medium text-muted-foreground"
-              >
-                Total
-              </td>
-              <td
-                class="px-4 py-3 text-right font-mono font-bold text-lg text-foreground"
-              >
-                {{ fmtCurrency(po.total) }}
-              </td>
-            </tr>
-          </tfoot>
-        </table>
+                <td class="px-4 py-3 text-foreground">
+                  {{ line.description }}
+                </td>
+                <td
+                  class="px-4 py-3 text-right font-mono text-muted-foreground"
+                >
+                  {{ line.quantity_ordered }}
+                </td>
+                <td
+                  class="px-4 py-3 text-right font-mono text-muted-foreground hidden md:table-cell"
+                >
+                  {{ fmtCurrency(line.unit_cost) }}
+                </td>
+                <td
+                  class="px-4 py-3 text-right font-mono font-medium text-foreground"
+                >
+                  {{ fmtCurrency(line.subtotal) }}
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr class="border-t-2 border-border bg-muted/20">
+                <td
+                  colspan="3"
+                  class="px-4 py-3 text-right text-sm font-medium text-muted-foreground"
+                >
+                  Total
+                </td>
+                <td
+                  class="px-4 py-3 text-right font-mono font-bold text-lg text-foreground"
+                >
+                  {{ fmtCurrency(po.total) }}
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       </div>
     </template>
   </div>

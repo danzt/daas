@@ -165,7 +165,7 @@ function formatTaxRate(rate: number) {
 </script>
 
 <template>
-  <div class="p-6 space-y-6">
+  <div class="p-4 sm:p-6 space-y-6">
     <button
       type="button"
       class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
@@ -362,119 +362,121 @@ function formatTaxRate(rate: number) {
           <div class="px-5 py-4 border-b">
             <h2 class="text-sm font-bold text-foreground">Detalle con IVA</h2>
           </div>
-          <table class="w-full">
-            <thead>
-              <tr class="bg-muted/40 border-b">
-                <th
-                  class="px-5 py-3 text-left text-xs font-semibold text-muted-foreground"
-                >
-                  Descripción
-                </th>
-                <th
-                  class="px-4 py-3 text-right text-xs font-semibold text-muted-foreground"
-                >
-                  Cant.
-                </th>
-                <th
-                  class="px-4 py-3 text-right text-xs font-semibold text-muted-foreground"
-                >
-                  P. Unit.
-                </th>
-                <th
-                  class="px-4 py-3 text-right text-xs font-semibold text-muted-foreground"
-                >
-                  IVA
-                </th>
-                <th
-                  class="px-5 py-3 text-right text-xs font-semibold text-muted-foreground"
-                >
-                  Subtotal
-                </th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-border">
-              <tr
-                v-for="line in invoice.lines"
-                :key="line.id"
-                class="hover:bg-muted/20 transition-colors"
-              >
-                <td class="px-5 py-3">
-                  <p class="text-sm font-medium text-foreground">
-                    {{ line.description }}
-                  </p>
-                </td>
-                <td class="px-4 py-3 text-right">
-                  <span class="text-sm tabular-nums text-muted-foreground">
-                    {{ line.quantity }}
-                  </span>
-                </td>
-                <td class="px-4 py-3 text-right">
-                  <span class="text-sm tabular-nums text-muted-foreground">
-                    {{ formatCurrency(line.unit_price) }}
-                  </span>
-                </td>
-                <td class="px-4 py-3 text-right">
-                  <span
-                    class="text-xs tabular-nums text-muted-foreground font-mono"
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="bg-muted/40 border-b">
+                  <th
+                    class="px-5 py-3 text-left text-xs font-semibold text-muted-foreground"
                   >
-                    {{ formatTaxRate(line.tax_rate) }}
-                    <br />
-                    <span class="text-foreground">{{
-                      formatCurrency(line.tax_amount)
-                    }}</span>
-                  </span>
-                </td>
-                <td class="px-5 py-3 text-right">
-                  <span
-                    class="text-sm font-semibold tabular-nums text-foreground"
+                    Descripción
+                  </th>
+                  <th
+                    class="px-4 py-3 text-right text-xs font-semibold text-muted-foreground"
                   >
-                    {{ formatCurrency(line.subtotal) }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-            <tfoot class="border-t-2 bg-muted/10">
-              <tr>
-                <td
-                  colspan="4"
-                  class="px-5 py-2 text-right text-xs text-muted-foreground"
+                    Cant.
+                  </th>
+                  <th
+                    class="px-4 py-3 text-right text-xs font-semibold text-muted-foreground"
+                  >
+                    P. Unit.
+                  </th>
+                  <th
+                    class="px-4 py-3 text-right text-xs font-semibold text-muted-foreground"
+                  >
+                    IVA
+                  </th>
+                  <th
+                    class="px-5 py-3 text-right text-xs font-semibold text-muted-foreground"
+                  >
+                    Subtotal
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                <tr
+                  v-for="line in invoice.lines"
+                  :key="line.id"
+                  class="hover:bg-muted/20 transition-colors"
                 >
-                  Base imponible
-                </td>
-                <td
-                  class="px-5 py-2 text-right text-sm tabular-nums text-muted-foreground"
-                >
-                  {{ formatCurrency(invoice.subtotal_base) }}
-                </td>
-              </tr>
-              <tr>
-                <td
-                  colspan="4"
-                  class="px-5 py-2 text-right text-xs text-muted-foreground"
-                >
-                  IVA total
-                </td>
-                <td
-                  class="px-5 py-2 text-right text-sm tabular-nums text-muted-foreground"
-                >
-                  {{ formatCurrency(invoice.tax_amount) }}
-                </td>
-              </tr>
-              <tr class="border-t">
-                <td
-                  colspan="4"
-                  class="px-5 py-4 text-right text-sm font-bold text-foreground"
-                >
-                  Total
-                </td>
-                <td
-                  class="px-5 py-4 text-right text-lg font-bold font-heading text-foreground tabular-nums"
-                >
-                  {{ formatCurrency(invoice.total) }}
-                </td>
-              </tr>
-            </tfoot>
-          </table>
+                  <td class="px-5 py-3">
+                    <p class="text-sm font-medium text-foreground">
+                      {{ line.description }}
+                    </p>
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <span class="text-sm tabular-nums text-muted-foreground">
+                      {{ line.quantity }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <span class="text-sm tabular-nums text-muted-foreground">
+                      {{ formatCurrency(line.unit_price) }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <span
+                      class="text-xs tabular-nums text-muted-foreground font-mono"
+                    >
+                      {{ formatTaxRate(line.tax_rate) }}
+                      <br />
+                      <span class="text-foreground">{{
+                        formatCurrency(line.tax_amount)
+                      }}</span>
+                    </span>
+                  </td>
+                  <td class="px-5 py-3 text-right">
+                    <span
+                      class="text-sm font-semibold tabular-nums text-foreground"
+                    >
+                      {{ formatCurrency(line.subtotal) }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot class="border-t-2 bg-muted/10">
+                <tr>
+                  <td
+                    colspan="4"
+                    class="px-5 py-2 text-right text-xs text-muted-foreground"
+                  >
+                    Base imponible
+                  </td>
+                  <td
+                    class="px-5 py-2 text-right text-sm tabular-nums text-muted-foreground"
+                  >
+                    {{ formatCurrency(invoice.subtotal_base) }}
+                  </td>
+                </tr>
+                <tr>
+                  <td
+                    colspan="4"
+                    class="px-5 py-2 text-right text-xs text-muted-foreground"
+                  >
+                    IVA total
+                  </td>
+                  <td
+                    class="px-5 py-2 text-right text-sm tabular-nums text-muted-foreground"
+                  >
+                    {{ formatCurrency(invoice.tax_amount) }}
+                  </td>
+                </tr>
+                <tr class="border-t">
+                  <td
+                    colspan="4"
+                    class="px-5 py-4 text-right text-sm font-bold text-foreground"
+                  >
+                    Total
+                  </td>
+                  <td
+                    class="px-5 py-4 text-right text-lg font-bold font-heading text-foreground tabular-nums"
+                  >
+                    {{ formatCurrency(invoice.total) }}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
         </div>
       </div>
     </template>

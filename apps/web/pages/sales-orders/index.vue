@@ -234,7 +234,7 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="p-6 space-y-6">
+  <div class="p-4 sm:p-6 space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
@@ -359,80 +359,82 @@ onMounted(load);
       v-else-if="!loading"
       class="border bg-card rounded-xl overflow-hidden shadow-sm"
     >
-      <table class="w-full text-sm">
-        <thead>
-          <tr class="border-b border-border bg-gray-50/50">
-            <th
-              class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-            >
-              Cliente
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-            >
-              Estado
-            </th>
-            <th
-              class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground hidden md:table-cell"
-            >
-              Fecha
-            </th>
-            <th
-              class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground"
-            >
-              Total
-            </th>
-            <th class="px-4 py-3" />
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-50">
-          <tr
-            v-for="order in filteredOrders"
-            :key="order.id"
-            class="hover:bg-gray-50 transition-colors group"
-          >
-            <td class="px-4 py-3">
-              <p class="font-medium text-foreground">
-                {{ order.customer_name || "Cliente anónimo" }}
-              </p>
-              <p
-                v-if="order.notes"
-                class="text-xs text-muted-foreground truncate max-w-48 mt-0.5"
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="border-b border-border bg-gray-50/50">
+              <th
+                class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
               >
-                {{ order.notes }}
-              </p>
-            </td>
-            <td class="px-4 py-3">
-              <span
-                :class="[
-                  'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
-                  STATUS_CONFIG[order.status]?.class,
-                ]"
+                Cliente
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground"
               >
-                {{ STATUS_CONFIG[order.status]?.label }}
-              </span>
-            </td>
-            <td
-              class="px-4 py-3 text-muted-foreground hidden md:table-cell text-xs"
-            >
-              {{ fmtDate(order.created_at) }}
-            </td>
-            <td
-              class="px-4 py-3 text-right font-mono font-semibold text-foreground"
-            >
-              {{ fmtCurrency(order.total) }}
-            </td>
-            <td class="px-4 py-3 text-right">
-              <NuxtLink
-                :to="`/sales-orders/${order.id}`"
-                class="opacity-0 group-hover:opacity-100 inline-flex p-1.5 rounded-lg hover:bg-gray-100 transition-all text-muted-foreground"
+                Estado
+              </th>
+              <th
+                class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-muted-foreground hidden md:table-cell"
               >
-                <ChevronRight class="w-4 h-4" />
-              </NuxtLink>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+                Fecha
+              </th>
+              <th
+                class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+              >
+                Total
+              </th>
+              <th class="px-4 py-3" />
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            <tr
+              v-for="order in filteredOrders"
+              :key="order.id"
+              class="hover:bg-gray-50 transition-colors group"
+            >
+              <td class="px-4 py-3">
+                <p class="font-medium text-foreground">
+                  {{ order.customer_name || "Cliente anónimo" }}
+                </p>
+                <p
+                  v-if="order.notes"
+                  class="text-xs text-muted-foreground truncate max-w-48 mt-0.5"
+                >
+                  {{ order.notes }}
+                </p>
+              </td>
+              <td class="px-4 py-3">
+                <span
+                  :class="[
+                    'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
+                    STATUS_CONFIG[order.status]?.class,
+                  ]"
+                >
+                  {{ STATUS_CONFIG[order.status]?.label }}
+                </span>
+              </td>
+              <td
+                class="px-4 py-3 text-muted-foreground hidden md:table-cell text-xs"
+              >
+                {{ fmtDate(order.created_at) }}
+              </td>
+              <td
+                class="px-4 py-3 text-right font-mono font-semibold text-foreground"
+              >
+                {{ fmtCurrency(order.total) }}
+              </td>
+              <td class="px-4 py-3 text-right">
+                <NuxtLink
+                  :to="`/sales-orders/${order.id}`"
+                  class="opacity-0 group-hover:opacity-100 inline-flex p-1.5 rounded-lg hover:bg-gray-100 transition-all text-muted-foreground"
+                >
+                  <ChevronRight class="w-4 h-4" />
+                </NuxtLink>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 

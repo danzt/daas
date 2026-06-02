@@ -1,9 +1,11 @@
 import { useAuthStore } from "~/stores/auth";
 
-export default defineNuxtPlugin(async () => {
+export default defineNuxtPlugin(() => {
   const store = useAuthStore();
   store.initFromStorage();
   if (store.isAuthenticated) {
-    await store.fetchTenant();
+    // Fire-and-forget: don't block app initialization.
+    // fetchTenant handles 401 internally (clears stale tokens).
+    store.fetchTenant();
   }
 });

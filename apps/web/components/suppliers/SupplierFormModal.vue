@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { X, Save, Building2 } from "lucide-vue-next";
+import { X, Save, Building2, Loader2 } from "lucide-vue-next";
 import { useApiFetch } from "~/composables/useAuth";
 
 export interface Supplier {

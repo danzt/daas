@@ -25,33 +25,33 @@ const (
 
 // SaleOrder is the root aggregate for a customer sale.
 type SaleOrder struct {
-	ID               uuid.UUID
-	TenantID         uuid.UUID
-	Status           OrderStatus
-	CustomerName     string
-	CustomerIDType   string
-	CustomerIDNumber string
-	Notes            string
-	Total            float64
-	ConfirmedAt      *time.Time
-	InvoicedAt       *time.Time
-	InvoiceID        *uuid.UUID
-	CreatedBy        uuid.UUID
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
-	Lines            []OrderLine
+	ID               uuid.UUID   `json:"id"`
+	TenantID         uuid.UUID   `json:"tenant_id"`
+	Status           OrderStatus `json:"status"`
+	CustomerName     string      `json:"customer_name"`
+	CustomerIDType   string      `json:"customer_id_type"`
+	CustomerIDNumber string      `json:"customer_id_number"`
+	Notes            string      `json:"notes"`
+	Total            float64     `json:"total"`
+	ConfirmedAt      *time.Time  `json:"confirmed_at"`
+	InvoicedAt       *time.Time  `json:"invoiced_at"`
+	InvoiceID        *uuid.UUID  `json:"invoice_id"`
+	CreatedBy        uuid.UUID   `json:"created_by"`
+	CreatedAt        time.Time   `json:"created_at"`
+	UpdatedAt        time.Time   `json:"updated_at"`
+	Lines            []OrderLine `json:"lines"`
 }
 
 // OrderLine is a single product line inside a sale order.
 type OrderLine struct {
-	ID          uuid.UUID
-	OrderID     uuid.UUID
-	ProductID   uuid.UUID
-	Description string
-	Quantity    float64
-	UnitPrice   float64
-	Subtotal    float64
-	SortOrder   int
+	ID          uuid.UUID `json:"id"`
+	OrderID     uuid.UUID `json:"order_id"`
+	ProductID   uuid.UUID `json:"product_id"`
+	Description string    `json:"description"`
+	Quantity    float64   `json:"quantity"`
+	UnitPrice   float64   `json:"unit_price"`
+	Subtotal    float64   `json:"subtotal"`
+	SortOrder   int       `json:"sort_order"`
 }
 
 // ─── Request types ────────────────────────────────────────────────────────────

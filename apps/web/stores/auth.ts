@@ -111,8 +111,20 @@ export const useAuthStore = defineStore("auth", () => {
         countryCode: data.country_code,
         fiscalId: data.fiscal_id,
       };
-    } catch {
-      // non-fatal — UI degrades gracefully without tenant name
+    } catch (err: unknown) {
+      const status =
+        (err as { response?: { status?: number } })?.response?.status ??
+        (err as { status?: number })?.status;
+      if (status === 401) {
+        // Token rejected by backend — clear stale auth state
+        accessToken.value = null;
+        user.value = null;
+        tenant.value = null;
+        if (!import.meta.server) {
+          localStorage.removeItem(TOKEN_KEY);
+        }
+      }
+      // Other errors are non-fatal — UI degrades gracefully without tenant name
     }
   }
 

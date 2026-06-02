@@ -29,5 +29,15 @@ export function useApiFetch<T>(
     baseURL: config.public.apiBase,
     headers,
     ...options,
-  });
+    onResponseError({ response }) {
+      if (response.status === 401 && !import.meta.server) {
+        // Token rejected — clear auth state and redirect to login
+        store.accessToken = null;
+        store.user = null;
+        store.tenant = null;
+        localStorage.removeItem("daas_token");
+        navigateTo("/auth/login");
+      }
+    },
+  } as Record<string, unknown>);
 }

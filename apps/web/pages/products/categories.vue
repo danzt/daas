@@ -81,11 +81,23 @@ async function saveCategory() {
       closeDialog();
     }
   } catch (err: unknown) {
-    const apiError = err as { data?: { detail?: string; message?: string } };
-    serverError.value =
-      apiError?.data?.detail ??
-      apiError?.data?.message ??
-      "Error al guardar la categoría";
+    const apiError = err as {
+      status?: number;
+      response?: { status?: number };
+      data?: { detail?: string; message?: string };
+    };
+    const status = apiError?.response?.status ?? apiError?.status;
+    const rawDetail = apiError?.data?.detail ?? apiError?.data?.message ?? "";
+    const isDuplicate =
+      status === 409 ||
+      /duplicate|unique|already exists|ya existe/i.test(rawDetail);
+    if (isDuplicate) {
+      serverError.value = `Ya existe una categoría llamada "${categoryName.value.trim()}"`;
+      // Refresh anyway — the category might exist from another session
+      await fetchCategories();
+    } else {
+      serverError.value = rawDetail || "Error al guardar la categoría";
+    }
   } finally {
     savingCategory.value = false;
   }

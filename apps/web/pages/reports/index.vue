@@ -201,7 +201,7 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="p-6 space-y-6">
+  <div class="p-4 sm:p-6 space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between flex-wrap gap-3">
       <div>
@@ -410,56 +410,58 @@ onMounted(load);
           >
             Sin datos de productos en el período
           </div>
-          <table v-else class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-border bg-muted/30">
-                <th
-                  class="px-4 py-3 text-left font-medium text-muted-foreground"
+          <div v-else class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-border bg-muted/30">
+                  <th
+                    class="px-4 py-3 text-left font-medium text-muted-foreground"
+                  >
+                    #
+                  </th>
+                  <th
+                    class="px-4 py-3 text-left font-medium text-muted-foreground"
+                  >
+                    Producto
+                  </th>
+                  <th
+                    class="px-4 py-3 text-right font-medium text-muted-foreground hidden md:table-cell"
+                  >
+                    Unidades
+                  </th>
+                  <th
+                    class="px-4 py-3 text-right font-medium text-muted-foreground"
+                  >
+                    Ingresos
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                <tr
+                  v-for="(prod, idx) in sales.top_products"
+                  :key="prod.product_id"
+                  class="hover:bg-muted/20 transition-colors"
                 >
-                  #
-                </th>
-                <th
-                  class="px-4 py-3 text-left font-medium text-muted-foreground"
-                >
-                  Producto
-                </th>
-                <th
-                  class="px-4 py-3 text-right font-medium text-muted-foreground hidden md:table-cell"
-                >
-                  Unidades
-                </th>
-                <th
-                  class="px-4 py-3 text-right font-medium text-muted-foreground"
-                >
-                  Ingresos
-                </th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-border">
-              <tr
-                v-for="(prod, idx) in sales.top_products"
-                :key="prod.product_id"
-                class="hover:bg-muted/20 transition-colors"
-              >
-                <td class="px-4 py-3 text-muted-foreground font-mono text-xs">
-                  {{ idx + 1 }}
-                </td>
-                <td class="px-4 py-3 font-medium text-foreground">
-                  {{ prod.product_name }}
-                </td>
-                <td
-                  class="px-4 py-3 text-right text-muted-foreground hidden md:table-cell font-mono"
-                >
-                  {{ prod.total_sold }}
-                </td>
-                <td
-                  class="px-4 py-3 text-right font-mono font-semibold text-foreground"
-                >
-                  {{ fmtCurrency(prod.revenue) }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                  <td class="px-4 py-3 text-muted-foreground font-mono text-xs">
+                    {{ idx + 1 }}
+                  </td>
+                  <td class="px-4 py-3 font-medium text-foreground">
+                    {{ prod.product_name }}
+                  </td>
+                  <td
+                    class="px-4 py-3 text-right text-muted-foreground hidden md:table-cell font-mono"
+                  >
+                    {{ prod.total_sold }}
+                  </td>
+                  <td
+                    class="px-4 py-3 text-right font-mono font-semibold text-foreground"
+                  >
+                    {{ fmtCurrency(prod.revenue) }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -504,83 +506,85 @@ onMounted(load);
         </div>
 
         <div class="border bg-card rounded-xl overflow-hidden">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-border bg-muted/30">
-                <th
-                  class="px-4 py-3 text-left font-medium text-muted-foreground"
-                >
-                  Producto
-                </th>
-                <th
-                  class="px-4 py-3 text-left font-medium text-muted-foreground hidden md:table-cell"
-                >
-                  Categoría
-                </th>
-                <th
-                  class="px-4 py-3 text-left font-medium text-muted-foreground hidden lg:table-cell"
-                >
-                  Tipo
-                </th>
-                <th
-                  class="px-4 py-3 text-right font-medium text-muted-foreground"
-                >
-                  Stock
-                </th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-border">
-              <tr
-                v-for="item in inventory.items"
-                :key="item.product_id"
-                class="hover:bg-muted/20 transition-colors"
-                :class="!item.active ? 'opacity-50' : ''"
-              >
-                <td class="px-4 py-3">
-                  <p class="font-medium text-foreground">
-                    {{ item.product_name }}
-                  </p>
-                  <p
-                    v-if="item.sku"
-                    class="text-xs text-muted-foreground font-mono"
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-border bg-muted/30">
+                  <th
+                    class="px-4 py-3 text-left font-medium text-muted-foreground"
                   >
-                    {{ item.sku }}
-                  </p>
-                </td>
-                <td
-                  class="px-4 py-3 text-muted-foreground hidden md:table-cell"
+                    Producto
+                  </th>
+                  <th
+                    class="px-4 py-3 text-left font-medium text-muted-foreground hidden md:table-cell"
+                  >
+                    Categoría
+                  </th>
+                  <th
+                    class="px-4 py-3 text-left font-medium text-muted-foreground hidden lg:table-cell"
+                  >
+                    Tipo
+                  </th>
+                  <th
+                    class="px-4 py-3 text-right font-medium text-muted-foreground"
+                  >
+                    Stock
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                <tr
+                  v-for="item in inventory.items"
+                  :key="item.product_id"
+                  class="hover:bg-muted/20 transition-colors"
+                  :class="!item.active ? 'opacity-50' : ''"
                 >
-                  {{ item.category_name || "—" }}
-                </td>
-                <td class="px-4 py-3 hidden lg:table-cell">
-                  <span
-                    :class="[
-                      'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
-                      item.is_fiscal
-                        ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
-                        : 'bg-muted text-muted-foreground',
-                    ]"
+                  <td class="px-4 py-3">
+                    <p class="font-medium text-foreground">
+                      {{ item.product_name }}
+                    </p>
+                    <p
+                      v-if="item.sku"
+                      class="text-xs text-muted-foreground font-mono"
+                    >
+                      {{ item.sku }}
+                    </p>
+                  </td>
+                  <td
+                    class="px-4 py-3 text-muted-foreground hidden md:table-cell"
                   >
-                    {{ item.is_fiscal ? "Fiscal" : "Interno" }}
-                  </span>
-                </td>
-                <td class="px-4 py-3 text-right">
-                  <span
-                    :class="[
-                      'font-mono font-semibold',
-                      item.quantity_on_hand === 0
-                        ? 'text-rose-600 dark:text-rose-400'
-                        : item.quantity_on_hand < 5
-                          ? 'text-amber-600 dark:text-amber-400'
-                          : 'text-foreground',
-                    ]"
-                  >
-                    {{ item.quantity_on_hand }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                    {{ item.category_name || "—" }}
+                  </td>
+                  <td class="px-4 py-3 hidden lg:table-cell">
+                    <span
+                      :class="[
+                        'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
+                        item.is_fiscal
+                          ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                          : 'bg-muted text-muted-foreground',
+                      ]"
+                    >
+                      {{ item.is_fiscal ? "Fiscal" : "Interno" }}
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <span
+                      :class="[
+                        'font-mono font-semibold',
+                        item.quantity_on_hand === 0
+                          ? 'text-rose-600 dark:text-rose-400'
+                          : item.quantity_on_hand < 5
+                            ? 'text-amber-600 dark:text-amber-400'
+                            : 'text-foreground',
+                      ]"
+                    >
+                      {{ item.quantity_on_hand }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -631,76 +635,78 @@ onMounted(load);
           >
             Sin compras en el período seleccionado
           </div>
-          <table v-else class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-border bg-muted/30">
-                <th
-                  class="px-4 py-3 text-left font-medium text-muted-foreground"
+          <div v-else class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-border bg-muted/30">
+                  <th
+                    class="px-4 py-3 text-left font-medium text-muted-foreground"
+                  >
+                    Proveedor
+                  </th>
+                  <th
+                    class="px-4 py-3 text-right font-medium text-muted-foreground hidden md:table-cell"
+                  >
+                    Órdenes
+                  </th>
+                  <th
+                    class="px-4 py-3 text-right font-medium text-muted-foreground"
+                  >
+                    Monto
+                  </th>
+                  <th
+                    class="px-4 py-3 text-right font-medium text-muted-foreground hidden lg:table-cell"
+                  >
+                    % del total
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                <tr
+                  v-for="sup in purchases.by_supplier"
+                  :key="sup.supplier_id"
+                  class="hover:bg-muted/20 transition-colors"
                 >
-                  Proveedor
-                </th>
-                <th
-                  class="px-4 py-3 text-right font-medium text-muted-foreground hidden md:table-cell"
-                >
-                  Órdenes
-                </th>
-                <th
-                  class="px-4 py-3 text-right font-medium text-muted-foreground"
-                >
-                  Monto
-                </th>
-                <th
-                  class="px-4 py-3 text-right font-medium text-muted-foreground hidden lg:table-cell"
-                >
-                  % del total
-                </th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-border">
-              <tr
-                v-for="sup in purchases.by_supplier"
-                :key="sup.supplier_id"
-                class="hover:bg-muted/20 transition-colors"
-              >
-                <td class="px-4 py-3 font-medium text-foreground">
-                  {{ sup.supplier_name }}
-                </td>
-                <td
-                  class="px-4 py-3 text-right text-muted-foreground hidden md:table-cell"
-                >
-                  {{ sup.order_count }}
-                </td>
-                <td
-                  class="px-4 py-3 text-right font-mono font-semibold text-foreground"
-                >
-                  {{ fmtCurrency(sup.total_spend) }}
-                </td>
-                <td
-                  class="px-4 py-3 text-right text-muted-foreground hidden lg:table-cell"
-                >
-                  <div class="flex items-center justify-end gap-2">
-                    <div
-                      class="w-16 h-1.5 bg-muted rounded-full overflow-hidden"
-                    >
+                  <td class="px-4 py-3 font-medium text-foreground">
+                    {{ sup.supplier_name }}
+                  </td>
+                  <td
+                    class="px-4 py-3 text-right text-muted-foreground hidden md:table-cell"
+                  >
+                    {{ sup.order_count }}
+                  </td>
+                  <td
+                    class="px-4 py-3 text-right font-mono font-semibold text-foreground"
+                  >
+                    {{ fmtCurrency(sup.total_spend) }}
+                  </td>
+                  <td
+                    class="px-4 py-3 text-right text-muted-foreground hidden lg:table-cell"
+                  >
+                    <div class="flex items-center justify-end gap-2">
                       <div
-                        class="h-full bg-blue-500 rounded-full"
-                        :style="`width: ${purchases.total_spend > 0 ? Math.round((sup.total_spend / purchases.total_spend) * 100) : 0}%`"
-                      />
+                        class="w-16 h-1.5 bg-muted rounded-full overflow-hidden"
+                      >
+                        <div
+                          class="h-full bg-blue-500 rounded-full"
+                          :style="`width: ${purchases.total_spend > 0 ? Math.round((sup.total_spend / purchases.total_spend) * 100) : 0}%`"
+                        />
+                      </div>
+                      <span class="text-xs w-8 text-right">
+                        {{
+                          purchases.total_spend > 0
+                            ? Math.round(
+                                (sup.total_spend / purchases.total_spend) * 100,
+                              )
+                            : 0
+                        }}%
+                      </span>
                     </div>
-                    <span class="text-xs w-8 text-right">
-                      {{
-                        purchases.total_spend > 0
-                          ? Math.round(
-                              (sup.total_spend / purchases.total_spend) * 100,
-                            )
-                          : 0
-                      }}%
-                    </span>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </template>

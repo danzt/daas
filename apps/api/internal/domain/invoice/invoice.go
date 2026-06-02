@@ -32,33 +32,33 @@ const (
 
 // InternalInvoice is the aggregate root for a non-fiscal sale document.
 type InternalInvoice struct {
-	ID               uuid.UUID
-	TenantID         uuid.UUID
-	Correlative      string // empty while status=draft
-	CustomerName     string
-	CustomerIDType   CustomerIDType
-	CustomerIDNumber string
-	Status           Status
-	Subtotal         float64
-	Total            float64
-	Notes            string
-	IssuedAt         *time.Time
-	CreatedBy        uuid.UUID
-	CreatedAt        time.Time
-	UpdatedAt        time.Time
-	Lines            []InvoiceLine
+	ID               uuid.UUID      `json:"id"`
+	TenantID         uuid.UUID      `json:"tenant_id"`
+	Correlative      string         `json:"correlative"` // empty while status=draft
+	CustomerName     string         `json:"customer_name"`
+	CustomerIDType   CustomerIDType `json:"customer_id_type"`
+	CustomerIDNumber string         `json:"customer_id_number"`
+	Status           Status         `json:"status"`
+	Subtotal         float64        `json:"subtotal"`
+	Total            float64        `json:"total"`
+	Notes            string         `json:"notes"`
+	IssuedAt         *time.Time     `json:"issued_at"`
+	CreatedBy        uuid.UUID      `json:"created_by"`
+	CreatedAt        time.Time      `json:"created_at"`
+	UpdatedAt        time.Time      `json:"updated_at"`
+	Lines            []InvoiceLine  `json:"lines"`
 }
 
 // InvoiceLine is a single product line inside an invoice.
 type InvoiceLine struct {
-	ID          uuid.UUID
-	InvoiceID   uuid.UUID
-	ProductID   uuid.UUID
-	Description string
-	Quantity    float64
-	UnitPrice   float64
-	Subtotal    float64
-	SortOrder   int
+	ID          uuid.UUID `json:"id"`
+	InvoiceID   uuid.UUID `json:"invoice_id"`
+	ProductID   uuid.UUID `json:"product_id"`
+	Description string    `json:"description"`
+	Quantity    float64   `json:"quantity"`
+	UnitPrice   float64   `json:"unit_price"`
+	Subtotal    float64   `json:"subtotal"`
+	SortOrder   int       `json:"sort_order"`
 }
 
 // CreateLineRequest is the input for one invoice line.

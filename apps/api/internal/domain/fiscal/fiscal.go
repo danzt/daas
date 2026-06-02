@@ -35,44 +35,44 @@ const (
 
 // FiscalInvoice is the aggregate root for a SENIAT-compliant sales document.
 type FiscalInvoice struct {
-	ID       uuid.UUID
-	TenantID uuid.UUID
+	ID       uuid.UUID `json:"id"`
+	TenantID uuid.UUID `json:"tenant_id"`
 	// Fiscal fields assigned by the SENIAT machine on successful send
-	FiscalNumber  *string
-	MachineSerial *string
-	ReportZNumber *int
+	FiscalNumber  *string `json:"fiscal_number"`
+	MachineSerial *string `json:"machine_serial"`
+	ReportZNumber *int    `json:"report_z_number"`
 	// Customer
-	CustomerName     string
-	CustomerIDType   CustomerIDType
-	CustomerIDNumber string
+	CustomerName     string         `json:"customer_name"`
+	CustomerIDType   CustomerIDType `json:"customer_id_type"`
+	CustomerIDNumber string         `json:"customer_id_number"`
 	// Financial totals
-	SubtotalBase float64 // base imponible (pre-tax)
-	TaxAmount    float64 // IVA total
-	Total        float64
+	SubtotalBase float64 `json:"subtotal_base"` // base imponible (pre-tax)
+	TaxAmount    float64 `json:"tax_amount"`    // IVA total
+	Total        float64 `json:"total"`
 	// Lifecycle
-	Status     Status
-	FailReason *string
-	RetryCount int
-	Notes      string
-	IssuedAt   *time.Time
-	CreatedBy  uuid.UUID
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	Lines      []FiscalInvoiceLine
+	Status     Status              `json:"status"`
+	FailReason *string             `json:"fail_reason"`
+	RetryCount int                 `json:"retry_count"`
+	Notes      string              `json:"notes"`
+	IssuedAt   *time.Time          `json:"issued_at"`
+	CreatedBy  uuid.UUID           `json:"created_by"`
+	CreatedAt  time.Time           `json:"created_at"`
+	UpdatedAt  time.Time           `json:"updated_at"`
+	Lines      []FiscalInvoiceLine `json:"lines"`
 }
 
 // FiscalInvoiceLine is a single product line inside a fiscal invoice.
 type FiscalInvoiceLine struct {
-	ID          uuid.UUID
-	InvoiceID   uuid.UUID
-	ProductID   uuid.UUID
-	Description string
-	Quantity    float64
-	UnitPrice   float64 // fiscal_price from product catalog
-	TaxRate     float64 // e.g. 0.16 for 16%
-	TaxAmount   float64 // Quantity * UnitPrice * TaxRate
-	Subtotal    float64 // Quantity * UnitPrice + TaxAmount
-	SortOrder   int
+	ID          uuid.UUID `json:"id"`
+	InvoiceID   uuid.UUID `json:"invoice_id"`
+	ProductID   uuid.UUID `json:"product_id"`
+	Description string    `json:"description"`
+	Quantity    float64   `json:"quantity"`
+	UnitPrice   float64   `json:"unit_price"` // fiscal_price from product catalog
+	TaxRate     float64   `json:"tax_rate"`   // e.g. 0.16 for 16%
+	TaxAmount   float64   `json:"tax_amount"` // Quantity * UnitPrice * TaxRate
+	Subtotal    float64   `json:"subtotal"`   // Quantity * UnitPrice + TaxAmount
+	SortOrder   int       `json:"sort_order"`
 }
 
 // CreateLineRequest is the input for one fiscal invoice line.

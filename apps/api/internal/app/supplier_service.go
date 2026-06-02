@@ -240,13 +240,45 @@ func (s *SupplierService) ListPOs(ctx context.Context, tenantID uuid.UUID, suppl
 	}
 	defer rows.Close()
 	var result []*supplier.PurchaseOrder
+	supplierIDs := make(map[uuid.UUID]struct{})
 	for rows.Next() {
 		po, err := scanPO(rows)
 		if err != nil {
 			return nil, err
 		}
 		result = append(result, po)
+		supplierIDs[po.SupplierID] = struct{}{}
 	}
+
+	// Batch-load suppliers and attach
+	if len(supplierIDs) > 0 {
+		ids := make([]uuid.UUID, 0, len(supplierIDs))
+		for id := range supplierIDs {
+			ids = append(ids, id)
+		}
+		sRows, err := s.pool.Query(ctx,
+			`SELECT id, tenant_id, name, rif, contact_name, email, phone, address, notes, active, created_at, updated_at
+			 FROM suppliers WHERE tenant_id=$1 AND id = ANY($2)`,
+			tenantID, ids,
+		)
+		if err == nil {
+			defer sRows.Close()
+			supMap := make(map[uuid.UUID]*supplier.Supplier, len(ids))
+			for sRows.Next() {
+				sup, err := scanSupplier(sRows)
+				if err != nil {
+					continue
+				}
+				supMap[sup.ID] = sup
+			}
+			for _, po := range result {
+				if sup, ok := supMap[po.SupplierID]; ok {
+					po.Supplier = sup
+				}
+			}
+		}
+	}
+
 	return result, nil
 }
 

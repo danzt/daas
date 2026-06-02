@@ -36,7 +36,10 @@ function close() {
         aria-modal="true"
       >
         <!-- Backdrop -->
-        <div class="absolute inset-0 bg-black/50" @click="close" />
+        <div
+          class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+          @click="close"
+        />
 
         <!-- Panel -->
         <Transition
@@ -53,7 +56,7 @@ function close() {
         >
           <div
             v-if="props.open"
-            class="relative z-10 flex h-full w-full max-w-md flex-col bg-white shadow-2xl dark:bg-zinc-900"
+            class="relative z-10 flex h-full w-full max-w-md flex-col bg-card border-l border-border shadow-2xl"
           >
             <slot />
           </div>

@@ -14,18 +14,18 @@ import (
 
 // Supplier is an external vendor from which the tenant purchases products.
 type Supplier struct {
-	ID          uuid.UUID
-	TenantID    uuid.UUID
-	Name        string
-	RIF         string
-	ContactName string
-	Email       string
-	Phone       string
-	Address     string
-	Notes       string
-	Active      bool
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	ID          uuid.UUID `json:"id"`
+	TenantID    uuid.UUID `json:"tenant_id"`
+	Name        string    `json:"name"`
+	RIF         string    `json:"rif"`
+	ContactName string    `json:"contact_name"`
+	Email       string    `json:"email"`
+	Phone       string    `json:"phone"`
+	Address     string    `json:"address"`
+	Notes       string    `json:"notes"`
+	Active      bool      `json:"active"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 // CreateSupplierRequest is the input for creating a supplier.
@@ -72,31 +72,31 @@ const (
 
 // PurchaseOrder is an aggregate root representing a purchase from a supplier.
 type PurchaseOrder struct {
-	ID         uuid.UUID
-	TenantID   uuid.UUID
-	SupplierID uuid.UUID
-	Status     POStatus
-	Notes      string
-	Total      float64
-	OrderedAt  *time.Time
-	ReceivedAt *time.Time
-	CreatedBy  uuid.UUID
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	Lines      []POLine
-	Supplier   *Supplier // optional, populated on demand
+	ID         uuid.UUID  `json:"id"`
+	TenantID   uuid.UUID  `json:"tenant_id"`
+	SupplierID uuid.UUID  `json:"supplier_id"`
+	Status     POStatus   `json:"status"`
+	Notes      string     `json:"notes"`
+	Total      float64    `json:"total"`
+	OrderedAt  *time.Time `json:"ordered_at"`
+	ReceivedAt *time.Time `json:"received_at"`
+	CreatedBy  uuid.UUID  `json:"created_by"`
+	CreatedAt  time.Time  `json:"created_at"`
+	UpdatedAt  time.Time  `json:"updated_at"`
+	Lines      []POLine   `json:"lines"`
+	Supplier   *Supplier  `json:"supplier,omitempty"` // optional, populated on demand
 }
 
 // POLine is a single product line in a purchase order.
 type POLine struct {
-	ID              uuid.UUID
-	POID            uuid.UUID
-	ProductID       uuid.UUID
-	Description     string
-	QuantityOrdered float64
-	UnitCost        float64
-	Subtotal        float64
-	SortOrder       int
+	ID              uuid.UUID `json:"id"`
+	POID            uuid.UUID `json:"po_id"`
+	ProductID       uuid.UUID `json:"product_id"`
+	Description     string    `json:"description"`
+	QuantityOrdered float64   `json:"quantity_ordered"`
+	UnitCost        float64   `json:"unit_cost"`
+	Subtotal        float64   `json:"subtotal"`
+	SortOrder       int       `json:"sort_order"`
 }
 
 // CreatePOLineRequest is the input for one purchase order line.
