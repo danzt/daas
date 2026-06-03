@@ -99,10 +99,9 @@ func main() {
 		log.Warn().Msg("DATABASE_URL not set — database features will be unavailable")
 	}
 
-	// Notification service — constructed but NOT invoked in S6.
-	// EmailAdapter activates in S8 when payment/order notifications go live.
-	// When RESEND_API_KEY is unset (dev), fall back to NoopAdapter so the
-	// dependency graph still compiles.
+	// Notification service. EmailAdapter activates when RESEND_API_KEY is set;
+	// otherwise we fall back to NoopAdapter so the dependency graph still
+	// compiles and dev runs don't spam real inboxes.
 	var notifSvc notification.NotificationService
 	if resendKey := os.Getenv("RESEND_API_KEY"); resendKey != "" {
 		from := os.Getenv("RESEND_FROM_EMAIL")
@@ -115,13 +114,21 @@ func main() {
 		notifSvc = notifadapter.NewNoopAdapter()
 		log.Info().Msg("notification service: NoopAdapter (RESEND_API_KEY unset)")
 	}
-	_ = notifSvc // wired but not used until S8
+
+	// Storefront base URL used by lifecycle emails to build the customer
+	// tracking links. Defaults to localhost for dev.
+	storefrontURL := os.Getenv("PUBLIC_STOREFRONT_URL")
+	if storefrontURL == "" {
+		storefrontURL = "http://localhost:3000"
+	}
 
 	router := adapterhttp.NewRouterWithConfig(adapterhttp.RouterConfig{
-		SupabaseURL:    cfg.SupabaseURL,
-		AnonKey:        cfg.SupabaseAnonKey,
-		ServiceRoleKey: cfg.SupabaseServiceRoleKey,
-		Pool:           pool,
+		SupabaseURL:     cfg.SupabaseURL,
+		AnonKey:         cfg.SupabaseAnonKey,
+		ServiceRoleKey:  cfg.SupabaseServiceRoleKey,
+		Pool:            pool,
+		NotificationSvc: notifSvc,
+		StorefrontURL:   storefrontURL,
 	})
 
 	addr := ":" + cfg.Port

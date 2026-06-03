@@ -18,12 +18,19 @@ import (
 // ShopOrderService handles the public storefront order lifecycle.
 // Stock is decremented atomically at checkout via Serializable transactions.
 type ShopOrderService struct {
-	pool *pgxpool.Pool
+	pool     *pgxpool.Pool
+	notifier *ShopOrderNotifier // optional — when nil, lifecycle emails are skipped
 }
 
 // NewShopOrderService creates a ShopOrderService backed by the given pool.
 func NewShopOrderService(pool *pgxpool.Pool) *ShopOrderService {
 	return &ShopOrderService{pool: pool}
+}
+
+// SetNotifier wires the lifecycle email notifier. Safe to call once at startup.
+// When nil (or never called), all order state transitions skip the email send.
+func (s *ShopOrderService) SetNotifier(n *ShopOrderNotifier) {
+	s.notifier = n
 }
 
 // ═══ Public checkout ═════════════════════════════════════════════════════════
@@ -282,22 +289,38 @@ func (s *ShopOrderService) ListTenantOrders(ctx context.Context, tenantID uuid.U
 
 // MarkPaid transitions pending → paid.
 func (s *ShopOrderService) MarkPaid(ctx context.Context, tenantID, orderID uuid.UUID) (*shop.ShopOrder, error) {
-	return s.transition(ctx, tenantID, orderID, shop.OrderStatusPaid, "paid_at")
+	o, err := s.transition(ctx, tenantID, orderID, shop.OrderStatusPaid, "paid_at")
+	if err == nil {
+		s.notifier.Notify(ctx, tenantID, o)
+	}
+	return o, err
 }
 
 // MarkFulfilled transitions paid → fulfilled.
 func (s *ShopOrderService) MarkFulfilled(ctx context.Context, tenantID, orderID uuid.UUID) (*shop.ShopOrder, error) {
-	return s.transition(ctx, tenantID, orderID, shop.OrderStatusFulfilled, "fulfilled_at")
+	o, err := s.transition(ctx, tenantID, orderID, shop.OrderStatusFulfilled, "fulfilled_at")
+	if err == nil {
+		s.notifier.Notify(ctx, tenantID, o)
+	}
+	return o, err
 }
 
 // MarkDelivered transitions fulfilled → delivered.
 func (s *ShopOrderService) MarkDelivered(ctx context.Context, tenantID, orderID uuid.UUID) (*shop.ShopOrder, error) {
-	return s.transition(ctx, tenantID, orderID, shop.OrderStatusDelivered, "delivered_at")
+	o, err := s.transition(ctx, tenantID, orderID, shop.OrderStatusDelivered, "delivered_at")
+	if err == nil {
+		s.notifier.Notify(ctx, tenantID, o)
+	}
+	return o, err
 }
 
 // Cancel transitions pending|paid → cancelled (admin version, no token required).
 func (s *ShopOrderService) Cancel(ctx context.Context, tenantID, orderID uuid.UUID) (*shop.ShopOrder, error) {
-	return s.transition(ctx, tenantID, orderID, shop.OrderStatusCancelled, "cancelled_at")
+	o, err := s.transition(ctx, tenantID, orderID, shop.OrderStatusCancelled, "cancelled_at")
+	if err == nil {
+		s.notifier.Notify(ctx, tenantID, o)
+	}
+	return o, err
 }
 
 // CustomerCancel transitions pending → cancelled using the access token.
@@ -320,7 +343,11 @@ func (s *ShopOrderService) CustomerCancel(ctx context.Context, tenantID, orderID
 	if err != nil {
 		return nil, fmt.Errorf("cancel shop order: %w", err)
 	}
-	return s.getOrderByID(ctx, tenantID, orderID)
+	o, err := s.getOrderByID(ctx, tenantID, orderID)
+	if err == nil {
+		s.notifier.Notify(ctx, tenantID, o)
+	}
+	return o, err
 }
 
 // ─── Private helpers ──────────────────────────────────────────────────────────
