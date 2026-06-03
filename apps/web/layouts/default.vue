@@ -84,6 +84,11 @@ const sidebarItems: NavGroup[] = [
         icon: ShoppingCart,
       },
       {
+        title: "Pedidos online",
+        url: "/shop-orders",
+        icon: ShoppingCart,
+      },
+      {
         title: "Facturas",
         url: "/invoices",
         icon: FileText,
