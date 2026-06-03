@@ -20,8 +20,11 @@ type ShopOrderHandler struct {
 }
 
 // NewShopOrderHandler creates a ShopOrderHandler backed by the given pool.
-func NewShopOrderHandler(pool *pgxpool.Pool) *ShopOrderHandler {
-	return &ShopOrderHandler{svc: app.NewShopOrderService(pool)}
+// notifier is optional — when nil, lifecycle state changes skip email sends.
+func NewShopOrderHandler(pool *pgxpool.Pool, notifier *app.ShopOrderNotifier) *ShopOrderHandler {
+	svc := app.NewShopOrderService(pool)
+	svc.SetNotifier(notifier)
+	return &ShopOrderHandler{svc: svc}
 }
 
 // ─── Request DTOs ─────────────────────────────────────────────────────────────

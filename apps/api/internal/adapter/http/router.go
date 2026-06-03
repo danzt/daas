@@ -14,6 +14,7 @@ import (
 	"github.com/danzt/daas/api/internal/adapter/http/handler"
 	mw "github.com/danzt/daas/api/internal/adapter/http/middleware"
 	"github.com/danzt/daas/api/internal/app"
+	"github.com/danzt/daas/api/internal/domain/notification"
 )
 
 // RouterConfig holds dependencies needed to build the Echo router.
@@ -22,6 +23,11 @@ type RouterConfig struct {
 	AnonKey        string
 	ServiceRoleKey string
 	Pool           *pgxpool.Pool
+	// NotificationSvc + StorefrontURL — used for transactional emails
+	// sent to customers when their order changes state. Optional; when nil,
+	// state transitions still succeed but no email is dispatched.
+	NotificationSvc notification.NotificationService
+	StorefrontURL   string
 }
 
 // NewRouter creates a new Echo instance with standard middleware configured
@@ -103,7 +109,15 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 	supplierHandler := handler.NewSupplierHandler(cfg.Pool)
 	reportHandler := handler.NewReportHandler(cfg.Pool)
 	saleHandler := handler.NewSaleHandler(cfg.Pool)
-	shopOrderHandler := handler.NewShopOrderHandler(cfg.Pool)
+
+	// Build lifecycle email notifier from injected NotificationSvc.
+	// nil-safe: if the notification service is not configured, the notifier
+	// stays nil and ShopOrderService.SetNotifier(nil) skips all sends.
+	var shopNotifier *app.ShopOrderNotifier
+	if cfg.NotificationSvc != nil && cfg.Pool != nil {
+		shopNotifier = app.NewShopOrderNotifier(cfg.NotificationSvc, cfg.Pool, cfg.StorefrontURL)
+	}
+	shopOrderHandler := handler.NewShopOrderHandler(cfg.Pool, shopNotifier)
 
 	// Routes
 	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler, fiscalInvoiceHandler, supplierHandler, reportHandler, saleHandler, shopOrderHandler)
