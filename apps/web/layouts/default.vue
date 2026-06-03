@@ -15,6 +15,7 @@ import {
   Command,
   PanelLeft,
   RefreshCw,
+  CreditCard,
 } from "lucide-vue-next";
 import { useAuthStore } from "~/stores/auth";
 
@@ -118,6 +119,17 @@ const sidebarItems: NavGroup[] = [
     id: 5,
     label: "Análisis",
     items: [{ title: "Reportes", url: "/reports", icon: BarChart2 }],
+  },
+  {
+    id: 6,
+    label: "Configuración",
+    items: [
+      {
+        title: "Métodos de pago",
+        url: "/settings/payment-methods",
+        icon: CreditCard,
+      },
+    ],
   },
 ];
 
