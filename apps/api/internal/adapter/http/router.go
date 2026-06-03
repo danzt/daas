@@ -103,9 +103,10 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 	supplierHandler := handler.NewSupplierHandler(cfg.Pool)
 	reportHandler := handler.NewReportHandler(cfg.Pool)
 	saleHandler := handler.NewSaleHandler(cfg.Pool)
+	shopOrderHandler := handler.NewShopOrderHandler(cfg.Pool)
 
 	// Routes
-	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler, fiscalInvoiceHandler, supplierHandler, reportHandler, saleHandler)
+	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler, fiscalInvoiceHandler, supplierHandler, reportHandler, saleHandler, shopOrderHandler)
 
 	// Storefront public route group — no auth required.
 	// Rate limiter runs first (fast reject), then tenant resolver activates RLS.
@@ -130,6 +131,11 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 		shopHandler := handler.NewShopHandler(shopSvc)
 		storefront.GET("/products", shopHandler.ListProducts)
 		storefront.GET("/products/:id", shopHandler.GetProduct)
+
+		// Public checkout + order tracking endpoints (S7-PR2).
+		storefront.POST("/checkout", shopOrderHandler.Checkout)
+		storefront.GET("/orders/:id", shopOrderHandler.GetOrder)
+		storefront.POST("/orders/:id/cancel", shopOrderHandler.CancelOrder)
 	}
 
 	return e
@@ -151,6 +157,7 @@ func registerRoutes(
 	supplierHandler *handler.SupplierHandler,
 	reportHandler *handler.ReportHandler,
 	saleHandler *handler.SaleHandler,
+	shopOrderHandler *handler.ShopOrderHandler,
 ) {
 	// Health check — unauthenticated
 	e.GET("/health", healthHandler)
@@ -243,6 +250,14 @@ func registerRoutes(
 	api.POST("/purchase-orders/:id/order", supplierHandler.OrderPO)
 	api.POST("/purchase-orders/:id/receive", supplierHandler.ReceivePO)
 	api.POST("/purchase-orders/:id/cancel", supplierHandler.CancelPO)
+
+	// Shop Orders — tenant admin lifecycle (S7-PR2)
+	api.GET("/shop-orders", shopOrderHandler.AdminList)
+	api.GET("/shop-orders/:id", shopOrderHandler.AdminGet)
+	api.POST("/shop-orders/:id/mark-paid", shopOrderHandler.MarkPaid)
+	api.POST("/shop-orders/:id/mark-fulfilled", shopOrderHandler.MarkFulfilled)
+	api.POST("/shop-orders/:id/mark-delivered", shopOrderHandler.MarkDelivered)
+	api.POST("/shop-orders/:id/cancel", shopOrderHandler.AdminCancel)
 }
 
 // healthHandler responds with a simple status OK payload.
