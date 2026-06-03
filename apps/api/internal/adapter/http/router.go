@@ -118,9 +118,10 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 		shopNotifier = app.NewShopOrderNotifier(cfg.NotificationSvc, cfg.Pool, cfg.StorefrontURL)
 	}
 	shopOrderHandler := handler.NewShopOrderHandler(cfg.Pool, shopNotifier)
+	paymentMethodHandler := handler.NewPaymentMethodHandler(cfg.Pool)
 
 	// Routes
-	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler, fiscalInvoiceHandler, supplierHandler, reportHandler, saleHandler, shopOrderHandler)
+	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler, fiscalInvoiceHandler, supplierHandler, reportHandler, saleHandler, shopOrderHandler, paymentMethodHandler)
 
 	// Storefront public route group — no auth required.
 	// Rate limiter runs first (fast reject), then tenant resolver activates RLS.
@@ -150,6 +151,9 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 		storefront.POST("/checkout", shopOrderHandler.Checkout)
 		storefront.GET("/orders/:id", shopOrderHandler.GetOrder)
 		storefront.POST("/orders/:id/cancel", shopOrderHandler.CancelOrder)
+
+		// Public payment methods (S8-PR1).
+		storefront.GET("/payment-methods", paymentMethodHandler.PublicList)
 	}
 
 	return e
@@ -172,6 +176,7 @@ func registerRoutes(
 	reportHandler *handler.ReportHandler,
 	saleHandler *handler.SaleHandler,
 	shopOrderHandler *handler.ShopOrderHandler,
+	paymentMethodHandler *handler.PaymentMethodHandler,
 ) {
 	// Health check — unauthenticated
 	e.GET("/health", healthHandler)
@@ -272,6 +277,12 @@ func registerRoutes(
 	api.POST("/shop-orders/:id/mark-fulfilled", shopOrderHandler.MarkFulfilled)
 	api.POST("/shop-orders/:id/mark-delivered", shopOrderHandler.MarkDelivered)
 	api.POST("/shop-orders/:id/cancel", shopOrderHandler.AdminCancel)
+
+	// Payment Methods — tenant settings (S8-PR1)
+	api.GET("/payment-methods", paymentMethodHandler.AdminList)
+	api.POST("/payment-methods", paymentMethodHandler.AdminCreate)
+	api.PUT("/payment-methods/:id", paymentMethodHandler.AdminUpdate)
+	api.DELETE("/payment-methods/:id", paymentMethodHandler.AdminDelete)
 }
 
 // healthHandler responds with a simple status OK payload.
