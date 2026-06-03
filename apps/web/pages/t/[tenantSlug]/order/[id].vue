@@ -18,6 +18,12 @@ import {
   ArrowLeft,
   Copy,
   Check,
+  Smartphone,
+  Building2,
+  DollarSign,
+  Bitcoin,
+  Banknote,
+  MoreHorizontal,
 } from "lucide-vue-next";
 import { usePublicFetch } from "~/composables/usePublicFetch";
 import { useFormatPrice } from "~/composables/useFormatPrice";
@@ -27,7 +33,6 @@ definePageMeta({
 });
 
 const route = useRoute();
-const router = useRouter();
 const tenantSlug = route.params.tenantSlug as string;
 const orderId = route.params.id as string;
 const accessToken = (route.query.access_token as string) ?? "";
@@ -68,6 +73,40 @@ interface ShopOrder {
   lines: OrderLine[];
 }
 
+// ─── Payment method types ─────────────────────────────────────────────────────
+
+interface PaymentMethod {
+  id: string;
+  type: string;
+  label: string;
+  details: Record<string, string>;
+  currency: string;
+  active: boolean;
+  sort_order: number;
+}
+
+const PM_LABELS: Record<string, string> = {
+  pago_movil: "Pago Móvil",
+  transfer_bank: "Transferencia bancaria",
+  zelle: "Zelle",
+  paypal: "PayPal",
+  usdt: "USDT",
+  cash: "Efectivo",
+  other: "Otro",
+};
+
+const PM_ICONS: Record<string, Component> = {
+  pago_movil: Smartphone,
+  transfer_bank: Building2,
+  zelle: DollarSign,
+  paypal: DollarSign,
+  usdt: Bitcoin,
+  cash: Banknote,
+  other: MoreHorizontal,
+};
+
+// ─── State ────────────────────────────────────────────────────────────────────
+
 const order = ref<ShopOrder | null>(null);
 const loading = ref(true);
 const loadError = ref("");
@@ -75,6 +114,9 @@ const cancelling = ref(false);
 const cancelError = ref("");
 const showConfirmCancel = ref(false);
 const copied = ref(false);
+
+const paymentMethods = ref<PaymentMethod[]>([]);
+const copiedField = ref<string | null>(null);
 
 useSeoMeta({
   title: () =>
@@ -86,19 +128,87 @@ async function load() {
   loading.value = true;
   loadError.value = "";
   try {
-    order.value = await usePublicFetch<ShopOrder>(
-      `/orders/${orderId}?access_token=${accessToken}`,
-    );
-  } catch (err: unknown) {
-    const e = err as { status?: number; statusCode?: number };
-    if (e?.status === 404 || e?.statusCode === 404) {
-      loadError.value = "Pedido no encontrado o link inválido";
+    const [orderData, pmData] = await Promise.allSettled([
+      usePublicFetch<ShopOrder>(
+        `/orders/${orderId}?access_token=${accessToken}`,
+      ),
+      usePublicFetch<PaymentMethod[]>("/payment-methods"),
+    ]);
+
+    if (orderData.status === "fulfilled") {
+      order.value = orderData.value;
     } else {
-      loadError.value = "No pudimos cargar el pedido";
+      const e = orderData.reason as { status?: number; statusCode?: number };
+      if (e?.status === 404 || e?.statusCode === 404) {
+        loadError.value = "Pedido no encontrado o link inválido";
+      } else {
+        loadError.value = "No pudimos cargar el pedido";
+      }
     }
+
+    if (pmData.status === "fulfilled") {
+      paymentMethods.value = pmData.value;
+    }
+    // If payment methods fail, we silently skip — non-critical
   } finally {
     loading.value = false;
   }
+}
+
+function pmIcon(type: string): Component {
+  return PM_ICONS[type] ?? MoreHorizontal;
+}
+
+function pmLabel(m: PaymentMethod): string {
+  return m.label || PM_LABELS[m.type] || m.type;
+}
+
+/** Returns key-value pairs to render as copyable lines for a payment method. */
+function pmLines(m: PaymentMethod): Array<{ label: string; value: string }> {
+  const d = m.details;
+  const t = m.type;
+  if (t === "pago_movil") {
+    return [
+      { label: "Banco", value: d.bank ?? "" },
+      { label: "Cédula / RIF", value: d.document_number ?? "" },
+      { label: "Teléfono", value: d.phone ?? "" },
+      ...(d.holder ? [{ label: "Titular", value: d.holder }] : []),
+    ];
+  } else if (t === "transfer_bank") {
+    return [
+      { label: "Banco", value: d.bank ?? "" },
+      { label: "Tipo", value: d.account_type ?? "" },
+      { label: "Cuenta", value: d.account_number ?? "" },
+      { label: "Titular", value: d.account_holder ?? "" },
+      ...(d.document_number
+        ? [{ label: "Cédula / RIF", value: d.document_number }]
+        : []),
+    ];
+  } else if (t === "zelle") {
+    return [
+      { label: "Email", value: d.email ?? "" },
+      { label: "Titular", value: d.account_holder ?? "" },
+      ...(d.bank ? [{ label: "Banco", value: d.bank }] : []),
+    ];
+  } else if (t === "paypal") {
+    return [{ label: "Email", value: d.email ?? "" }];
+  } else if (t === "usdt") {
+    return [
+      { label: "Red", value: d.network ?? "" },
+      { label: "Wallet", value: d.wallet_address ?? "" },
+    ];
+  } else if (t === "cash") {
+    return d.notes ? [{ label: "Instrucciones", value: d.notes }] : [];
+  } else {
+    return d.notes ? [{ label: "Instrucciones", value: d.notes }] : [];
+  }
+}
+
+function copyField(key: string, value: string) {
+  if (!import.meta.client) return;
+  navigator.clipboard.writeText(value);
+  copiedField.value = key;
+  setTimeout(() => (copiedField.value = null), 2000);
 }
 
 async function cancelOrder() {
@@ -318,6 +428,101 @@ onMounted(load);
             >
               {{ fmtDate(order.cancelled_at) }}
             </p>
+          </div>
+        </div>
+
+        <!-- Payment methods section (pending orders only) -->
+        <div
+          v-if="order.status === 'pending'"
+          class="border bg-card rounded-xl p-5 shadow-sm space-y-4"
+        >
+          <div>
+            <h2
+              class="text-base font-bold text-foreground flex items-center gap-2"
+            >
+              <CreditCard class="w-4 h-4 text-primary" />
+              Cómo pagar este pedido
+            </h2>
+            <p class="text-xs text-muted-foreground mt-1">
+              Pagá el monto total
+              <span class="font-semibold text-foreground">{{
+                fmt(order.total)
+              }}</span>
+              con cualquiera de estos métodos.
+              <span class="text-muted-foreground/70"
+                >Después vas a poder subir tu comprobante (próximamente).</span
+              >
+            </p>
+          </div>
+
+          <!-- No methods configured -->
+          <div
+            v-if="paymentMethods.length === 0"
+            class="rounded-lg bg-muted/50 border border-border px-4 py-3 text-sm text-muted-foreground"
+          >
+            El vendedor todavía no configuró métodos de pago. Contactalo
+            directamente.
+            <a
+              v-if="order.customer_email"
+              :href="`mailto:${order.customer_email}`"
+              class="text-primary underline ml-1"
+              >Enviar email</a
+            >
+          </div>
+
+          <!-- Method cards -->
+          <div v-else class="space-y-3">
+            <div
+              v-for="pm in paymentMethods"
+              :key="pm.id"
+              class="rounded-xl border border-border bg-muted/30 p-4 space-y-2"
+            >
+              <!-- Header -->
+              <div class="flex items-center gap-2">
+                <component
+                  :is="pmIcon(pm.type)"
+                  class="w-4 h-4 text-primary shrink-0"
+                />
+                <p class="text-sm font-semibold text-foreground">
+                  {{ pmLabel(pm) }}
+                </p>
+                <span
+                  v-if="pm.currency"
+                  class="ml-auto text-xs font-mono bg-muted text-muted-foreground px-1.5 py-0.5 rounded"
+                >
+                  {{ pm.currency }}
+                </span>
+              </div>
+
+              <!-- Lines -->
+              <dl class="space-y-1.5">
+                <div
+                  v-for="line in pmLines(pm)"
+                  :key="line.label"
+                  class="flex items-center justify-between gap-2 text-sm"
+                >
+                  <dt class="text-muted-foreground text-xs shrink-0 w-28">
+                    {{ line.label }}
+                  </dt>
+                  <dd class="flex-1 font-mono text-foreground text-xs truncate">
+                    {{ line.value }}
+                  </dd>
+                  <button
+                    v-if="line.value"
+                    type="button"
+                    :title="`Copiar ${line.label}`"
+                    class="shrink-0 p-1 rounded hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                    @click="copyField(`${pm.id}-${line.label}`, line.value)"
+                  >
+                    <Check
+                      v-if="copiedField === `${pm.id}-${line.label}`"
+                      class="w-3 h-3 text-emerald-600"
+                    />
+                    <Copy v-else class="w-3 h-3" />
+                  </button>
+                </div>
+              </dl>
+            </div>
           </div>
         </div>
 
