@@ -108,7 +108,9 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 	meHandler := handler.NewMeHandler(cfg.Pool)
 	productHandler := handler.NewProductHandler(cfg.Pool)
 	inventoryHandler := handler.NewInventoryHandler(cfg.Pool)
-	invoiceHandler := handler.NewInvoiceHandler(cfg.Pool)
+	// Create InternalInvoiceService once — shared between InvoiceHandler and auto-invoice.
+	internalInvoiceSvc := app.NewInternalInvoiceService(cfg.Pool)
+	invoiceHandler := handler.NewInvoiceHandlerWithService(internalInvoiceSvc)
 	fiscalInvoiceHandler := handler.NewFiscalInvoiceHandler(cfg.Pool)
 	supplierHandler := handler.NewSupplierHandler(cfg.Pool)
 	reportHandler := handler.NewReportHandler(cfg.Pool)
@@ -122,6 +124,9 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 		shopNotifier = app.NewShopOrderNotifier(cfg.NotificationSvc, cfg.Pool, cfg.StorefrontURL)
 	}
 	shopOrderHandler := handler.NewShopOrderHandler(cfg.Pool, shopNotifier, cfg.Storage)
+	if cfg.Pool != nil {
+		shopOrderHandler.SetInvoiceService(internalInvoiceSvc)
+	}
 	paymentMethodHandler := handler.NewPaymentMethodHandler(cfg.Pool)
 
 	// Routes

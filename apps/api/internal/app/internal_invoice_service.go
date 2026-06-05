@@ -498,6 +498,238 @@ func (s *InternalInvoiceService) restoreStock(ctx context.Context, tx pgx.Tx, te
 	return err
 }
 
+// CreateAndIssueFromShopOrder generates and immediately issues an internal
+// invoice for all non-fiscal lines of a shop order. Designed for the
+// auto-invoice flow triggered on MarkPaid — it does NOT require a Supabase
+// UID and instead looks up the tenant owner user directly.
+//
+// If the shop order has ONLY fiscal products, it skips silently and returns nil.
+// The caller (ShopOrderService.MarkPaid) is responsible for calling this
+// asynchronously / best-effort — a failure here must NOT block the state transition.
+func (s *InternalInvoiceService) CreateAndIssueFromShopOrder(
+	ctx context.Context,
+	tenantID uuid.UUID,
+	orderID uuid.UUID,
+	customerName string,
+	customerNote string,
+) (*invoice.InternalInvoice, error) {
+	// Resolve owner user ID for audit columns.
+	ownerID, err := s.ownerUserID(ctx, tenantID)
+	if err != nil {
+		return nil, fmt.Errorf("auto-invoice: resolve owner: %w", err)
+	}
+
+	// Load shop_order_lines for this order (only non-fiscal products).
+	type shopLine struct {
+		productID   uuid.UUID
+		description string
+		quantity    float64
+		unitPrice   float64
+	}
+	rows, err := s.pool.Query(ctx, `
+		SELECT sol.product_id, sol.name, sol.quantity, sol.unit_price
+		FROM shop_order_lines sol
+		JOIN products p ON p.id = sol.product_id
+		WHERE sol.order_id = $1 AND p.is_fiscal = false`,
+		orderID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("auto-invoice: load lines: %w", err)
+	}
+	defer rows.Close()
+
+	var lines []shopLine
+	for rows.Next() {
+		var l shopLine
+		if err := rows.Scan(&l.productID, &l.description, &l.quantity, &l.unitPrice); err != nil {
+			return nil, fmt.Errorf("auto-invoice: scan line: %w", err)
+		}
+		lines = append(lines, l)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("auto-invoice: rows error: %w", err)
+	}
+
+	// Nothing to invoice — all products were fiscal.
+	if len(lines) == 0 {
+		return nil, nil
+	}
+
+	// Build CreateRequest.
+	req := invoice.CreateRequest{
+		CustomerName:     customerName,
+		CustomerIDType:   invoice.CustomerIDTypeAnonymous,
+		CustomerIDNumber: "",
+		Notes:            customerNote,
+	}
+	for _, l := range lines {
+		req.Lines = append(req.Lines, invoice.CreateLineRequest{
+			ProductID:   l.productID,
+			Description: l.description,
+			Quantity:    l.quantity,
+			UnitPrice:   l.unitPrice,
+			IsFiscal:    false,
+		})
+	}
+
+	// Create draft directly using internal user ID (bypass supabase UID resolution).
+	inv, err := s.createWithUserID(ctx, tenantID, ownerID, req)
+	if err != nil {
+		return nil, fmt.Errorf("auto-invoice: create draft: %w", err)
+	}
+
+	// Issue immediately.
+	// skipStockDeduction=true because checkout already decremented stock atomically.
+	issued, err := s.issueWithUserID(ctx, tenantID, inv.ID, ownerID, true)
+	if err != nil {
+		return nil, fmt.Errorf("auto-invoice: issue: %w", err)
+	}
+	return issued, nil
+}
+
+// ownerUserID returns the tenant_users.id of the tenant owner (role='owner').
+func (s *InternalInvoiceService) ownerUserID(ctx context.Context, tenantID uuid.UUID) (uuid.UUID, error) {
+	var id uuid.UUID
+	err := s.pool.QueryRow(ctx,
+		`SELECT id FROM tenant_users WHERE tenant_id = $1 AND role = 'owner' LIMIT 1`,
+		tenantID,
+	).Scan(&id)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("owner user: %w", err)
+	}
+	return id, nil
+}
+
+// createWithUserID is the same as Create but accepts an already-resolved tenant_users.id.
+func (s *InternalInvoiceService) createWithUserID(ctx context.Context, tenantID, createdBy uuid.UUID, req invoice.CreateRequest) (*invoice.InternalInvoice, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck
+
+	inv := &invoice.InternalInvoice{
+		ID:               uuid.New(),
+		TenantID:         tenantID,
+		CustomerName:     req.CustomerName,
+		CustomerIDType:   req.CustomerIDType,
+		CustomerIDNumber: req.CustomerIDNumber,
+		Status:           invoice.StatusDraft,
+		Notes:            req.Notes,
+		CreatedBy:        createdBy,
+		CreatedAt:        time.Now(),
+		UpdatedAt:        time.Now(),
+	}
+	if inv.CustomerIDType == "" {
+		inv.CustomerIDType = invoice.CustomerIDTypeAnonymous
+	}
+
+	_, err = tx.Exec(ctx, `
+		INSERT INTO internal_invoices
+			(id, tenant_id, customer_name, customer_id_type, customer_id_number,
+			 status, subtotal, total, notes, created_by, created_at, updated_at)
+		VALUES ($1,$2,$3,$4,$5,'draft',0,0,$6,$7,NOW(),NOW())`,
+		inv.ID, inv.TenantID, inv.CustomerName, inv.CustomerIDType,
+		inv.CustomerIDNumber, inv.Notes, inv.CreatedBy,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("insert invoice: %w", err)
+	}
+
+	var subtotal float64
+	for i, l := range req.Lines {
+		lineSubtotal := l.Quantity * l.UnitPrice
+		subtotal += lineSubtotal
+		lineID := uuid.New()
+		_, err = tx.Exec(ctx, `
+			INSERT INTO internal_invoice_lines
+				(id, invoice_id, product_id, description, quantity, unit_price, subtotal, sort_order)
+			VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+			lineID, inv.ID, l.ProductID, l.Description, l.Quantity, l.UnitPrice, lineSubtotal, i,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("insert line: %w", err)
+		}
+		inv.Lines = append(inv.Lines, invoice.InvoiceLine{
+			ID:        lineID,
+			InvoiceID: inv.ID,
+			ProductID: l.ProductID,
+			Quantity:  l.Quantity,
+			UnitPrice: l.UnitPrice,
+			Subtotal:  lineSubtotal,
+			SortOrder: i,
+		})
+	}
+
+	inv.Subtotal = subtotal
+	inv.Total = subtotal
+	_, err = tx.Exec(ctx, `UPDATE internal_invoices SET subtotal=$1, total=$2 WHERE id=$3`, inv.Subtotal, inv.Total, inv.ID)
+	if err != nil {
+		return nil, fmt.Errorf("update totals: %w", err)
+	}
+	if err = tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("commit: %w", err)
+	}
+	return inv, nil
+}
+
+// issueWithUserID is the same as Issue but accepts an already-resolved tenant_users.id.
+// When skipStockDeduction is true, inventory exit movements are NOT created — use this
+// for shop orders where stock was already decremented atomically at checkout time.
+func (s *InternalInvoiceService) issueWithUserID(ctx context.Context, tenantID, invoiceID, issuedBy uuid.UUID, skipStockDeduction bool) (*invoice.InternalInvoice, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("begin tx: %w", err)
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck
+
+	inv, err := s.loadForUpdate(ctx, tx, tenantID, invoiceID)
+	if err != nil {
+		return nil, err
+	}
+	if inv.Status == invoice.StatusIssued {
+		return nil, invoice.ErrInvoiceAlreadyIssued
+	}
+
+	year := time.Now().Year()
+	seq, err := s.nextCorrelative(ctx, tx, tenantID, year)
+	if err != nil {
+		return nil, fmt.Errorf("generate correlative: %w", err)
+	}
+	correlative := invoice.FormatCorrelative(year, seq)
+	now := time.Now()
+
+	_, err = tx.Exec(ctx, `
+		UPDATE internal_invoices
+		SET status='issued', correlative=$1, issued_at=$2, updated_at=NOW()
+		WHERE id=$3 AND tenant_id=$4`,
+		correlative, now, invoiceID, tenantID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("update invoice status: %w", err)
+	}
+
+	if !skipStockDeduction {
+		for _, line := range inv.Lines {
+			if err := s.deductStock(ctx, tx, tenantID, line.ProductID, line.Quantity, invoiceID, issuedBy); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	if err = tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("commit: %w", err)
+	}
+	inv.Status = invoice.StatusIssued
+	inv.Correlative = correlative
+	inv.IssuedAt = &now
+	return inv, nil
+}
+
 // resolveUserID translates a Supabase sub (UUID string) to the internal
 // tenant_users.id used in audit fields. Matches the pattern used by InventoryService.
 func (s *InternalInvoiceService) resolveUserID(ctx context.Context, tenantID uuid.UUID, supabaseUID string) (uuid.UUID, error) {
