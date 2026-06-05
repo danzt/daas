@@ -627,6 +627,10 @@ func (s *ShopOrderService) UploadPaymentProof(
 	if err != nil {
 		return nil, err
 	}
+
+	// Notify the tenant owner that a proof was uploaded (async, best-effort).
+	s.notifier.NotifyProofUploaded(ctx, tenantID, updated)
+
 	updated.AccessToken = ""
 	return updated, nil
 }
