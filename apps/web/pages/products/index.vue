@@ -382,10 +382,19 @@ onMounted(async () => {
         :class="!product.active ? 'opacity-60' : ''"
       >
         <!-- Image / icon area -->
-        <div
-          class="relative aspect-square bg-gradient-to-br from-primary/5 via-primary/10 to-violet-100 flex items-center justify-center"
-        >
-          <Package class="w-10 h-10 sm:w-14 sm:h-14 text-primary/30" />
+        <div class="relative aspect-square overflow-hidden">
+          <img
+            v-if="product.image_url"
+            :src="product.image_url"
+            :alt="product.name"
+            class="w-full h-full object-cover"
+          />
+          <div
+            v-else
+            class="w-full h-full bg-gradient-to-br from-primary/5 via-primary/10 to-violet-100 flex items-center justify-center"
+          >
+            <Package class="w-10 h-10 sm:w-14 sm:h-14 text-primary/30" />
+          </div>
           <!-- Fiscal badge — top-left like Amazon Prime -->
           <span
             v-if="product.is_fiscal"

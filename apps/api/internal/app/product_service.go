@@ -88,7 +88,7 @@ func (s *ProductService) List(ctx context.Context, tenantID uuid.UUID, f Product
 
 	rows, err := s.pool.Query(ctx, `
 		SELECT id, tenant_id, name, sku, barcode, description, category_id,
-		       is_fiscal, fiscal_price, internal_price, tax_rate, active, created_at, updated_at
+		       is_fiscal, fiscal_price, internal_price, tax_rate, active, image_url, created_at, updated_at
 		FROM products
 		WHERE tenant_id = $1
 		  AND ($2::boolean IS NULL OR active = $2)
@@ -122,7 +122,7 @@ func (s *ProductService) List(ctx context.Context, tenantID uuid.UUID, f Product
 func (s *ProductService) Get(ctx context.Context, tenantID, id uuid.UUID) (*product.Product, error) {
 	row := s.pool.QueryRow(ctx, `
 		SELECT id, tenant_id, name, sku, barcode, description, category_id,
-		       is_fiscal, fiscal_price, internal_price, tax_rate, active, created_at, updated_at
+		       is_fiscal, fiscal_price, internal_price, tax_rate, active, image_url, created_at, updated_at
 		FROM products
 		WHERE id = $1 AND tenant_id = $2`,
 		id, tenantID,
@@ -177,7 +177,7 @@ func (s *ProductService) Create(ctx context.Context, tenantID uuid.UUID, req Cre
 		                      is_fiscal, fiscal_price, internal_price, tax_rate)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 		RETURNING id, tenant_id, name, sku, barcode, description, category_id,
-		          is_fiscal, fiscal_price, internal_price, tax_rate, active, created_at, updated_at`,
+		          is_fiscal, fiscal_price, internal_price, tax_rate, active, image_url, created_at, updated_at`,
 		tenantID,
 		nullableString(req.Name),
 		nullableString(req.SKU),
@@ -205,7 +205,7 @@ func (s *ProductService) Update(ctx context.Context, tenantID, id uuid.UUID, req
 		    fiscal_price = $8, internal_price = $9, tax_rate = $10, updated_at = NOW()
 		WHERE id = $1 AND tenant_id = $2
 		RETURNING id, tenant_id, name, sku, barcode, description, category_id,
-		          is_fiscal, fiscal_price, internal_price, tax_rate, active, created_at, updated_at`,
+		          is_fiscal, fiscal_price, internal_price, tax_rate, active, image_url, created_at, updated_at`,
 		id, tenantID,
 		req.Name, nullableString(req.SKU), nullableString(req.Barcode),
 		nullableString(req.Description), req.CategoryID,
@@ -227,7 +227,7 @@ func (s *ProductService) Delete(ctx context.Context, tenantID, id uuid.UUID) (*p
 		UPDATE products SET active = FALSE, updated_at = NOW()
 		WHERE id = $1 AND tenant_id = $2
 		RETURNING id, tenant_id, name, sku, barcode, description, category_id,
-		          is_fiscal, fiscal_price, internal_price, tax_rate, active, created_at, updated_at`,
+		          is_fiscal, fiscal_price, internal_price, tax_rate, active, image_url, created_at, updated_at`,
 		id, tenantID,
 	)
 	p, err := scanProduct(row)
@@ -315,7 +315,7 @@ func scanProduct(row interface {
 	Scan(dest ...any) error
 }) (*product.Product, error) {
 	var p product.Product
-	var sku, barcode, description *string
+	var sku, barcode, description, imageURL *string
 	var createdAt, updatedAt time.Time
 
 	err := row.Scan(
@@ -323,7 +323,7 @@ func scanProduct(row interface {
 		&sku, &barcode, &description,
 		&p.CategoryID,
 		&p.IsFiscal, &p.FiscalPrice, &p.InternalPrice, &p.TaxRate,
-		&p.Active, &createdAt, &updatedAt,
+		&p.Active, &imageURL, &createdAt, &updatedAt,
 	)
 	if err != nil {
 		return nil, err
@@ -337,9 +337,50 @@ func scanProduct(row interface {
 	if description != nil {
 		p.Description = *description
 	}
+	if imageURL != nil {
+		p.ImageURL = *imageURL
+	}
 	p.CreatedAt = createdAt
 	p.UpdatedAt = updatedAt
 	return &p, nil
+}
+
+// SetImageURL sets image_url on a product and returns the updated product.
+func (s *ProductService) SetImageURL(ctx context.Context, tenantID, id uuid.UUID, imageURL string) (*product.Product, error) {
+	row := s.pool.QueryRow(ctx, `
+		UPDATE products SET image_url = $3, updated_at = NOW()
+		WHERE id = $1 AND tenant_id = $2
+		RETURNING id, tenant_id, name, sku, barcode, description, category_id,
+		          is_fiscal, fiscal_price, internal_price, tax_rate, active, image_url, created_at, updated_at`,
+		id, tenantID, imageURL,
+	)
+	p, err := scanProduct(row)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, product.ErrProductNotFound
+		}
+		return nil, fmt.Errorf("set image_url: %w", err)
+	}
+	return p, nil
+}
+
+// ClearImageURL sets image_url to NULL on a product and returns the updated product.
+func (s *ProductService) ClearImageURL(ctx context.Context, tenantID, id uuid.UUID) (*product.Product, error) {
+	row := s.pool.QueryRow(ctx, `
+		UPDATE products SET image_url = NULL, updated_at = NOW()
+		WHERE id = $1 AND tenant_id = $2
+		RETURNING id, tenant_id, name, sku, barcode, description, category_id,
+		          is_fiscal, fiscal_price, internal_price, tax_rate, active, image_url, created_at, updated_at`,
+		id, tenantID,
+	)
+	p, err := scanProduct(row)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, product.ErrProductNotFound
+		}
+		return nil, fmt.Errorf("clear image_url: %w", err)
+	}
+	return p, nil
 }
 
 // nullableString converts an empty string to nil for nullable DB columns.

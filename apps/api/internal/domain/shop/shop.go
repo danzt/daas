@@ -26,6 +26,7 @@ type ShopProduct struct {
 	Category    *string   `json:"category,omitempty"`
 	StockQty    int       `json:"stock_qty"`
 	IsFiscal    bool      `json:"is_fiscal"`
+	ImageURL    *string   `json:"image_url,omitempty"`
 }
 
 // ProductFilter holds query parameters for ListPublicProducts.
