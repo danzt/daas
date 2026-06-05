@@ -273,20 +273,21 @@ function handleClose() {
   <Teleport to="body">
     <div
       v-if="modelValue"
-      class="fixed inset-0 z-50 flex items-start justify-center p-4 pt-10 overflow-y-auto"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
     >
       <!-- Backdrop -->
       <div class="absolute inset-0 bg-black/50" @click="handleClose" />
 
-      <!-- Modal content -->
+      <!-- Modal content — fixed height with internal scroll -->
       <div
-        class="relative z-10 w-full max-w-lg bg-white rounded-xl shadow-xl mb-10"
+        class="relative z-10 w-full max-w-lg bg-white rounded-xl shadow-xl flex flex-col"
+        style="max-height: min(90vh, 680px)"
       >
-        <!-- Header -->
+        <!-- Header — sticky top -->
         <div
-          class="flex items-center justify-between px-6 py-5 border-b border-border"
+          class="flex-shrink-0 flex items-center justify-between px-6 py-5 border-b border-border rounded-t-xl"
         >
           <h2 class="text-xl font-bold font-heading text-foreground">
             {{ title }}
@@ -300,8 +301,8 @@ function handleClose() {
           </button>
         </div>
 
-        <!-- Body -->
-        <div class="px-6 py-5 space-y-5">
+        <!-- Body — scrolls internally -->
+        <div class="flex-1 overflow-y-auto px-6 py-5 space-y-5">
           <!-- Server error -->
           <div
             v-if="serverError"
@@ -600,9 +601,9 @@ function handleClose() {
           </div>
         </div>
 
-        <!-- Footer -->
+        <!-- Footer — sticky bottom -->
         <div
-          class="px-6 py-4 border-t border-border flex items-center justify-end gap-3"
+          class="flex-shrink-0 px-6 py-4 border-t border-border bg-white flex items-center justify-end gap-3 rounded-b-xl"
         >
           <button
             type="button"
