@@ -123,21 +123,30 @@ func main() {
 		storefrontURL = "http://localhost:3000"
 	}
 
-	// Storage adapter for payment proof uploads.
-	// In production, swap LocalFSAdapter for SupabaseStorageAdapter (future PR).
-	storageRootDir := os.Getenv("STORAGE_ROOT_DIR")
-	if storageRootDir == "" {
-		storageRootDir = "./storage"
+	// Storage adapter — SupabaseStorageAdapter when all three Supabase env vars are
+	// present; LocalFSAdapter otherwise (dev default).
+	var storageAdapter storage.Storage
+	supabaseProjectURL := os.Getenv("SUPABASE_PROJECT_URL")
+	supabaseServiceKey := os.Getenv("SUPABASE_SERVICE_ROLE_KEY")
+	supabaseBucketName := os.Getenv("SUPABASE_STORAGE_BUCKET")
+	if supabaseProjectURL != "" && supabaseServiceKey != "" && supabaseBucketName != "" {
+		storageAdapter = storage.NewSupabaseStorageAdapter(supabaseProjectURL, supabaseServiceKey, supabaseBucketName)
+		log.Info().Str("bucket", supabaseBucketName).Msg("storage adapter: SupabaseStorageAdapter")
+	} else {
+		storageRootDir := os.Getenv("STORAGE_ROOT_DIR")
+		if storageRootDir == "" {
+			storageRootDir = "./storage"
+		}
+		storagePublicBase := os.Getenv("STORAGE_PUBLIC_BASE")
+		if storagePublicBase == "" {
+			storagePublicBase = "http://localhost:8080/files"
+		}
+		storageAdapter = storage.NewLocalFSAdapter(storageRootDir, storagePublicBase)
+		log.Info().
+			Str("root_dir", storageRootDir).
+			Str("public_base", storagePublicBase).
+			Msg("storage adapter: LocalFSAdapter")
 	}
-	storagePublicBase := os.Getenv("STORAGE_PUBLIC_BASE")
-	if storagePublicBase == "" {
-		storagePublicBase = "http://localhost:8080/files"
-	}
-	storageAdapter := storage.NewLocalFSAdapter(storageRootDir, storagePublicBase)
-	log.Info().
-		Str("root_dir", storageRootDir).
-		Str("public_base", storagePublicBase).
-		Msg("storage adapter: LocalFSAdapter")
 
 	router := adapterhttp.NewRouterWithConfig(adapterhttp.RouterConfig{
 		SupabaseURL:     cfg.SupabaseURL,
