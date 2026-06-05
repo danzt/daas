@@ -24,6 +24,11 @@ import {
   Bitcoin,
   Banknote,
   MoreHorizontal,
+  Paperclip,
+  Upload,
+  FileImage,
+  FileText,
+  ExternalLink,
 } from "lucide-vue-next";
 import { usePublicFetch } from "~/composables/usePublicFetch";
 import { useFormatPrice } from "~/composables/useFormatPrice";
@@ -71,6 +76,11 @@ interface ShopOrder {
   created_at: string;
   updated_at: string;
   lines: OrderLine[];
+  payment_proof_url?: string;
+  payment_proof_filename?: string;
+  payment_proof_uploaded_at?: string;
+  payment_method_id?: string;
+  payment_reference?: string;
 }
 
 // ─── Payment method types ─────────────────────────────────────────────────────
@@ -117,6 +127,14 @@ const copied = ref(false);
 
 const paymentMethods = ref<PaymentMethod[]>([]);
 const copiedField = ref<string | null>(null);
+
+// ─── Proof upload state ───────────────────────────────────────────────────────
+const proofFile = ref<File | null>(null);
+const proofDragOver = ref(false);
+const proofMethodId = ref<string>("");
+const proofReference = ref<string>("");
+const proofUploading = ref(false);
+const proofError = ref<string>("");
 
 useSeoMeta({
   title: () =>
@@ -310,6 +328,84 @@ const statusInfo = computed(() => {
   return map[order.value.status];
 });
 
+// ─── Proof upload helpers ─────────────────────────────────────────────────────
+
+const ACCEPTED_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+];
+const MAX_BYTES = 5 * 1024 * 1024;
+
+function proofIsImage(url?: string, filename?: string): boolean {
+  const src = filename ?? url ?? "";
+  return /\.(jpe?g|png|webp)$/i.test(src);
+}
+
+function onProofFileChange(e: Event) {
+  const input = e.target as HTMLInputElement;
+  if (input.files?.length) selectProofFile(input.files[0]);
+}
+
+function onProofDrop(e: DragEvent) {
+  proofDragOver.value = false;
+  const file = e.dataTransfer?.files?.[0];
+  if (file) selectProofFile(file);
+}
+
+function selectProofFile(file: File) {
+  proofError.value = "";
+  if (!ACCEPTED_TYPES.includes(file.type)) {
+    proofError.value = "Formato no soportado. Subí JPG, PNG, WEBP o PDF.";
+    return;
+  }
+  if (file.size > MAX_BYTES) {
+    proofError.value = "El archivo es muy grande. Máximo 5 MB.";
+    return;
+  }
+  proofFile.value = file;
+}
+
+async function submitProof() {
+  if (!proofFile.value || !order.value) return;
+  proofUploading.value = true;
+  proofError.value = "";
+  try {
+    const fd = new FormData();
+    fd.append("file", proofFile.value);
+    if (proofMethodId.value)
+      fd.append("payment_method_id", proofMethodId.value);
+    if (proofReference.value) fd.append("reference", proofReference.value);
+    const updated = await usePublicFetch<ShopOrder>(
+      `/orders/${orderId}/payment-proof?access_token=${accessToken}`,
+      { method: "POST", body: fd },
+    );
+    order.value = updated;
+    proofFile.value = null;
+    proofMethodId.value = "";
+    proofReference.value = "";
+  } catch (err: unknown) {
+    const e = err as {
+      status?: number;
+      statusCode?: number;
+      data?: { message?: string };
+    };
+    const status = e?.status ?? e?.statusCode;
+    if (status === 415) {
+      proofError.value = "Formato no soportado. Subí JPG, PNG, WEBP o PDF.";
+    } else if (status === 413) {
+      proofError.value = "El archivo es muy grande. Máximo 5 MB.";
+    } else if (status === 409) {
+      proofError.value = "Ya subiste un comprobante.";
+    } else {
+      proofError.value = e?.data?.message ?? "No se pudo subir el comprobante.";
+    }
+  } finally {
+    proofUploading.value = false;
+  }
+}
+
 onMounted(load);
 </script>
 
@@ -448,10 +544,7 @@ onMounted(load);
               <span class="font-semibold text-foreground">{{
                 fmt(order.total)
               }}</span>
-              con cualquiera de estos métodos.
-              <span class="text-muted-foreground/70"
-                >Después vas a poder subir tu comprobante (próximamente).</span
-              >
+              con cualquiera de estos métodos y luego subí tu comprobante.
             </p>
           </div>
 
@@ -524,6 +617,211 @@ onMounted(load);
               </dl>
             </div>
           </div>
+        </div>
+
+        <!-- Proof upload section (pending orders only) -->
+        <div
+          v-if="order.status === 'pending'"
+          class="border bg-card rounded-xl p-5 shadow-sm space-y-4"
+        >
+          <h2
+            class="text-base font-bold text-foreground flex items-center gap-2"
+          >
+            <Paperclip class="w-4 h-4 text-primary" />
+            Subir comprobante de pago
+          </h2>
+
+          <!-- Already uploaded state -->
+          <template v-if="order.payment_proof_url">
+            <div
+              class="rounded-xl border border-emerald-200 bg-emerald-50 p-4 space-y-3"
+            >
+              <div
+                class="flex items-center gap-2 text-sm text-emerald-700 font-semibold"
+              >
+                <CheckCircle2 class="w-4 h-4" />
+                Comprobante recibido. Esperando verificación del vendedor.
+              </div>
+
+              <!-- Image preview -->
+              <a
+                v-if="
+                  proofIsImage(
+                    order.payment_proof_url,
+                    order.payment_proof_filename,
+                  )
+                "
+                :href="order.payment_proof_url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="block"
+              >
+                <img
+                  :src="order.payment_proof_url"
+                  :alt="order.payment_proof_filename ?? 'Comprobante'"
+                  class="max-h-64 rounded-lg border object-contain w-full"
+                />
+              </a>
+
+              <!-- PDF link -->
+              <a
+                v-else
+                :href="order.payment_proof_url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+              >
+                <FileText class="w-4 h-4" />
+                {{ order.payment_proof_filename ?? "Ver comprobante" }}
+                <ExternalLink class="w-3 h-3" />
+              </a>
+
+              <dl class="text-xs text-muted-foreground space-y-1">
+                <div v-if="order.payment_proof_filename" class="flex gap-2">
+                  <dt>Archivo:</dt>
+                  <dd class="font-mono">{{ order.payment_proof_filename }}</dd>
+                </div>
+                <div v-if="order.payment_proof_uploaded_at" class="flex gap-2">
+                  <dt>Subido:</dt>
+                  <dd>{{ fmtDate(order.payment_proof_uploaded_at) }}</dd>
+                </div>
+                <div
+                  v-if="order.payment_method_id && paymentMethods.length"
+                  class="flex gap-2"
+                >
+                  <dt>Método:</dt>
+                  <dd>
+                    {{
+                      pmLabel(
+                        paymentMethods.find(
+                          (m) => m.id === order.payment_method_id,
+                        ) ?? paymentMethods[0],
+                      )
+                    }}
+                  </dd>
+                </div>
+                <div v-if="order.payment_reference" class="flex gap-2">
+                  <dt>Referencia:</dt>
+                  <dd class="font-mono">{{ order.payment_reference }}</dd>
+                </div>
+              </dl>
+            </div>
+          </template>
+
+          <!-- Upload form -->
+          <template v-else>
+            <!-- Dropzone -->
+            <label
+              :class="[
+                'block border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors',
+                proofDragOver
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:border-primary/60 hover:bg-muted/40',
+                proofFile ? 'border-primary/70 bg-primary/5' : '',
+              ]"
+              @dragover.prevent="proofDragOver = true"
+              @dragleave.prevent="proofDragOver = false"
+              @drop.prevent="onProofDrop"
+            >
+              <input
+                type="file"
+                accept=".jpg,.jpeg,.png,.webp,.pdf"
+                class="sr-only"
+                @change="onProofFileChange"
+              />
+              <div
+                v-if="proofFile"
+                class="flex flex-col items-center gap-2 text-sm text-foreground"
+              >
+                <component
+                  :is="
+                    proofIsImage(undefined, proofFile.name)
+                      ? FileImage
+                      : FileText
+                  "
+                  class="w-8 h-8 text-primary"
+                />
+                <p class="font-medium">{{ proofFile.name }}</p>
+                <p class="text-xs text-muted-foreground">
+                  {{ (proofFile.size / 1024 / 1024).toFixed(2) }} MB
+                </p>
+                <p class="text-xs text-primary underline">Cambiar archivo</p>
+              </div>
+              <div
+                v-else
+                class="flex flex-col items-center gap-2 text-muted-foreground"
+              >
+                <Upload class="w-8 h-8" />
+                <p class="text-sm font-medium">
+                  Arrastrá o hacé clic para subir
+                </p>
+                <p class="text-xs">JPG, PNG, WEBP o PDF · Máximo 5 MB</p>
+              </div>
+            </label>
+
+            <!-- Optional payment method select -->
+            <div v-if="paymentMethods.length" class="space-y-1.5">
+              <p class="text-xs font-semibold text-foreground">
+                ¿Por qué método pagaste? (opcional)
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-for="pm in paymentMethods"
+                  :key="pm.id"
+                  type="button"
+                  :class="[
+                    'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors cursor-pointer',
+                    proofMethodId === pm.id
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border bg-muted/30 text-foreground hover:border-primary/50',
+                  ]"
+                  @click="proofMethodId = proofMethodId === pm.id ? '' : pm.id"
+                >
+                  <component :is="pmIcon(pm.type)" class="w-3.5 h-3.5" />
+                  {{ pmLabel(pm) }}
+                </button>
+              </div>
+            </div>
+
+            <!-- Optional reference -->
+            <div class="space-y-1.5">
+              <label
+                for="proof-reference"
+                class="text-xs font-semibold text-foreground"
+              >
+                Referencia / Confirmación (opcional)
+              </label>
+              <input
+                id="proof-reference"
+                v-model="proofReference"
+                type="text"
+                maxlength="160"
+                placeholder="Ej: Confirmación Banesco #12345"
+                class="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-primary/40 placeholder:text-muted-foreground/60"
+              />
+            </div>
+
+            <!-- Error message -->
+            <p
+              v-if="proofError"
+              class="text-sm text-destructive flex items-start gap-1.5"
+            >
+              <AlertTriangle class="w-4 h-4 shrink-0 mt-0.5" />
+              {{ proofError }}
+            </p>
+
+            <!-- Submit -->
+            <button
+              type="button"
+              :disabled="!proofFile || proofUploading"
+              class="w-full px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-40 transition-opacity cursor-pointer flex items-center justify-center gap-2"
+              @click="submitProof"
+            >
+              <Loader2 v-if="proofUploading" class="w-4 h-4 animate-spin" />
+              <Upload v-else class="w-4 h-4" />
+              {{ proofUploading ? "Subiendo..." : "Enviar comprobante" }}
+            </button>
+          </template>
         </div>
 
         <!-- Timeline -->
