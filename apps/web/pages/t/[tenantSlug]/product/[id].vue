@@ -39,6 +39,7 @@ interface ShopProduct {
   category?: string;
   stock_qty: number;
   is_fiscal: boolean;
+  image_url?: string;
 }
 
 interface ListResponse {
@@ -268,11 +269,24 @@ function buyNow() {
           <div class="space-y-3">
             <div
               :class="[
-                'aspect-square rounded-2xl overflow-hidden border bg-gradient-to-br relative',
-                productGradient(product.id),
+                'aspect-square rounded-2xl overflow-hidden border relative',
+                !product.image_url
+                  ? `bg-gradient-to-br ${productGradient(product.id)}`
+                  : '',
               ]"
             >
-              <div class="absolute inset-0 flex items-center justify-center">
+              <!-- Real product image -->
+              <img
+                v-if="product.image_url"
+                :src="product.image_url"
+                :alt="product.name"
+                class="w-full h-full object-cover"
+              />
+              <!-- Gradient placeholder -->
+              <div
+                v-else
+                class="absolute inset-0 flex items-center justify-center"
+              >
                 <ShoppingCart class="w-32 h-32 text-foreground/15" />
               </div>
 
@@ -717,13 +731,20 @@ function buyNow() {
               :to="`/t/${tenantSlug}/product/${rel.id}`"
               class="group border bg-card rounded-xl overflow-hidden hover:shadow-lg hover:border-primary/30 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer flex flex-col"
             >
-              <div
-                :class="[
-                  'aspect-square bg-gradient-to-br relative',
-                  productGradient(rel.id),
-                ]"
-              >
-                <div class="absolute inset-0 flex items-center justify-center">
+              <div class="aspect-square relative overflow-hidden">
+                <img
+                  v-if="rel.image_url"
+                  :src="rel.image_url"
+                  :alt="rel.name"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                />
+                <div
+                  v-else
+                  :class="[
+                    'w-full h-full bg-gradient-to-br flex items-center justify-center',
+                    productGradient(rel.id),
+                  ]"
+                >
                   <ShoppingCart
                     class="w-12 h-12 text-foreground/15 group-hover:scale-110 transition-transform"
                   />

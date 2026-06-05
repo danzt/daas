@@ -50,6 +50,7 @@ interface ShopProduct {
   category?: string;
   stock_qty: number;
   is_fiscal: boolean;
+  image_url?: string;
 }
 
 interface ListResponse {
@@ -542,13 +543,22 @@ onMounted(load);
               :to="`/t/${$route.params.tenantSlug}/product/${product.id}`"
               class="group relative border bg-card rounded-xl overflow-hidden hover:shadow-xl hover:shadow-primary/10 hover:border-primary/30 hover:-translate-y-0.5 transition-all duration-300 cursor-pointer flex flex-col"
             >
-              <div
-                :class="[
-                  'aspect-square bg-gradient-to-br relative overflow-hidden',
-                  productGradient(product.id),
-                ]"
-              >
-                <div class="absolute inset-0 flex items-center justify-center">
+              <div class="aspect-square relative overflow-hidden">
+                <!-- Real product image -->
+                <img
+                  v-if="product.image_url"
+                  :src="product.image_url"
+                  :alt="product.name"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <!-- Gradient placeholder when no image -->
+                <div
+                  v-else
+                  :class="[
+                    'w-full h-full bg-gradient-to-br flex items-center justify-center',
+                    productGradient(product.id),
+                  ]"
+                >
                   <ShoppingCart
                     class="w-16 h-16 text-foreground/15 group-hover:scale-110 transition-transform duration-300"
                   />
