@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Loader2, X } from "lucide-vue-next";
+import { Loader2, X, ImagePlus, Trash2 } from "lucide-vue-next";
 import { useApiFetch } from "~/composables/useAuth";
 
 export interface Product {
@@ -15,6 +15,7 @@ export interface Product {
   internal_price?: number;
   tax_rate?: number;
   active: boolean;
+  image_url?: string;
   created_at: string;
   updated_at: string;
 }
@@ -61,6 +62,15 @@ const errors = ref<Record<string, string>>({});
 const saving = ref(false);
 const serverError = ref("");
 
+// Image state
+const imageFile = ref<File | null>(null);
+const imagePreviewURL = ref<string>("");
+const uploadingImage = ref(false);
+const existingImageURL = ref<string>("");
+const removingImage = ref(false);
+
+const imageInputRef = ref<HTMLInputElement | null>(null);
+
 const categoryOptions = computed(() =>
   props.categories.map((c) => ({ value: c.id, label: c.name })),
 );
@@ -83,6 +93,7 @@ function resetForm() {
     fiscalPrice.value = props.product.fiscal_price?.toString() ?? "";
     internalPrice.value = props.product.internal_price?.toString() ?? "";
     taxRate.value = props.product.tax_rate?.toString() ?? "";
+    existingImageURL.value = props.product.image_url ?? "";
   } else {
     name.value = "";
     sku.value = "";
@@ -94,9 +105,12 @@ function resetForm() {
     fiscalPrice.value = "";
     internalPrice.value = "";
     taxRate.value = "";
+    existingImageURL.value = "";
   }
   errors.value = {};
   serverError.value = "";
+  imageFile.value = null;
+  imagePreviewURL.value = "";
 }
 
 watch(
@@ -141,6 +155,53 @@ function validate(): boolean {
   return Object.keys(errs).length === 0;
 }
 
+function onImageFileSelected(event: Event) {
+  const input = event.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+  imageFile.value = file;
+  imagePreviewURL.value = URL.createObjectURL(file);
+}
+
+function clearImageSelection() {
+  imageFile.value = null;
+  imagePreviewURL.value = "";
+  if (imageInputRef.value) imageInputRef.value.value = "";
+}
+
+async function uploadImageForProduct(productId: string) {
+  if (!imageFile.value) return;
+  uploadingImage.value = true;
+  try {
+    const fd = new FormData();
+    fd.append("image", imageFile.value);
+    await useApiFetch(`/api/v1/products/${productId}/image`, {
+      method: "POST",
+      body: fd,
+    });
+  } catch {
+    // Non-fatal — product saved; image upload failure is silent in this flow.
+    // The user can retry from the product card on the list page.
+  } finally {
+    uploadingImage.value = false;
+  }
+}
+
+async function handleRemoveImage() {
+  if (!isEdit.value || !props.product) return;
+  removingImage.value = true;
+  try {
+    await useApiFetch(`/api/v1/products/${props.product.id}/image`, {
+      method: "DELETE",
+    });
+    existingImageURL.value = "";
+  } catch {
+    // silently ignore
+  } finally {
+    removingImage.value = false;
+  }
+}
+
 async function handleSave() {
   if (!validate()) return;
 
@@ -166,16 +227,28 @@ async function handleSave() {
       body.internal_price = parseFloat(internalPrice.value);
     }
 
+    let savedProductId: string;
+
     if (isEdit.value && props.product) {
       await useApiFetch(`/api/v1/products/${props.product.id}`, {
         method: "PUT",
         body,
       });
+      savedProductId = props.product.id;
     } else {
-      await useApiFetch("/api/v1/products", {
-        method: "POST",
-        body,
-      });
+      const created = await useApiFetch<{ product: Product }>(
+        "/api/v1/products",
+        {
+          method: "POST",
+          body,
+        },
+      );
+      savedProductId = created.product.id;
+    }
+
+    // Step 2: upload image if one was selected (after we have the product ID).
+    if (imageFile.value && savedProductId) {
+      await uploadImageForProduct(savedProductId);
     }
 
     emit("update:modelValue", false);
@@ -437,6 +510,78 @@ function handleClose() {
               placeholder="Descripción opcional del producto..."
               class="w-full px-4 py-3 border border-input rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground resize-none"
             />
+          </div>
+
+          <!-- Product image -->
+          <div>
+            <p class="text-sm font-semibold text-foreground mb-2">
+              Imagen del producto
+            </p>
+
+            <!-- Show existing image (edit mode) or selected preview -->
+            <div
+              v-if="existingImageURL || imagePreviewURL"
+              class="relative w-full rounded-xl overflow-hidden border bg-muted mb-3"
+              style="aspect-ratio: 4/3"
+            >
+              <img
+                :src="imagePreviewURL || existingImageURL"
+                alt="Imagen del producto"
+                class="w-full h-full object-cover"
+              />
+              <button
+                type="button"
+                title="Eliminar imagen"
+                class="absolute top-2 right-2 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center shadow hover:bg-red-600 transition-colors cursor-pointer disabled:opacity-50"
+                :disabled="removingImage"
+                @click="
+                  existingImageURL ? handleRemoveImage() : clearImageSelection()
+                "
+              >
+                <Loader2
+                  v-if="removingImage"
+                  class="w-3.5 h-3.5 animate-spin"
+                />
+                <Trash2 v-else class="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            <!-- Upload zone — shown when no image is set/selected -->
+            <label
+              v-if="!existingImageURL && !imagePreviewURL"
+              class="flex flex-col items-center justify-center w-full rounded-xl border-2 border-dashed border-input bg-muted/40 cursor-pointer hover:bg-muted/60 transition-colors py-6 gap-2"
+            >
+              <ImagePlus class="w-7 h-7 text-muted-foreground" />
+              <span class="text-sm text-muted-foreground font-medium">
+                Arrastrar o hacer clic para subir imagen
+              </span>
+              <span class="text-xs text-muted-foreground">
+                JPG, PNG o WebP — máx. 5 MB
+              </span>
+              <input
+                ref="imageInputRef"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                class="sr-only"
+                @change="onImageFileSelected"
+              />
+            </label>
+
+            <!-- Replace button when image exists but user wants to change -->
+            <label
+              v-else
+              class="inline-flex items-center gap-2 text-xs text-primary font-semibold cursor-pointer hover:underline mt-1"
+            >
+              <ImagePlus class="w-3.5 h-3.5" />
+              Cambiar imagen
+              <input
+                ref="imageInputRef"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                class="sr-only"
+                @change="onImageFileSelected"
+              />
+            </label>
           </div>
 
           <!-- Active toggle -->
