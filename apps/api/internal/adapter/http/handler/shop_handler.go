@@ -36,6 +36,7 @@ type shopProductResponse struct {
 	Category    *string  `json:"category,omitempty"`
 	StockQty    int      `json:"stock_qty"`
 	IsFiscal    bool     `json:"is_fiscal"`
+	ImageURL    *string  `json:"image_url,omitempty"`
 }
 
 type paginationMeta struct {
@@ -63,6 +64,7 @@ func toShopProductResponse(p shop.ShopProduct) shopProductResponse {
 		Category:    p.Category,
 		StockQty:    p.StockQty,
 		IsFiscal:    p.IsFiscal,
+		ImageURL:    p.ImageURL,
 	}
 }
 

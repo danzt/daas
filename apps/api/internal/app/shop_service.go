@@ -67,7 +67,8 @@ func (s *ShopService) ListPublicProducts(
 		       p.fiscal_price,
 		       pc.name AS category,
 		       COALESCE(ps.quantity_on_hand::integer, 0) AS stock_qty,
-		       p.is_fiscal
+		       p.is_fiscal,
+		       p.image_url
 		FROM products p
 		LEFT JOIN product_categories pc ON pc.id = p.category_id
 		LEFT JOIN product_stock ps ON ps.product_id = p.id
@@ -117,7 +118,8 @@ func (s *ShopService) GetPublicProduct(
 		       p.fiscal_price,
 		       pc.name AS category,
 		       COALESCE(ps.quantity_on_hand::integer, 0) AS stock_qty,
-		       p.is_fiscal
+		       p.is_fiscal,
+		       p.image_url
 		FROM products p
 		LEFT JOIN product_categories pc ON pc.id = p.category_id
 		LEFT JOIN product_stock ps ON ps.product_id = p.id
@@ -145,6 +147,7 @@ func scanShopProduct(row interface {
 	var p shop.ShopProduct
 	var category *string
 	var fiscalPrice *float64
+	var imageURL *string
 
 	err := row.Scan(
 		&p.ID,
@@ -156,11 +159,13 @@ func scanShopProduct(row interface {
 		&category,
 		&p.StockQty,
 		&p.IsFiscal,
+		&imageURL,
 	)
 	if err != nil {
 		return shop.ShopProduct{}, err
 	}
 	p.FiscalPrice = fiscalPrice
 	p.Category = category
+	p.ImageURL = imageURL
 	return p, nil
 }
