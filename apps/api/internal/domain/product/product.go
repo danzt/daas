@@ -25,6 +25,7 @@ type Product struct {
 	InternalPrice *float64
 	TaxRate       *float64
 	Active        bool
+	ImageURL      string // optional — publicly resolvable URL; empty when no image uploaded
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }
