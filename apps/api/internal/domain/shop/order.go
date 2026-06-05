@@ -46,6 +46,13 @@ type ShopOrder struct {
 	CreatedAt   time.Time   `json:"created_at"`
 	UpdatedAt   time.Time   `json:"updated_at"`
 	Lines       []OrderLine `json:"lines"`
+
+	// Payment proof — populated once the customer uploads a receipt.
+	PaymentProofURL        string     `json:"payment_proof_url,omitempty"`
+	PaymentProofFilename   string     `json:"payment_proof_filename,omitempty"`
+	PaymentProofUploadedAt *time.Time `json:"payment_proof_uploaded_at,omitempty"`
+	PaymentMethodID        *uuid.UUID `json:"payment_method_id,omitempty"`
+	PaymentReference       string     `json:"payment_reference,omitempty"`
 }
 
 // OrderLine is a single product line inside a shop order.
@@ -143,4 +150,41 @@ var (
 	ErrInsufficientStock       = errors.New("insufficient stock")
 	ErrProductNotPurchasable   = errors.New("product is not available for purchase")
 	ErrInvalidAccessToken      = errors.New("invalid access token")
+
+	// Payment proof errors
+	ErrPaymentProofRequired      = errors.New("payment proof file required")
+	ErrPaymentProofAlreadyExists = errors.New("payment proof already submitted")
+	ErrPaymentProofInvalidType   = errors.New("unsupported file type")
+	ErrPaymentProofTooLarge      = errors.New("file too large")
 )
+
+// ─── Payment proof validation ─────────────────────────────────────────────────
+
+// AllowedPaymentProofMimeTypes is the whitelist for uploaded payment proofs.
+var AllowedPaymentProofMimeTypes = []string{
+	"image/jpeg",
+	"image/png",
+	"image/webp",
+	"application/pdf",
+}
+
+// MaxPaymentProofBytes is 5 MB — the hard upper limit for proof uploads.
+const MaxPaymentProofBytes int64 = 5 * 1024 * 1024
+
+// ValidatePaymentProofMeta returns nil when contentType and sizeBytes are acceptable.
+// Returns ErrPaymentProofRequired if size is zero, ErrPaymentProofTooLarge if over
+// MaxPaymentProofBytes, and ErrPaymentProofInvalidType for any unsupported MIME type.
+func ValidatePaymentProofMeta(contentType string, sizeBytes int64) error {
+	if sizeBytes <= 0 {
+		return ErrPaymentProofRequired
+	}
+	if sizeBytes > MaxPaymentProofBytes {
+		return ErrPaymentProofTooLarge
+	}
+	for _, allowed := range AllowedPaymentProofMimeTypes {
+		if contentType == allowed {
+			return nil
+		}
+	}
+	return ErrPaymentProofInvalidType
+}

@@ -15,6 +15,10 @@ import {
   ExternalLink,
   Truck,
   Send,
+  Paperclip,
+  FileText,
+  FileImage,
+  Download,
 } from "lucide-vue-next";
 import { useApiFetch } from "~/composables/useAuth";
 
@@ -31,6 +35,16 @@ interface OrderLine {
   quantity: number;
   subtotal: number;
   is_fiscal: boolean;
+  sort_order: number;
+}
+
+interface PaymentMethod {
+  id: string;
+  type: string;
+  label: string;
+  details: Record<string, string>;
+  currency: string;
+  active: boolean;
   sort_order: number;
 }
 
@@ -55,6 +69,11 @@ interface ShopOrder {
   created_at: string;
   updated_at: string;
   lines: OrderLine[];
+  payment_proof_url?: string;
+  payment_proof_filename?: string;
+  payment_proof_uploaded_at?: string;
+  payment_method_id?: string;
+  payment_reference?: string;
 }
 
 const route = useRoute();
@@ -66,6 +85,20 @@ const loadError = ref("");
 const actionLoading = ref<string | null>(null);
 const actionError = ref("");
 const showConfirmCancel = ref(false);
+const paymentMethods = ref<PaymentMethod[]>([]);
+
+function proofIsImage(url?: string, filename?: string): boolean {
+  const src = filename ?? url ?? "";
+  return /\.(jpe?g|png|webp)$/i.test(src);
+}
+
+function proofMethodLabel(): string {
+  if (!order.value?.payment_method_id) return "";
+  const pm = paymentMethods.value.find(
+    (m) => m.id === order.value!.payment_method_id,
+  );
+  return pm?.label || pm?.type || "";
+}
 
 function fmtCurrency(n: number) {
   return new Intl.NumberFormat("es-VE", {
@@ -123,11 +156,18 @@ async function load() {
   loading.value = true;
   loadError.value = "";
   try {
-    order.value = await useApiFetch<ShopOrder>(
-      `/api/v1/shop-orders/${orderId}`,
-    );
-  } catch {
-    loadError.value = "No se pudo cargar el pedido";
+    const [orderData, pmData] = await Promise.allSettled([
+      useApiFetch<ShopOrder>(`/api/v1/shop-orders/${orderId}`),
+      useApiFetch<PaymentMethod[]>(`/api/v1/payment-methods`),
+    ]);
+    if (orderData.status === "fulfilled") {
+      order.value = orderData.value;
+    } else {
+      loadError.value = "No se pudo cargar el pedido";
+    }
+    if (pmData.status === "fulfilled") {
+      paymentMethods.value = pmData.value;
+    }
   } finally {
     loading.value = false;
   }
@@ -272,6 +312,88 @@ onMounted(load);
               {{ fmtDate(order.delivered_at) }}
             </p>
           </div>
+        </div>
+
+        <!-- Payment proof section -->
+        <div
+          v-if="order.payment_proof_url || order.status === 'pending'"
+          class="border rounded-xl p-5 space-y-3"
+          :class="
+            order.payment_proof_url
+              ? 'border-emerald-200 bg-emerald-50/60'
+              : 'border-border bg-muted/20'
+          "
+        >
+          <h3
+            class="text-sm font-bold flex items-center gap-2"
+            :class="
+              order.payment_proof_url ? 'text-emerald-800' : 'text-foreground'
+            "
+          >
+            <Paperclip class="w-4 h-4" />
+            Comprobante de pago
+          </h3>
+
+          <!-- Proof present -->
+          <template v-if="order.payment_proof_url">
+            <!-- Image preview -->
+            <a
+              v-if="
+                proofIsImage(
+                  order.payment_proof_url,
+                  order.payment_proof_filename,
+                )
+              "
+              :href="order.payment_proof_url"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="block"
+            >
+              <img
+                :src="order.payment_proof_url"
+                :alt="order.payment_proof_filename ?? 'Comprobante'"
+                class="max-h-96 rounded-lg border object-contain w-full cursor-zoom-in"
+              />
+            </a>
+
+            <!-- PDF link -->
+            <a
+              v-else
+              :href="order.payment_proof_url"
+              target="_blank"
+              rel="noopener noreferrer"
+              download
+              class="inline-flex items-center gap-2 text-sm text-primary hover:underline"
+            >
+              <FileText class="w-4 h-4" />
+              {{ order.payment_proof_filename ?? "Ver comprobante" }}
+              <Download class="w-3.5 h-3.5" />
+            </a>
+
+            <dl class="text-xs text-muted-foreground space-y-1 mt-2">
+              <div v-if="order.payment_proof_filename" class="flex gap-2">
+                <dt class="w-24 shrink-0">Archivo</dt>
+                <dd class="font-mono">{{ order.payment_proof_filename }}</dd>
+              </div>
+              <div v-if="order.payment_proof_uploaded_at" class="flex gap-2">
+                <dt class="w-24 shrink-0">Subido</dt>
+                <dd>{{ fmtDate(order.payment_proof_uploaded_at) }}</dd>
+              </div>
+              <div v-if="proofMethodLabel()" class="flex gap-2">
+                <dt class="w-24 shrink-0">Método</dt>
+                <dd>{{ proofMethodLabel() }}</dd>
+              </div>
+              <div v-if="order.payment_reference" class="flex gap-2">
+                <dt class="w-24 shrink-0">Referencia</dt>
+                <dd class="font-mono">{{ order.payment_reference }}</dd>
+              </div>
+            </dl>
+          </template>
+
+          <!-- No proof yet, order pending -->
+          <p v-else class="text-xs text-muted-foreground">
+            El cliente aún no subió el comprobante.
+          </p>
         </div>
 
         <!-- Action error -->

@@ -13,6 +13,7 @@ import (
 
 	"github.com/danzt/daas/api/internal/adapter/http/handler"
 	mw "github.com/danzt/daas/api/internal/adapter/http/middleware"
+	"github.com/danzt/daas/api/internal/adapter/storage"
 	"github.com/danzt/daas/api/internal/app"
 	"github.com/danzt/daas/api/internal/domain/notification"
 )
@@ -28,6 +29,9 @@ type RouterConfig struct {
 	// state transitions still succeed but no email is dispatched.
 	NotificationSvc notification.NotificationService
 	StorefrontURL   string
+	// Storage is used by the payment-proof upload endpoint.
+	// When nil, the endpoint is still registered but upload calls will fail.
+	Storage storage.Storage
 }
 
 // NewRouter creates a new Echo instance with standard middleware configured
@@ -117,7 +121,7 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 	if cfg.NotificationSvc != nil && cfg.Pool != nil {
 		shopNotifier = app.NewShopOrderNotifier(cfg.NotificationSvc, cfg.Pool, cfg.StorefrontURL)
 	}
-	shopOrderHandler := handler.NewShopOrderHandler(cfg.Pool, shopNotifier)
+	shopOrderHandler := handler.NewShopOrderHandler(cfg.Pool, shopNotifier, cfg.Storage)
 	paymentMethodHandler := handler.NewPaymentMethodHandler(cfg.Pool)
 
 	// Routes
@@ -127,6 +131,11 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 	// Rate limiter runs first (fast reject), then tenant resolver activates RLS.
 	// Handlers for catalog endpoints are wired in S6-T8.
 	if cfg.Pool != nil {
+		// Serve uploaded payment proofs (and any other stored files) as static assets.
+		// Files are written by LocalFSAdapter under ./storage, so the URL
+		// http://localhost:8080/files/payment-proofs/... maps to ./storage/payment-proofs/...
+		e.Static("/files", "./storage")
+
 		rateLimiter := mw.NewRateLimiter()
 		pathResolver := mw.NewPathResolver(cfg.Pool)
 		publicTenantMW := mw.NewPublicTenantMiddleware(pathResolver, cfg.Pool)
@@ -154,6 +163,13 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 
 		// Public payment methods (S8-PR1).
 		storefront.GET("/payment-methods", paymentMethodHandler.PublicList)
+
+		// Payment proof upload (S8-PR2). Body limit slightly above 5MB to allow
+		// multipart framing overhead; the service enforces exact 5MB on the file itself.
+		storefront.POST("/orders/:id/payment-proof",
+			shopOrderHandler.UploadPaymentProof,
+			middleware.BodyLimit("6M"),
+		)
 	}
 
 	return e

@@ -1,6 +1,7 @@
 package shop_test
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/google/uuid"
@@ -150,5 +151,74 @@ func TestShopOrder_CanTransitionTo_CancelledToAnything(t *testing.T) {
 		if err := o.CanTransitionTo(target); err == nil {
 			t.Errorf("cancelled → %s should NOT be allowed (terminal state), got nil error", target)
 		}
+	}
+}
+
+// ─── ValidatePaymentProofMeta ─────────────────────────────────────────────────
+
+func TestValidatePaymentProofMeta_JPEG_OK(t *testing.T) {
+	if err := shop.ValidatePaymentProofMeta("image/jpeg", 1024); err != nil {
+		t.Errorf("expected nil for image/jpeg, got: %v", err)
+	}
+}
+
+func TestValidatePaymentProofMeta_PNG_OK(t *testing.T) {
+	if err := shop.ValidatePaymentProofMeta("image/png", 1024); err != nil {
+		t.Errorf("expected nil for image/png, got: %v", err)
+	}
+}
+
+func TestValidatePaymentProofMeta_WEBP_OK(t *testing.T) {
+	if err := shop.ValidatePaymentProofMeta("image/webp", 1024); err != nil {
+		t.Errorf("expected nil for image/webp, got: %v", err)
+	}
+}
+
+func TestValidatePaymentProofMeta_PDF_OK(t *testing.T) {
+	if err := shop.ValidatePaymentProofMeta("application/pdf", 1024); err != nil {
+		t.Errorf("expected nil for application/pdf, got: %v", err)
+	}
+}
+
+func TestValidatePaymentProofMeta_RejectsGIF(t *testing.T) {
+	err := shop.ValidatePaymentProofMeta("image/gif", 1024)
+	if !errors.Is(err, shop.ErrPaymentProofInvalidType) {
+		t.Errorf("expected ErrPaymentProofInvalidType for image/gif, got: %v", err)
+	}
+}
+
+func TestValidatePaymentProofMeta_RejectsTextHTML(t *testing.T) {
+	err := shop.ValidatePaymentProofMeta("text/html", 1024)
+	if !errors.Is(err, shop.ErrPaymentProofInvalidType) {
+		t.Errorf("expected ErrPaymentProofInvalidType for text/html, got: %v", err)
+	}
+}
+
+func TestValidatePaymentProofMeta_RejectsEmptyContentType(t *testing.T) {
+	err := shop.ValidatePaymentProofMeta("", 1024)
+	if !errors.Is(err, shop.ErrPaymentProofInvalidType) {
+		t.Errorf("expected ErrPaymentProofInvalidType for empty content type, got: %v", err)
+	}
+}
+
+func TestValidatePaymentProofMeta_RejectsSizeAtZero(t *testing.T) {
+	err := shop.ValidatePaymentProofMeta("image/jpeg", 0)
+	if !errors.Is(err, shop.ErrPaymentProofRequired) {
+		t.Errorf("expected ErrPaymentProofRequired for size=0, got: %v", err)
+	}
+}
+
+func TestValidatePaymentProofMeta_AcceptsSizeAt5MB(t *testing.T) {
+	const exactly5MB = int64(5 * 1024 * 1024)
+	if err := shop.ValidatePaymentProofMeta("image/jpeg", exactly5MB); err != nil {
+		t.Errorf("expected nil at exactly 5MB boundary, got: %v", err)
+	}
+}
+
+func TestValidatePaymentProofMeta_RejectsSizeOver5MB(t *testing.T) {
+	const over5MB = int64(5*1024*1024) + 1
+	err := shop.ValidatePaymentProofMeta("image/jpeg", over5MB)
+	if !errors.Is(err, shop.ErrPaymentProofTooLarge) {
+		t.Errorf("expected ErrPaymentProofTooLarge for size > 5MB, got: %v", err)
 	}
 }
