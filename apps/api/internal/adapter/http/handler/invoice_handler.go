@@ -25,6 +25,12 @@ func NewInvoiceHandler(pool *pgxpool.Pool) *InvoiceHandler {
 	return &InvoiceHandler{svc: app.NewInternalInvoiceService(pool)}
 }
 
+// NewInvoiceHandlerWithService creates an InvoiceHandler using an existing service instance.
+// Use this when the same InternalInvoiceService needs to be shared (e.g. for auto-invoicing).
+func NewInvoiceHandlerWithService(svc *app.InternalInvoiceService) *InvoiceHandler {
+	return &InvoiceHandler{svc: svc}
+}
+
 // ─── Request / Response DTOs ─────────────────────────────────────────────────
 
 type createInvoiceLineReq struct {

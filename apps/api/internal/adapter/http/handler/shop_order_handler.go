@@ -32,6 +32,12 @@ func NewShopOrderHandler(pool *pgxpool.Pool, notifier *app.ShopOrderNotifier, st
 	return &ShopOrderHandler{svc: svc}
 }
 
+// SetInvoiceService injects the InternalInvoiceService used for auto-invoicing on MarkPaid.
+// Must be called after NewShopOrderHandler, before the server starts accepting requests.
+func (h *ShopOrderHandler) SetInvoiceService(svc *app.InternalInvoiceService) {
+	h.svc.SetInvoiceService(svc)
+}
+
 // ─── Request DTOs ─────────────────────────────────────────────────────────────
 
 type checkoutLineReq struct {

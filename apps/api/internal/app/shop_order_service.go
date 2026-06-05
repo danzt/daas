@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/rs/zerolog/log"
 
 	"github.com/danzt/daas/api/internal/adapter/storage"
 	"github.com/danzt/daas/api/internal/domain/shop"
@@ -22,9 +23,10 @@ import (
 // ShopOrderService handles the public storefront order lifecycle.
 // Stock is decremented atomically at checkout via Serializable transactions.
 type ShopOrderService struct {
-	pool     *pgxpool.Pool
-	notifier *ShopOrderNotifier // optional — when nil, lifecycle emails are skipped
-	storage  storage.Storage    // optional — when nil, proof uploads fail gracefully
+	pool       *pgxpool.Pool
+	notifier   *ShopOrderNotifier      // optional — when nil, lifecycle emails are skipped
+	storage    storage.Storage         // optional — when nil, proof uploads fail gracefully
+	invoiceSvc *InternalInvoiceService // optional — when nil, auto-invoice on MarkPaid is skipped
 }
 
 // NewShopOrderService creates a ShopOrderService backed by the given pool.
@@ -42,6 +44,12 @@ func (s *ShopOrderService) SetNotifier(n *ShopOrderNotifier) {
 // Must be called before UploadPaymentProof is used.
 func (s *ShopOrderService) SetStorage(st storage.Storage) {
 	s.storage = st
+}
+
+// SetInvoiceService wires the internal invoice service for auto-invoice on MarkPaid.
+// Optional — when nil, no invoice is generated automatically.
+func (s *ShopOrderService) SetInvoiceService(svc *InternalInvoiceService) {
+	s.invoiceSvc = svc
 }
 
 // ═══ Public checkout ═════════════════════════════════════════════════════════
@@ -301,12 +309,46 @@ func (s *ShopOrderService) ListTenantOrders(ctx context.Context, tenantID uuid.U
 }
 
 // MarkPaid transitions pending → paid.
+// On success it asynchronously:
+//   - Sends the lifecycle email notification (existing behaviour)
+//   - Creates + issues an internal invoice for all non-fiscal lines (auto-invoice)
 func (s *ShopOrderService) MarkPaid(ctx context.Context, tenantID, orderID uuid.UUID) (*shop.ShopOrder, error) {
 	o, err := s.transition(ctx, tenantID, orderID, shop.OrderStatusPaid, "paid_at")
-	if err == nil {
-		s.notifier.Notify(ctx, tenantID, o)
+	if err != nil {
+		return nil, err
 	}
-	return o, err
+	// Best-effort async side effects — failures must never block the HTTP response.
+	s.notifier.Notify(ctx, tenantID, o)
+	if s.invoiceSvc != nil {
+		go s.generateAutoInvoice(tenantID, orderID, o.CustomerName, o.Notes)
+	}
+	return o, nil
+}
+
+// generateAutoInvoice runs the auto-invoice flow for a just-paid shop order.
+// Designed to be called as a goroutine — failures are logged, not propagated.
+func (s *ShopOrderService) generateAutoInvoice(tenantID, orderID uuid.UUID, customerName, notes string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	inv, err := s.invoiceSvc.CreateAndIssueFromShopOrder(ctx, tenantID, orderID, customerName, notes)
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("order_id", orderID.String()).
+			Str("tenant_id", tenantID.String()).
+			Msg("auto-invoice: failed to create invoice for paid shop order")
+		return
+	}
+	if inv == nil {
+		// All products were fiscal — skip is expected.
+		return
+	}
+	log.Info().
+		Str("order_id", orderID.String()).
+		Str("invoice_id", inv.ID.String()).
+		Str("correlative", inv.Correlative).
+		Msg("auto-invoice: internal invoice created and issued")
 }
 
 // MarkFulfilled transitions paid → fulfilled.
