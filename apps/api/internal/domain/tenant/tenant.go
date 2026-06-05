@@ -32,6 +32,14 @@ type Tenant struct {
 	Status      Status
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
+
+	// Storefront branding fields (S9-T2).
+	// All are optional — the storefront falls back to DaaS defaults when empty.
+	BrandingLogoURL      string `json:"branding_logo_url,omitempty"`
+	BrandingPrimaryColor string `json:"branding_primary_color,omitempty"` // hex e.g. #7C3AED
+	BrandingBannerURL    string `json:"branding_banner_url,omitempty"`
+	BrandingStoreName    string `json:"branding_store_name,omitempty"` // defaults to Name
+	BrandingTagline      string `json:"branding_tagline,omitempty"`
 }
 
 // IsActive returns true when the tenant is in the active state and allowed

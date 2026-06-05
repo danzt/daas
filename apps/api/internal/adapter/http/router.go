@@ -131,9 +131,10 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 		shopOrderHandler.SetInvoiceService(internalInvoiceSvc)
 	}
 	paymentMethodHandler := handler.NewPaymentMethodHandler(cfg.Pool)
+	brandingHandler := handler.NewBrandingHandler(cfg.Pool, cfg.Storage)
 
 	// Routes
-	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler, fiscalInvoiceHandler, supplierHandler, reportHandler, saleHandler, shopOrderHandler, paymentMethodHandler)
+	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler, fiscalInvoiceHandler, supplierHandler, reportHandler, saleHandler, shopOrderHandler, paymentMethodHandler, brandingHandler)
 
 	// Storefront public route group — no auth required.
 	// Rate limiter runs first (fast reject), then tenant resolver activates RLS.
@@ -172,6 +173,9 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 		// Public payment methods (S8-PR1).
 		storefront.GET("/payment-methods", paymentMethodHandler.PublicList)
 
+		// Public tenant branding (S9-T2).
+		storefront.GET("/branding", brandingHandler.GetPublic)
+
 		// Payment proof upload (S8-PR2). Body limit slightly above 5MB to allow
 		// multipart framing overhead; the service enforces exact 5MB on the file itself.
 		storefront.POST("/orders/:id/payment-proof",
@@ -201,6 +205,7 @@ func registerRoutes(
 	saleHandler *handler.SaleHandler,
 	shopOrderHandler *handler.ShopOrderHandler,
 	paymentMethodHandler *handler.PaymentMethodHandler,
+	brandingHandler *handler.BrandingHandler,
 ) {
 	// Health check — unauthenticated
 	e.GET("/health", healthHandler)
@@ -309,6 +314,14 @@ func registerRoutes(
 	api.POST("/payment-methods", paymentMethodHandler.AdminCreate)
 	api.PUT("/payment-methods/:id", paymentMethodHandler.AdminUpdate)
 	api.DELETE("/payment-methods/:id", paymentMethodHandler.AdminDelete)
+
+	// Branding — storefront personalisation (S9-T2)
+	api.GET("/branding", brandingHandler.GetAdmin)
+	api.PUT("/branding", brandingHandler.Update)
+	api.POST("/branding/logo", brandingHandler.UploadLogo, middleware.BodyLimit("3M"))
+	api.DELETE("/branding/logo", brandingHandler.DeleteLogo)
+	api.POST("/branding/banner", brandingHandler.UploadBanner, middleware.BodyLimit("6M"))
+	api.DELETE("/branding/banner", brandingHandler.DeleteBanner)
 }
 
 // healthHandler responds with a simple status OK payload.
