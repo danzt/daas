@@ -2,8 +2,11 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,6 +14,7 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"github.com/danzt/daas/api/internal/adapter/http/middleware"
+	"github.com/danzt/daas/api/internal/adapter/storage"
 	"github.com/danzt/daas/api/internal/app"
 	"github.com/danzt/daas/api/internal/domain/product"
 )
@@ -19,6 +23,13 @@ import (
 // It is a thin adapter: parse → call service → format response.
 type ProductHandler struct {
 	service *app.ProductService
+	storage storage.Storage // optional — required only for image upload/delete
+}
+
+// SetStorage injects the storage adapter used for product image uploads.
+// Must be called before UploadProductImage or DeleteProductImage are used.
+func (h *ProductHandler) SetStorage(st storage.Storage) {
+	h.storage = st
 }
 
 // NewProductHandler creates a ProductHandler backed by the given service.
@@ -69,6 +80,7 @@ type productResponse struct {
 	InternalPrice *float64   `json:"internal_price,omitempty"`
 	TaxRate       *float64   `json:"tax_rate,omitempty"`
 	Active        bool       `json:"active"`
+	ImageURL      string     `json:"image_url,omitempty"`
 	CreatedAt     string     `json:"created_at"`
 	UpdatedAt     string     `json:"updated_at"`
 }
@@ -102,6 +114,7 @@ func toProductResponse(p *product.Product) productResponse {
 		InternalPrice: p.InternalPrice,
 		TaxRate:       p.TaxRate,
 		Active:        p.Active,
+		ImageURL:      p.ImageURL,
 		CreatedAt:     p.CreatedAt.Format(time.RFC3339),
 		UpdatedAt:     p.UpdatedAt.Format(time.RFC3339),
 	}
@@ -382,4 +395,153 @@ func (h *ProductHandler) DeleteCategory(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
+}
+
+// allowedImageTypes lists the MIME types accepted for product images.
+var allowedImageTypes = map[string]string{
+	"image/jpeg": ".jpg",
+	"image/png":  ".png",
+	"image/webp": ".webp",
+}
+
+const maxProductImageSize = 5 * 1024 * 1024 // 5 MB
+
+// UploadProductImage handles POST /api/v1/products/:id/image
+//
+// Multipart field "image" (required). Accepts image/jpeg, image/png, image/webp.
+// Max 5 MB. Stores via the injected storage adapter and sets image_url on the product.
+func (h *ProductHandler) UploadProductImage(c echo.Context) error {
+	if h.storage == nil {
+		return WriteProblem(c, http.StatusInternalServerError, "storage-unavailable", "storage adapter not configured")
+	}
+
+	tenantID, err := getTenantID(c)
+	if err != nil {
+		return WriteProblem(c, http.StatusForbidden, "forbidden", "tenant context missing")
+	}
+
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return WriteProblem(c, http.StatusBadRequest, "bad-request", "id must be a valid UUID")
+	}
+
+	fileHeader, err := c.FormFile("image")
+	if err != nil {
+		return WriteProblem(c, http.StatusBadRequest, "image-required", "multipart field 'image' is required")
+	}
+
+	// Validate content-type.
+	contentType := fileHeader.Header.Get("Content-Type")
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+	// Strip parameters (e.g. "image/jpeg; name=foo.jpg" → "image/jpeg")
+	if idx := strings.Index(contentType, ";"); idx != -1 {
+		contentType = strings.TrimSpace(contentType[:idx])
+	}
+	ext, ok := allowedImageTypes[contentType]
+	if !ok {
+		return WriteProblem(c, http.StatusUnsupportedMediaType, "unsupported-media-type",
+			"image must be image/jpeg, image/png, or image/webp")
+	}
+
+	// Validate size.
+	if fileHeader.Size > maxProductImageSize {
+		return WriteProblem(c, http.StatusRequestEntityTooLarge, "file-too-large",
+			fmt.Sprintf("image must not exceed %d MB", maxProductImageSize/1024/1024))
+	}
+
+	// Override ext from filename when the declared content-type seems generic.
+	if fnExt := strings.ToLower(filepath.Ext(fileHeader.Filename)); fnExt != "" {
+		switch fnExt {
+		case ".jpg", ".jpeg":
+			ext = ".jpg"
+		case ".png":
+			ext = ".png"
+		case ".webp":
+			ext = ".webp"
+		}
+	}
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		return WriteProblem(c, http.StatusInternalServerError, "internal-error", "cannot open uploaded file")
+	}
+	defer func() { _ = file.Close() }()
+
+	storageKey := fmt.Sprintf("product-images/%s/%s/%d%s", tenantID, id, time.Now().UnixMilli(), ext)
+
+	publicURL, err := h.storage.Save(c.Request().Context(), storageKey, file, contentType)
+	if err != nil {
+		return WriteProblem(c, http.StatusInternalServerError, "internal-error", "failed to store image")
+	}
+
+	updated, err := h.service.SetImageURL(c.Request().Context(), tenantID, id, publicURL)
+	if err != nil {
+		return mapProductError(c, err)
+	}
+	return c.JSON(http.StatusOK, toProductResponse(updated))
+}
+
+// DeleteProductImage handles DELETE /api/v1/products/:id/image
+//
+// Removes the stored image (if any) and clears image_url on the product.
+// Idempotent — products without an image return 200 with the unchanged product.
+func (h *ProductHandler) DeleteProductImage(c echo.Context) error {
+	if h.storage == nil {
+		return WriteProblem(c, http.StatusInternalServerError, "storage-unavailable", "storage adapter not configured")
+	}
+
+	tenantID, err := getTenantID(c)
+	if err != nil {
+		return WriteProblem(c, http.StatusForbidden, "forbidden", "tenant context missing")
+	}
+
+	id, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return WriteProblem(c, http.StatusBadRequest, "bad-request", "id must be a valid UUID")
+	}
+
+	// Fetch current product to get the existing image_url.
+	p, err := h.service.Get(c.Request().Context(), tenantID, id)
+	if err != nil {
+		return mapProductError(c, err)
+	}
+
+	// If there is an image, delete it from storage.
+	if p.ImageURL != "" {
+		// Extract storage key from the URL.
+		// URL format for LocalFS:  http://host/files/product-images/...
+		// URL format for Supabase: https://host/storage/v1/object/public/bucket/product-images/...
+		// We only need the path after the bucket/files prefix.
+		storageKey := extractStorageKey(p.ImageURL)
+		if storageKey != "" {
+			_ = h.storage.Delete(c.Request().Context(), storageKey) // best-effort
+		}
+	}
+
+	updated, err := h.service.ClearImageURL(c.Request().Context(), tenantID, id)
+	if err != nil {
+		return mapProductError(c, err)
+	}
+	return c.JSON(http.StatusOK, toProductResponse(updated))
+}
+
+// extractStorageKey tries to extract the storage key from a public URL.
+// Returns empty string when the URL pattern is not recognised.
+func extractStorageKey(publicURL string) string {
+	// Supabase pattern: .../object/public/<bucket>/<key>
+	if idx := strings.Index(publicURL, "/object/public/"); idx != -1 {
+		after := publicURL[idx+len("/object/public/"):]
+		// Strip bucket prefix (first segment).
+		if slashIdx := strings.Index(after, "/"); slashIdx != -1 {
+			return after[slashIdx+1:]
+		}
+		return after
+	}
+	// LocalFS pattern: http://host/files/<key>
+	if idx := strings.Index(publicURL, "/files/"); idx != -1 {
+		return publicURL[idx+len("/files/"):]
+	}
+	return ""
 }

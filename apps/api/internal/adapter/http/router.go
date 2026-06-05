@@ -107,6 +107,9 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 	integrationHandler := handler.NewIntegrationHandler(cfg.Pool)
 	meHandler := handler.NewMeHandler(cfg.Pool)
 	productHandler := handler.NewProductHandler(cfg.Pool)
+	if cfg.Storage != nil {
+		productHandler.SetStorage(cfg.Storage)
+	}
 	inventoryHandler := handler.NewInventoryHandler(cfg.Pool)
 	// Create InternalInvoiceService once — shared between InvoiceHandler and auto-invoice.
 	internalInvoiceSvc := app.NewInternalInvoiceService(cfg.Pool)
@@ -237,6 +240,8 @@ func registerRoutes(
 	api.GET("/products/:id", productHandler.GetProduct)
 	api.PUT("/products/:id", productHandler.UpdateProduct)
 	api.DELETE("/products/:id", productHandler.DeleteProduct)
+	api.POST("/products/:id/image", productHandler.UploadProductImage, middleware.BodyLimit("6M"))
+	api.DELETE("/products/:id/image", productHandler.DeleteProductImage)
 
 	// Inventory
 	api.GET("/inventory/stock", inventoryHandler.ListStock)
