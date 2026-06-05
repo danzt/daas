@@ -20,8 +20,22 @@ import {
 import { usePublicFetch } from "~/composables/usePublicFetch";
 import { useFormatPrice } from "~/composables/useFormatPrice";
 import { useCartStore } from "~/stores/cart";
+import { useBranding } from "~/composables/useBranding";
 
 const cartStore = useCartStore();
+
+// Branding — storeName, tagline, bannerURL are used in the hero section.
+// The layout (public.vue) already fetches and caches branding, so this call
+// reuses the same composable state without an extra network request.
+const route = useRoute();
+const tenantSlug = computed(() => (route.params.tenantSlug as string) ?? "");
+const {
+  tagline: brandingTagline,
+  bannerURL: brandingBannerURL,
+  fetchBranding,
+} = useBranding(tenantSlug);
+
+onMounted(fetchBranding);
 
 function addToCart(product: ShopProduct) {
   if (product.stock_qty === 0) return;
@@ -223,17 +237,44 @@ onMounted(load);
   <div class="bg-background">
     <!-- ── Hero Search ──────────────────────────────────────────────────── -->
     <div
-      class="border-b bg-gradient-to-br from-primary/5 via-purple-50 to-fuchsia-50/50"
+      class="border-b relative overflow-hidden"
+      :class="
+        brandingBannerURL
+          ? ''
+          : 'bg-gradient-to-br from-primary/5 via-purple-50 to-fuchsia-50/50'
+      "
     >
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+      <!-- Banner background image when set -->
+      <div v-if="brandingBannerURL" class="absolute inset-0 z-0">
+        <img
+          :src="brandingBannerURL"
+          alt=""
+          aria-hidden="true"
+          class="w-full h-full object-cover"
+        />
+        <div class="absolute inset-0 bg-foreground/50" />
+      </div>
+
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 relative z-10">
         <div class="text-center mb-6">
           <h1
-            class="text-2xl sm:text-4xl font-bold font-heading text-foreground mb-2"
+            :class="[
+              'text-2xl sm:text-4xl font-bold font-heading mb-2',
+              brandingBannerURL ? 'text-white' : 'text-foreground',
+            ]"
           >
             Descubrí productos para vos
           </h1>
-          <p class="text-sm sm:text-base text-muted-foreground">
-            Envío rápido · Pago seguro · Garantía de satisfacción
+          <p
+            :class="[
+              'text-sm sm:text-base',
+              brandingBannerURL ? 'text-white/80' : 'text-muted-foreground',
+            ]"
+          >
+            {{
+              brandingTagline ||
+              "Envío rápido · Pago seguro · Garantía de satisfacción"
+            }}
           </p>
         </div>
 
@@ -259,16 +300,40 @@ onMounted(load);
         </div>
 
         <div
-          class="flex items-center justify-center gap-4 sm:gap-6 mt-6 text-xs sm:text-sm text-muted-foreground flex-wrap"
+          :class="[
+            'flex items-center justify-center gap-4 sm:gap-6 mt-6 text-xs sm:text-sm flex-wrap',
+            brandingBannerURL ? 'text-white/80' : 'text-muted-foreground',
+          ]"
         >
           <div class="flex items-center gap-1.5">
-            <Truck class="w-4 h-4 text-primary" /> Envío rápido
+            <Truck
+              :class="
+                brandingBannerURL
+                  ? 'w-4 h-4 text-white'
+                  : 'w-4 h-4 text-primary'
+              "
+            />
+            Envío rápido
           </div>
           <div class="flex items-center gap-1.5">
-            <ShieldCheck class="w-4 h-4 text-primary" /> Compra protegida
+            <ShieldCheck
+              :class="
+                brandingBannerURL
+                  ? 'w-4 h-4 text-white'
+                  : 'w-4 h-4 text-primary'
+              "
+            />
+            Compra protegida
           </div>
           <div class="flex items-center gap-1.5">
-            <Package class="w-4 h-4 text-primary" /> Devoluciones gratis
+            <Package
+              :class="
+                brandingBannerURL
+                  ? 'w-4 h-4 text-white'
+                  : 'w-4 h-4 text-primary'
+              "
+            />
+            Devoluciones gratis
           </div>
         </div>
       </div>

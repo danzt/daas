@@ -1,19 +1,34 @@
 <script setup lang="ts">
 import { Package, ShoppingCart, Check } from "lucide-vue-next";
 import { useCartStore } from "~/stores/cart";
+import { useBranding } from "~/composables/useBranding";
 
 const route = useRoute();
 const cartStore = useCartStore();
 
 const tenantSlug = computed(() => (route.params.tenantSlug as string) ?? "");
-// In S7+, replace with a usePublicTenant() composable that fetches tenant info.
-const tenantDisplayName = computed(() => tenantSlug.value.replace(/-/g, " "));
 
-// Hydrate the cart from localStorage on the client. The Pinia store can't
-// read localStorage during SSR, so we trigger the restore here once the
-// layout mounts.
+// Branding — fetch once when the layout mounts.
+const { storeName, logoURL, primaryColor, fetchBranding } =
+  useBranding(tenantSlug);
+
+// Inject CSS variable override for primary color when branding provides one.
+// useHead is reactive — it re-runs whenever primaryColor changes.
+useHead(
+  computed(() => ({
+    style: [
+      {
+        innerHTML: `:root { --primary: ${primaryColor.value}; }`,
+        id: "tenant-primary-color",
+      },
+    ],
+  })),
+);
+
+// Hydrate cart + fetch branding on client mount.
 onMounted(() => {
   cartStore.restore();
+  fetchBranding();
 });
 
 // Bounce animation on the cart icon whenever an item lands.
@@ -48,16 +63,23 @@ watch(
           :to="`/t/${tenantSlug}`"
           class="flex items-center gap-3 group"
         >
+          <!-- Logo: show image if set, else fallback to icon -->
           <div
-            class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors"
+            class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors overflow-hidden"
           >
-            <Package class="w-5 h-5 text-primary" />
+            <img
+              v-if="logoURL"
+              :src="logoURL"
+              :alt="storeName"
+              class="w-full h-full object-contain"
+            />
+            <Package v-else class="w-5 h-5 text-primary" />
           </div>
           <div>
             <h1
               class="text-base font-bold font-heading text-foreground capitalize"
             >
-              {{ tenantDisplayName }}
+              {{ storeName }}
             </h1>
             <p class="text-[11px] text-muted-foreground -mt-0.5">
               Tienda online
