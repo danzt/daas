@@ -9,6 +9,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 
+	"github.com/danzt/daas/api/internal/adapter/storage"
 	"github.com/danzt/daas/api/internal/app"
 	"github.com/danzt/daas/api/internal/domain/shop"
 )
@@ -21,9 +22,13 @@ type ShopOrderHandler struct {
 
 // NewShopOrderHandler creates a ShopOrderHandler backed by the given pool.
 // notifier is optional — when nil, lifecycle state changes skip email sends.
-func NewShopOrderHandler(pool *pgxpool.Pool, notifier *app.ShopOrderNotifier) *ShopOrderHandler {
+// st is optional — when nil, payment proof uploads return a 500.
+func NewShopOrderHandler(pool *pgxpool.Pool, notifier *app.ShopOrderNotifier, st storage.Storage) *ShopOrderHandler {
 	svc := app.NewShopOrderService(pool)
 	svc.SetNotifier(notifier)
+	if st != nil {
+		svc.SetStorage(st)
+	}
 	return &ShopOrderHandler{svc: svc}
 }
 
@@ -243,6 +248,91 @@ func (h *ShopOrderHandler) AdminCancel(c echo.Context) error {
 	})
 }
 
+// UploadPaymentProof handles POST /t/:tenantSlug/shop/v1/orders/:id/payment-proof?access_token=...
+//
+// Public. Accepts multipart/form-data with a required "file" field and optional
+// "payment_method_id" and "reference" fields. Streams the file into the storage
+// adapter — does NOT buffer the full file in memory.
+// Returns 200 with the updated order JSON (access_token cleared).
+func (h *ShopOrderHandler) UploadPaymentProof(c echo.Context) error {
+	tenantID, err := getPublicTenantID(c)
+	if err != nil {
+		return c.JSON(http.StatusForbidden, map[string]string{"error": "tenant_context_missing"})
+	}
+
+	orderID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "invalid_param",
+			"field": "id",
+		})
+	}
+
+	token := c.QueryParam("access_token")
+	if token == "" {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "access_token_required"})
+	}
+
+	// Parse the multipart form (file is streamed — not buffered via ReadAll).
+	fileHeader, err := c.FormFile("file")
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error":   "payment_proof_required",
+			"message": shop.ErrPaymentProofRequired.Error(),
+		})
+	}
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		return WriteProblem(c, http.StatusInternalServerError, "internal-error", "cannot open uploaded file")
+	}
+	defer func() { _ = file.Close() }()
+
+	// Detect content type: trust the browser-provided value only if non-empty;
+	// otherwise fall back to the filename extension. We pass it to the service
+	// which validates it against the whitelist.
+	contentType := fileHeader.Header.Get("Content-Type")
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+
+	// Optional fields.
+	var paymentMethodID *uuid.UUID
+	if pmStr := c.FormValue("payment_method_id"); pmStr != "" {
+		pmID, err := uuid.Parse(pmStr)
+		if err != nil {
+			return c.JSON(http.StatusBadRequest, map[string]string{
+				"error": "invalid_param",
+				"field": "payment_method_id",
+			})
+		}
+		paymentMethodID = &pmID
+	}
+
+	reference := c.FormValue("reference")
+	if len(reference) > 160 {
+		reference = reference[:160]
+	}
+
+	order, err := h.svc.UploadPaymentProof(
+		c.Request().Context(),
+		tenantID,
+		orderID,
+		token,
+		fileHeader.Filename,
+		contentType,
+		fileHeader.Size,
+		file,
+		paymentMethodID,
+		reference,
+	)
+	if err != nil {
+		return mapShopOrderError(c, err)
+	}
+	order.AccessToken = ""
+	return c.JSON(http.StatusOK, order)
+}
+
 // ─── Private helpers ──────────────────────────────────────────────────────────
 
 type transitionFn func(tenantID, orderID uuid.UUID) (*shop.ShopOrder, error)
@@ -314,6 +404,26 @@ func mapShopOrderError(c echo.Context, err error) error {
 		return c.JSON(http.StatusNotFound, map[string]string{
 			"error":   "not_found",
 			"message": "Order not found",
+		})
+	case errors.Is(err, shop.ErrPaymentProofRequired):
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error":   "payment_proof_required",
+			"message": err.Error(),
+		})
+	case errors.Is(err, shop.ErrPaymentProofInvalidType):
+		return c.JSON(http.StatusUnsupportedMediaType, map[string]string{
+			"error":   "unsupported_media_type",
+			"message": err.Error(),
+		})
+	case errors.Is(err, shop.ErrPaymentProofTooLarge):
+		return c.JSON(http.StatusRequestEntityTooLarge, map[string]string{
+			"error":   "file_too_large",
+			"message": err.Error(),
+		})
+	case errors.Is(err, shop.ErrPaymentProofAlreadyExists):
+		return c.JSON(http.StatusConflict, map[string]string{
+			"error":   "proof_already_submitted",
+			"message": err.Error(),
 		})
 	default:
 		return WriteProblem(c, http.StatusInternalServerError, "internal-error", err.Error())

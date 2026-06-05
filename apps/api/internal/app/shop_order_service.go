@@ -6,12 +6,16 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/danzt/daas/api/internal/adapter/storage"
 	"github.com/danzt/daas/api/internal/domain/shop"
 )
 
@@ -20,6 +24,7 @@ import (
 type ShopOrderService struct {
 	pool     *pgxpool.Pool
 	notifier *ShopOrderNotifier // optional — when nil, lifecycle emails are skipped
+	storage  storage.Storage    // optional — when nil, proof uploads fail gracefully
 }
 
 // NewShopOrderService creates a ShopOrderService backed by the given pool.
@@ -31,6 +36,12 @@ func NewShopOrderService(pool *pgxpool.Pool) *ShopOrderService {
 // When nil (or never called), all order state transitions skip the email send.
 func (s *ShopOrderService) SetNotifier(n *ShopOrderNotifier) {
 	s.notifier = n
+}
+
+// SetStorage injects the storage adapter for proof uploads.
+// Must be called before UploadPaymentProof is used.
+func (s *ShopOrderService) SetStorage(st storage.Storage) {
+	s.storage = st
 }
 
 // ═══ Public checkout ═════════════════════════════════════════════════════════
@@ -248,7 +259,9 @@ func (s *ShopOrderService) ListTenantOrders(ctx context.Context, tenantID uuid.U
 		       subtotal, shipping_cost, total,
 		       status, COALESCE(notes, ''),
 		       paid_at, fulfilled_at, delivered_at, cancelled_at,
-		       created_at, updated_at
+		       created_at, updated_at,
+		       payment_proof_url, payment_proof_filename, payment_proof_uploaded_at,
+		       payment_method_id, payment_reference
 		FROM shop_orders
 		WHERE tenant_id = $1`
 	dataArgs := []any{tenantID}
@@ -382,7 +395,9 @@ func (s *ShopOrderService) getOrderByID(ctx context.Context, tenantID, orderID u
 		       subtotal, shipping_cost, total,
 		       status, COALESCE(notes, ''),
 		       paid_at, fulfilled_at, delivered_at, cancelled_at,
-		       created_at, updated_at
+		       created_at, updated_at,
+		       payment_proof_url, payment_proof_filename, payment_proof_uploaded_at,
+		       payment_method_id, payment_reference
 		FROM shop_orders
 		WHERE id = $1 AND tenant_id = $2`,
 		orderID, tenantID,
@@ -410,7 +425,9 @@ func (s *ShopOrderService) getOrderByIDWithToken(ctx context.Context, tenantID, 
 		       subtotal, shipping_cost, total,
 		       status, COALESCE(notes, ''),
 		       paid_at, fulfilled_at, delivered_at, cancelled_at,
-		       created_at, updated_at
+		       created_at, updated_at,
+		       payment_proof_url, payment_proof_filename, payment_proof_uploaded_at,
+		       payment_method_id, payment_reference
 		FROM shop_orders
 		WHERE id = $1 AND tenant_id = $2 AND access_token = $3`,
 		orderID, tenantID, accessToken,
@@ -466,6 +483,8 @@ type shopOrderScanner interface {
 
 func scanShopOrder(row shopOrderScanner) (*shop.ShopOrder, error) {
 	var o shop.ShopOrder
+	var proofURL, proofFilename *string
+	var proofRef *string
 	if err := row.Scan(
 		&o.ID, &o.TenantID,
 		&o.CustomerName, &o.CustomerEmail, &o.CustomerPhone,
@@ -474,10 +493,128 @@ func scanShopOrder(row shopOrderScanner) (*shop.ShopOrder, error) {
 		&o.Status, &o.Notes,
 		&o.PaidAt, &o.FulfilledAt, &o.DeliveredAt, &o.CancelledAt,
 		&o.CreatedAt, &o.UpdatedAt,
+		&proofURL, &proofFilename, &o.PaymentProofUploadedAt,
+		&o.PaymentMethodID, &proofRef,
 	); err != nil {
 		return nil, err
 	}
+	if proofURL != nil {
+		o.PaymentProofURL = *proofURL
+	}
+	if proofFilename != nil {
+		o.PaymentProofFilename = *proofFilename
+	}
+	if proofRef != nil {
+		o.PaymentReference = *proofRef
+	}
 	return &o, nil
+}
+
+// ═══ Payment proof upload ═════════════════════════════════════════════════════
+
+// UploadPaymentProof saves the customer's payment screenshot / PDF and records
+// the URL on the order. Validates:
+//   - order belongs to tenant, access token is valid, status is pending
+//   - file meta is acceptable (delegates to shop.ValidatePaymentProofMeta)
+//   - no proof uploaded yet (idempotency guard — returns ErrPaymentProofAlreadyExists)
+//
+// Returns the updated order with payment_proof_url populated.
+func (s *ShopOrderService) UploadPaymentProof(
+	ctx context.Context,
+	tenantID, orderID uuid.UUID,
+	accessToken string,
+	filename string,
+	contentType string,
+	sizeBytes int64,
+	content io.Reader,
+	paymentMethodID *uuid.UUID,
+	reference string,
+) (*shop.ShopOrder, error) {
+	// 1. Validate file metadata before touching the DB.
+	if err := shop.ValidatePaymentProofMeta(contentType, sizeBytes); err != nil {
+		return nil, err
+	}
+
+	// 2. Load and validate the order.
+	order, err := s.getOrderByIDWithToken(ctx, tenantID, orderID, accessToken)
+	if err != nil {
+		return nil, err
+	}
+	if order.Status != shop.OrderStatusPending {
+		return nil, shop.ErrInvalidTransition
+	}
+	if order.PaymentProofURL != "" {
+		return nil, shop.ErrPaymentProofAlreadyExists
+	}
+
+	// 3. Build a sanitized storage key.
+	sanitized := sanitizeFilename(filename)
+	ts := time.Now().UTC()
+	key := fmt.Sprintf("payment-proofs/%s/%s/%d-%s",
+		tenantID.String(),
+		orderID.String(),
+		ts.UnixMilli(),
+		sanitized,
+	)
+
+	// 4. Persist to storage.
+	publicURL, err := s.storage.Save(ctx, key, content, contentType)
+	if err != nil {
+		return nil, fmt.Errorf("save payment proof: %w", err)
+	}
+
+	// 5. Update the order row.
+	_, err = s.pool.Exec(ctx, `
+		UPDATE shop_orders
+		SET payment_proof_url        = $1,
+		    payment_proof_filename   = $2,
+		    payment_proof_uploaded_at = $3,
+		    payment_method_id        = $4,
+		    payment_reference        = $5,
+		    updated_at               = $3
+		WHERE id = $6 AND tenant_id = $7`,
+		publicURL, sanitized, ts,
+		paymentMethodID, reference,
+		orderID, tenantID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("update shop order proof: %w", err)
+	}
+
+	updated, err := s.getOrderByID(ctx, tenantID, orderID)
+	if err != nil {
+		return nil, err
+	}
+	updated.AccessToken = ""
+	return updated, nil
+}
+
+// ─── Private helpers ──────────────────────────────────────────────────────────
+
+// sanitizeFilename strips path separators, replaces spaces with hyphens,
+// removes characters outside [a-zA-Z0-9._-], and caps at 80 characters.
+var reUnsafeChars = regexp.MustCompile(`[^a-zA-Z0-9._\-]`)
+
+func sanitizeFilename(name string) string {
+	// Strip any directory component.
+	base := name
+	for _, sep := range []string{"/", "\\"} {
+		if idx := strings.LastIndex(base, sep); idx >= 0 {
+			base = base[idx+1:]
+		}
+	}
+	// Replace spaces.
+	base = strings.ReplaceAll(base, " ", "-")
+	// Remove unsafe characters.
+	base = reUnsafeChars.ReplaceAllString(base, "")
+	// Cap length.
+	if len(base) > 80 {
+		base = base[:80]
+	}
+	if base == "" {
+		base = "proof"
+	}
+	return base
 }
 
 // generateAccessToken returns a 64-char hex string from crypto/rand.

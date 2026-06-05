@@ -14,6 +14,7 @@ import (
 
 	adapterhttp "github.com/danzt/daas/api/internal/adapter/http"
 	notifadapter "github.com/danzt/daas/api/internal/adapter/notification"
+	"github.com/danzt/daas/api/internal/adapter/storage"
 	"github.com/danzt/daas/api/internal/config"
 	"github.com/danzt/daas/api/internal/domain/notification"
 )
@@ -122,6 +123,22 @@ func main() {
 		storefrontURL = "http://localhost:3000"
 	}
 
+	// Storage adapter for payment proof uploads.
+	// In production, swap LocalFSAdapter for SupabaseStorageAdapter (future PR).
+	storageRootDir := os.Getenv("STORAGE_ROOT_DIR")
+	if storageRootDir == "" {
+		storageRootDir = "./storage"
+	}
+	storagePublicBase := os.Getenv("STORAGE_PUBLIC_BASE")
+	if storagePublicBase == "" {
+		storagePublicBase = "http://localhost:8080/files"
+	}
+	storageAdapter := storage.NewLocalFSAdapter(storageRootDir, storagePublicBase)
+	log.Info().
+		Str("root_dir", storageRootDir).
+		Str("public_base", storagePublicBase).
+		Msg("storage adapter: LocalFSAdapter")
+
 	router := adapterhttp.NewRouterWithConfig(adapterhttp.RouterConfig{
 		SupabaseURL:     cfg.SupabaseURL,
 		AnonKey:         cfg.SupabaseAnonKey,
@@ -129,6 +146,7 @@ func main() {
 		Pool:            pool,
 		NotificationSvc: notifSvc,
 		StorefrontURL:   storefrontURL,
+		Storage:         storageAdapter,
 	})
 
 	addr := ":" + cfg.Port
