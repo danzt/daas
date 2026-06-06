@@ -115,6 +115,8 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 	internalInvoiceSvc := app.NewInternalInvoiceService(cfg.Pool)
 	invoiceHandler := handler.NewInvoiceHandlerWithService(internalInvoiceSvc)
 	fiscalInvoiceHandler := handler.NewFiscalInvoiceHandler(cfg.Pool)
+	// FiscalInvoiceService shared between FiscalInvoiceHandler and auto-fiscal-invoice on MarkPaid.
+	fiscalInvoiceSvc := fiscalInvoiceHandler.Service()
 	supplierHandler := handler.NewSupplierHandler(cfg.Pool)
 	reportHandler := handler.NewReportHandler(cfg.Pool)
 	saleHandler := handler.NewSaleHandler(cfg.Pool)
@@ -129,6 +131,7 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 	shopOrderHandler := handler.NewShopOrderHandler(cfg.Pool, shopNotifier, cfg.Storage)
 	if cfg.Pool != nil {
 		shopOrderHandler.SetInvoiceService(internalInvoiceSvc)
+		shopOrderHandler.SetFiscalInvoiceService(fiscalInvoiceSvc)
 	}
 	paymentMethodHandler := handler.NewPaymentMethodHandler(cfg.Pool)
 	brandingHandler := handler.NewBrandingHandler(cfg.Pool, cfg.Storage)

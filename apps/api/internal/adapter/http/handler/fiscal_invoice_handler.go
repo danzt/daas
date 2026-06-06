@@ -28,6 +28,12 @@ func NewFiscalInvoiceHandler(pool *pgxpool.Pool) *FiscalInvoiceHandler {
 	return &FiscalInvoiceHandler{svc: app.NewFiscalInvoiceService(pool, adapter)}
 }
 
+// Service returns the underlying FiscalInvoiceService so it can be shared
+// with other components (e.g. ShopOrderHandler auto-fiscal-invoice on MarkPaid).
+func (h *FiscalInvoiceHandler) Service() *app.FiscalInvoiceService {
+	return h.svc
+}
+
 // ─── Request DTOs ─────────────────────────────────────────────────────────────
 
 type createFiscalLineReq struct {
