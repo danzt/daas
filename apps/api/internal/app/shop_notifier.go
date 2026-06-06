@@ -10,6 +10,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
 
+	notifadapter "github.com/danzt/daas/api/internal/adapter/notification"
 	"github.com/danzt/daas/api/internal/domain/notification"
 	"github.com/danzt/daas/api/internal/domain/shop"
 )
@@ -62,7 +63,8 @@ func (n *ShopOrderNotifier) send(tenantID uuid.UUID, order shop.ShopOrder) {
 		return
 	}
 
-	msg := notification.Message{
+	// 1. Email to customer.
+	emailMsg := notification.Message{
 		Channel: "email",
 		To:      order.CustomerEmail,
 		Subject: subject,
@@ -73,19 +75,52 @@ func (n *ShopOrderNotifier) send(tenantID uuid.UUID, order shop.ShopOrder) {
 			"status":    string(order.Status),
 		},
 	}
-	if err := n.svc.Send(ctx, msg); err != nil {
+	if err := n.svc.Send(ctx, emailMsg); err != nil {
 		log.Warn().
 			Err(err).
 			Str("order_id", order.ID.String()).
 			Str("to", order.CustomerEmail).
 			Msg("notifier: failed to send order email")
-		return
+	} else {
+		log.Info().
+			Str("order_id", order.ID.String()).
+			Str("to", order.CustomerEmail).
+			Str("status", string(order.Status)).
+			Msg("notifier: order email sent")
 	}
-	log.Info().
-		Str("order_id", order.ID.String()).
-		Str("to", order.CustomerEmail).
-		Str("status", string(order.Status)).
-		Msg("notifier: order email sent")
+
+	// 2. WhatsApp to customer — only when a phone number is recorded.
+	if order.CustomerPhone != "" {
+		trackingURL := fmt.Sprintf("%s/t/%s/order/%s?access_token=%s",
+			n.storefrontURL, slug, order.ID.String(), order.AccessToken)
+		shortID := strings.ToUpper(order.ID.String()[:8])
+		waText := buildShortWhatsAppMessage(order, tenantName, shortID, trackingURL)
+		phone := notifadapter.NormalizePhone(order.CustomerPhone)
+		waMsg := notification.Message{
+			Channel: "whatsapp",
+			To:      phone,
+			Subject: subject,
+			Body:    waText,
+			Data: map[string]any{
+				"order_id":  order.ID.String(),
+				"tenant_id": tenantID.String(),
+				"status":    string(order.Status),
+			},
+		}
+		if err := n.svc.Send(ctx, waMsg); err != nil {
+			log.Warn().
+				Err(err).
+				Str("order_id", order.ID.String()).
+				Str("to", phone).
+				Msg("notifier: failed to send order WhatsApp")
+		} else {
+			log.Info().
+				Str("order_id", order.ID.String()).
+				Str("to", phone).
+				Str("status", string(order.Status)).
+				Msg("notifier: order WhatsApp sent")
+		}
+	}
 }
 
 // NotifyProofUploaded sends an email to the tenant owner when a customer
@@ -128,7 +163,8 @@ func (n *ShopOrderNotifier) sendProofAlert(tenantID uuid.UUID, order shop.ShopOr
 		Slug:         slug,
 	})
 
-	msg := notification.Message{
+	// 1. Email alert to tenant owner.
+	emailMsg := notification.Message{
 		Channel: "email",
 		To:      ownerEmail,
 		Subject: subject,
@@ -139,11 +175,43 @@ func (n *ShopOrderNotifier) sendProofAlert(tenantID uuid.UUID, order shop.ShopOr
 			"event":     "proof_uploaded",
 		},
 	}
-	if err := n.svc.Send(ctx, msg); err != nil {
-		log.Warn().Err(err).Str("order_id", order.ID.String()).Msg("notifier: failed to send proof alert")
-		return
+	if err := n.svc.Send(ctx, emailMsg); err != nil {
+		log.Warn().Err(err).Str("order_id", order.ID.String()).Msg("notifier: failed to send proof alert email")
+	} else {
+		log.Info().Str("order_id", order.ID.String()).Str("to", ownerEmail).Msg("notifier: proof alert email sent to tenant")
 	}
-	log.Info().Str("order_id", order.ID.String()).Str("to", ownerEmail).Msg("notifier: proof alert sent to tenant")
+
+	// 2. WhatsApp alert to the tenant's configured notification number (if set).
+	waPhone, err := n.lookupTenantWhatsApp(ctx, tenantID)
+	if err != nil {
+		log.Warn().Err(err).Str("tenant_id", tenantID.String()).Msg("notifier: failed to lookup tenant WhatsApp; skipping")
+	}
+	if waPhone != "" {
+		phone := notifadapter.NormalizePhone(waPhone)
+		waText := fmt.Sprintf(
+			"💰 *Nuevo comprobante recibido*\n\nPedido *#%s* de %s\nTotal: Bs.S %s\n\nVer pedido: %s",
+			shortID,
+			order.CustomerName,
+			formatMoney(order.Total),
+			adminURL,
+		)
+		waMsg := notification.Message{
+			Channel: "whatsapp",
+			To:      phone,
+			Subject: subject,
+			Body:    waText,
+			Data: map[string]any{
+				"order_id":  order.ID.String(),
+				"tenant_id": tenantID.String(),
+				"event":     "proof_uploaded",
+			},
+		}
+		if err := n.svc.Send(ctx, waMsg); err != nil {
+			log.Warn().Err(err).Str("order_id", order.ID.String()).Str("to", phone).Msg("notifier: failed to send proof alert WhatsApp")
+		} else {
+			log.Info().Str("order_id", order.ID.String()).Str("to", phone).Msg("notifier: proof alert WhatsApp sent to tenant")
+		}
+	}
 }
 
 func (n *ShopOrderNotifier) lookupOwnerEmail(ctx context.Context, tenantID uuid.UUID) (string, error) {
@@ -156,6 +224,24 @@ func (n *ShopOrderNotifier) lookupOwnerEmail(ctx context.Context, tenantID uuid.
 		return "", fmt.Errorf("owner email: %w", err)
 	}
 	return email, nil
+}
+
+// lookupTenantWhatsApp returns the configured notification WhatsApp phone for
+// the tenant, or an empty string when none is set. It never returns a hard
+// error that would block the email path — callers treat "" as "skip WhatsApp".
+func (n *ShopOrderNotifier) lookupTenantWhatsApp(ctx context.Context, tenantID uuid.UUID) (string, error) {
+	var phone *string
+	err := n.pool.QueryRow(ctx,
+		`SELECT notifications_whatsapp_phone FROM tenants WHERE id = $1`,
+		tenantID,
+	).Scan(&phone)
+	if err != nil {
+		return "", fmt.Errorf("tenant whatsapp: %w", err)
+	}
+	if phone == nil {
+		return "", nil
+	}
+	return *phone, nil
 }
 
 type proofAlertParams struct {
@@ -369,4 +455,42 @@ func htmlEscape(s string) string {
 		"'", "&#39;",
 	)
 	return r.Replace(s)
+}
+
+// buildShortWhatsAppMessage returns a concise plain-text WhatsApp message for
+// order lifecycle events. It is intentionally short — WhatsApp readers scan
+// messages, they don't read long HTML emails.
+//
+// Format:
+//
+//	Hola {name} 👋
+//	Tu pedido #{shortID} en {tenantName} fue {statusLabel}.
+//	Ver pedido: {trackingURL}
+func buildShortWhatsAppMessage(order shop.ShopOrder, tenantName, shortID, trackingURL string) string {
+	statusLabel := orderStatusLabel(order.Status)
+	return fmt.Sprintf(
+		"Hola %s 👋\nTu pedido *#%s* en *%s* fue %s.\n\nVer pedido: %s",
+		order.CustomerName,
+		shortID,
+		tenantName,
+		statusLabel,
+		trackingURL,
+	)
+}
+
+// orderStatusLabel returns a human-readable past-tense label in Spanish for
+// the given order status. Used in WhatsApp notifications.
+func orderStatusLabel(status shop.OrderStatus) string {
+	switch status {
+	case shop.OrderStatusPaid:
+		return "confirmado y pagado ✅"
+	case shop.OrderStatusFulfilled:
+		return "despachado 🚚"
+	case shop.OrderStatusDelivered:
+		return "entregado 🎉"
+	case shop.OrderStatusCancelled:
+		return "cancelado ❌"
+	default:
+		return string(status)
+	}
 }
