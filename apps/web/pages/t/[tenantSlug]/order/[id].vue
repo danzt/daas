@@ -1057,13 +1057,23 @@ onMounted(load);
 
         <!-- Footer actions -->
         <div class="flex items-center justify-between gap-3 pt-3 flex-wrap">
-          <NuxtLink
-            :to="`/t/${tenantSlug}`"
-            class="inline-flex items-center gap-2 text-sm text-primary hover:underline font-semibold"
-          >
-            <ArrowLeft class="w-4 h-4" />
-            Seguir comprando
-          </NuxtLink>
+          <div class="flex items-center gap-4 flex-wrap">
+            <NuxtLink
+              :to="`/t/${tenantSlug}`"
+              class="inline-flex items-center gap-2 text-sm text-primary hover:underline font-semibold"
+            >
+              <ArrowLeft class="w-4 h-4" />
+              Seguir comprando
+            </NuxtLink>
+            <NuxtLink
+              v-if="order.customer_email"
+              :to="`/t/${tenantSlug}/my-orders?email=${encodeURIComponent(order.customer_email)}`"
+              class="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors font-medium"
+            >
+              <Mail class="w-3.5 h-3.5" />
+              Mis pedidos
+            </NuxtLink>
+          </div>
           <button
             type="button"
             class="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"

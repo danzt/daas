@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -306,6 +307,133 @@ func (s *ShopOrderService) ListTenantOrders(ctx context.Context, tenantID uuid.U
 		orders = []*shop.ShopOrder{}
 	}
 	return orders, total, nil
+}
+
+// ListCustomerOrders returns up to 50 orders for a given customer email (case-insensitive)
+// across the tenant, sorted newest first. The access_token is included in the returned
+// orders so the customer can navigate to the order detail page.
+func (s *ShopOrderService) ListCustomerOrders(ctx context.Context, tenantID uuid.UUID, email string) ([]*shop.ShopOrder, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT so.id, so.tenant_id,
+		       so.customer_name, so.customer_email, COALESCE(so.customer_phone, ''),
+		       so.shipping_address, COALESCE(so.shipping_city, ''), COALESCE(so.shipping_notes, ''),
+		       so.subtotal, so.shipping_cost, so.total,
+		       so.status, COALESCE(so.notes, ''),
+		       so.paid_at, so.fulfilled_at, so.delivered_at, so.cancelled_at,
+		       so.created_at, so.updated_at,
+		       so.payment_proof_url, so.payment_proof_filename, so.payment_proof_uploaded_at,
+		       so.payment_method_id, so.payment_reference,
+		       so.access_token,
+		       COALESCE(
+		           json_agg(
+		               json_build_object(
+		                   'id',         sol.id,
+		                   'order_id',   sol.order_id,
+		                   'product_id', sol.product_id,
+		                   'name',       sol.name,
+		                   'unit_price', sol.unit_price,
+		                   'quantity',   sol.quantity,
+		                   'subtotal',   sol.subtotal,
+		                   'is_fiscal',  sol.is_fiscal,
+		                   'sort_order', sol.sort_order
+		               ) ORDER BY sol.sort_order
+		           ) FILTER (WHERE sol.id IS NOT NULL),
+		           '[]'::json
+		       ) AS lines
+		FROM shop_orders so
+		LEFT JOIN shop_order_lines sol ON sol.order_id = so.id
+		WHERE so.tenant_id = $1 AND so.customer_email ILIKE $2
+		GROUP BY so.id
+		ORDER BY so.created_at DESC
+		LIMIT 50`,
+		tenantID, email,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("list customer orders: %w", err)
+	}
+	defer rows.Close()
+
+	var orders []*shop.ShopOrder
+	for rows.Next() {
+		o, err := scanCustomerOrder(rows)
+		if err != nil {
+			return nil, fmt.Errorf("scan customer order: %w", err)
+		}
+		orders = append(orders, o)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("customer orders rows: %w", err)
+	}
+	if orders == nil {
+		orders = []*shop.ShopOrder{}
+	}
+	return orders, nil
+}
+
+// scanCustomerOrder scans one row from the ListCustomerOrders query.
+// The query selects 25 base columns + 1 json_agg(lines) column, so all 26
+// must be consumed in a single Scan call.
+func scanCustomerOrder(rows pgx.Rows) (*shop.ShopOrder, error) {
+	type lineDTO struct {
+		ID        uuid.UUID `json:"id"`
+		OrderID   uuid.UUID `json:"order_id"`
+		ProductID uuid.UUID `json:"product_id"`
+		Name      string    `json:"name"`
+		UnitPrice float64   `json:"unit_price"`
+		Quantity  int       `json:"quantity"`
+		Subtotal  float64   `json:"subtotal"`
+		IsFiscal  bool      `json:"is_fiscal"`
+		SortOrder int       `json:"sort_order"`
+	}
+
+	var o shop.ShopOrder
+	var proofURL, proofFilename, proofRef *string
+	var linesJSON json.RawMessage
+
+	if err := rows.Scan(
+		&o.ID, &o.TenantID,
+		&o.CustomerName, &o.CustomerEmail, &o.CustomerPhone,
+		&o.ShippingAddress, &o.ShippingCity, &o.ShippingNotes,
+		&o.Subtotal, &o.ShippingCost, &o.Total,
+		&o.Status, &o.Notes,
+		&o.PaidAt, &o.FulfilledAt, &o.DeliveredAt, &o.CancelledAt,
+		&o.CreatedAt, &o.UpdatedAt,
+		&proofURL, &proofFilename, &o.PaymentProofUploadedAt,
+		&o.PaymentMethodID, &proofRef,
+		&o.AccessToken,
+		&linesJSON,
+	); err != nil {
+		return nil, err
+	}
+	if proofURL != nil {
+		o.PaymentProofURL = *proofURL
+	}
+	if proofFilename != nil {
+		o.PaymentProofFilename = *proofFilename
+	}
+	if proofRef != nil {
+		o.PaymentReference = *proofRef
+	}
+
+	var dtos []lineDTO
+	if err := json.Unmarshal(linesJSON, &dtos); err != nil {
+		return nil, fmt.Errorf("unmarshal order lines: %w", err)
+	}
+	o.Lines = make([]shop.OrderLine, len(dtos))
+	for i, d := range dtos {
+		o.Lines[i] = shop.OrderLine{
+			ID:        d.ID,
+			OrderID:   d.OrderID,
+			ProductID: d.ProductID,
+			Name:      d.Name,
+			UnitPrice: d.UnitPrice,
+			Quantity:  d.Quantity,
+			Subtotal:  d.Subtotal,
+			IsFiscal:  d.IsFiscal,
+			SortOrder: d.SortOrder,
+		}
+	}
+	return &o, nil
 }
 
 // MarkPaid transitions pending → paid.
