@@ -33,17 +33,19 @@ func NewBrandingHandler(pool *pgxpool.Pool, st storage.Storage) *BrandingHandler
 
 // BrandingResponse is the public-facing DTO returned by GetPublic and GetAdmin.
 type BrandingResponse struct {
-	StoreName    string `json:"store_name"`
-	Tagline      string `json:"tagline,omitempty"`
-	LogoURL      string `json:"logo_url,omitempty"`
-	BannerURL    string `json:"banner_url,omitempty"`
-	PrimaryColor string `json:"primary_color,omitempty"`
+	StoreName             string `json:"store_name"`
+	Tagline               string `json:"tagline,omitempty"`
+	LogoURL               string `json:"logo_url,omitempty"`
+	BannerURL             string `json:"banner_url,omitempty"`
+	PrimaryColor          string `json:"primary_color,omitempty"`
+	NotificationsWhatsApp string `json:"notifications_whatsapp_phone,omitempty"`
 }
 
 type updateBrandingReq struct {
-	StoreName    *string `json:"store_name"`
-	Tagline      *string `json:"tagline"`
-	PrimaryColor *string `json:"primary_color"`
+	StoreName             *string `json:"store_name"`
+	Tagline               *string `json:"tagline"`
+	PrimaryColor          *string `json:"primary_color"`
+	NotificationsWhatsApp *string `json:"notifications_whatsapp_phone"`
 }
 
 // ─── Public endpoint ──────────────────────────────────────────────────────────
@@ -93,7 +95,8 @@ func (h *BrandingHandler) GetPublic(c echo.Context) error {
 
 // GetAdmin handles GET /api/v1/branding
 //
-// Returns the full branding configuration for the authenticated tenant.
+// Returns the full branding configuration for the authenticated tenant,
+// including the WhatsApp notification phone number.
 func (h *BrandingHandler) GetAdmin(c echo.Context) error {
 	tenantID, err := getTenantID(c)
 	if err != nil {
@@ -102,11 +105,12 @@ func (h *BrandingHandler) GetAdmin(c echo.Context) error {
 
 	row := h.pool.QueryRow(c.Request().Context(),
 		`SELECT name, branding_store_name, branding_tagline,
-		        branding_logo_url, branding_banner_url, branding_primary_color
+		        branding_logo_url, branding_banner_url, branding_primary_color,
+		        notifications_whatsapp_phone
 		 FROM tenants WHERE id = $1`, tenantID)
 
-	var name, storeName, tagline, logoURL, bannerURL, primaryColor *string
-	if err := row.Scan(&name, &storeName, &tagline, &logoURL, &bannerURL, &primaryColor); err != nil {
+	var name, storeName, tagline, logoURL, bannerURL, primaryColor, waPhone *string
+	if err := row.Scan(&name, &storeName, &tagline, &logoURL, &bannerURL, &primaryColor, &waPhone); err != nil {
 		return WriteProblem(c, http.StatusInternalServerError, "internal-error", "failed to load branding")
 	}
 
@@ -127,6 +131,9 @@ func (h *BrandingHandler) GetAdmin(c echo.Context) error {
 	}
 	if primaryColor != nil {
 		resp.PrimaryColor = *primaryColor
+	}
+	if waPhone != nil {
+		resp.NotificationsWhatsApp = *waPhone
 	}
 	return c.JSON(http.StatusOK, resp)
 }
@@ -156,15 +163,17 @@ func (h *BrandingHandler) Update(c echo.Context) error {
 
 	_, err = h.pool.Exec(c.Request().Context(),
 		`UPDATE tenants
-		 SET branding_store_name    = COALESCE($2, branding_store_name),
-		     branding_tagline       = COALESCE($3, branding_tagline),
-		     branding_primary_color = COALESCE($4, branding_primary_color),
-		     updated_at             = NOW()
+		 SET branding_store_name             = COALESCE($2, branding_store_name),
+		     branding_tagline                = COALESCE($3, branding_tagline),
+		     branding_primary_color          = COALESCE($4, branding_primary_color),
+		     notifications_whatsapp_phone    = COALESCE($5, notifications_whatsapp_phone),
+		     updated_at                      = NOW()
 		 WHERE id = $1`,
 		tenantID,
 		nullableString(req.StoreName),
 		nullableString(req.Tagline),
 		nullableString(req.PrimaryColor),
+		nullableString(req.NotificationsWhatsApp),
 	)
 	if err != nil {
 		return WriteProblem(c, http.StatusInternalServerError, "internal-error", "failed to update branding")
@@ -362,7 +371,7 @@ func isValidHexColor(s string) bool {
 		return false
 	}
 	for _, r := range s[1:] {
-		if !((r >= '0' && r <= '9') || (r >= 'a' && r <= 'f') || (r >= 'A' && r <= 'F')) {
+		if (r < '0' || r > '9') && (r < 'a' || r > 'f') && (r < 'A' || r > 'F') {
 			return false
 		}
 	}
