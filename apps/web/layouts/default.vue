@@ -14,7 +14,6 @@ import {
   Search,
   Command,
   PanelLeft,
-  RefreshCw,
   CreditCard,
   Palette,
 } from "lucide-vue-next";
@@ -24,8 +23,9 @@ const store = useAuthStore();
 const router = useRouter();
 const route = useRoute();
 
+// sidebarOpen starts false — CSS breakpoints handle position (static vs fixed),
+// so there's no position-change flash. onMounted opens it on desktop.
 const sidebarOpen = ref(false);
-const isMobile = ref(false);
 const openGroups = ref<Set<string>>(new Set());
 
 interface NavSubItem {
@@ -173,33 +173,29 @@ const roleLabel = computed(() =>
   store.user?.role === "owner" ? "Propietario" : "Empleado",
 );
 
-// Close sidebar on route change (mobile drawer behaviour)
+// Close the mobile drawer on navigation
 watch(
   () => route.path,
   () => {
-    if (isMobile.value) sidebarOpen.value = false;
+    if (window.innerWidth < 1024) sidebarOpen.value = false;
   },
 );
 
 onMounted(() => {
-  const checkMobile = () => {
-    isMobile.value = window.innerWidth < 1024;
-    if (!isMobile.value && !sidebarOpen.value) sidebarOpen.value = true;
-  };
-  checkMobile();
-  window.addEventListener("resize", checkMobile);
+  // Open sidebar immediately on desktop — client-only layout, no SSR mismatch risk
+  if (window.innerWidth >= 1024) sidebarOpen.value = true;
 
   const handleKeyboard = (e: KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === "b") {
       e.preventDefault();
       sidebarOpen.value = !sidebarOpen.value;
     }
-    if (e.key === "Escape" && isMobile.value) sidebarOpen.value = false;
+    if (e.key === "Escape" && window.innerWidth < 1024)
+      sidebarOpen.value = false;
   };
   window.addEventListener("keydown", handleKeyboard);
 
   onUnmounted(() => {
-    window.removeEventListener("resize", checkMobile);
     window.removeEventListener("keydown", handleKeyboard);
   });
 });
@@ -207,10 +203,10 @@ onMounted(() => {
 
 <template>
   <div class="flex h-screen overflow-hidden bg-background">
-    <!-- ── Mobile backdrop ───────────────────────────────── -->
+    <!-- ── Mobile backdrop (CSS hides it on lg+) ────────── -->
     <Transition name="fade">
       <div
-        v-if="isMobile && sidebarOpen"
+        v-if="sidebarOpen"
         class="fixed inset-0 z-30 bg-black/50 lg:hidden"
         aria-hidden="true"
         @click="sidebarOpen = false"
@@ -218,20 +214,19 @@ onMounted(() => {
     </Transition>
 
     <!-- ── Sidebar ─────────────────────────────────────── -->
+    <!--
+      Layout strategy (no JS isMobile — CSS handles it):
+        Mobile  : always fixed + full-width drawer; translate controls show/hide
+        Desktop : always static in flex flow; width controls collapse/expand
+    -->
     <aside
-      class="flex flex-col shrink-0 border-r border-border bg-sidebar transition-all duration-200 overflow-hidden"
-      :class="
-        isMobile
-          ? 'fixed inset-y-0 left-0 z-40 w-64 shadow-xl'
-          : sidebarOpen
-            ? 'w-64'
-            : 'w-14'
-      "
-      :style="
-        isMobile
-          ? { transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)' }
-          : {}
-      "
+      class="flex flex-col shrink-0 border-r border-border bg-sidebar overflow-hidden transition-[width,transform] duration-200 fixed inset-y-0 left-0 z-40 w-64 shadow-xl lg:static lg:inset-auto lg:z-auto lg:shadow-none"
+      :class="{
+        'translate-x-0': sidebarOpen,
+        '-translate-x-full lg:translate-x-0': !sidebarOpen,
+        'lg:w-64': sidebarOpen,
+        'lg:w-14': !sidebarOpen,
+      }"
     >
       <!-- Logo -->
       <div class="flex h-12 shrink-0 items-center border-b border-border px-3">
