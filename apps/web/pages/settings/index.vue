@@ -39,11 +39,23 @@ function cancelEditTenant() {
 }
 
 async function saveTenant() {
-  // Tenant PATCH endpoint not available in S1a — placeholder
+  if (!tenantName.value.trim()) return;
   savingTenant.value = true;
-  await new Promise((r) => setTimeout(r, 500));
-  savingTenant.value = false;
-  isEditingTenant.value = false;
+  try {
+    await useApiFetch("/api/v1/tenants/me", {
+      method: "PATCH",
+      body: {
+        name: tenantName.value.trim(),
+        fiscal_id: tenantFiscalId.value.trim(),
+      },
+    });
+    await store.fetchTenant();
+    isEditingTenant.value = false;
+  } catch {
+    // error shown via toast in future — silent for now
+  } finally {
+    savingTenant.value = false;
+  }
 }
 
 // ─── Tab 2: Usuarios ─────────────────────────────────────────────────────────
@@ -119,7 +131,8 @@ async function sendInvite() {
 // ─── Tab 3: Integraciones ────────────────────────────────────────────────────
 interface FiscalIntegration {
   active: boolean;
-  masked_key: string;
+  configured: boolean;
+  api_key_masked?: string;
 }
 
 const fiscalIntegration = ref<FiscalIntegration | null>(null);
@@ -312,15 +325,6 @@ onMounted(() => {
                   type="text"
                   class="w-full h-11 px-4 border rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white"
                 />
-              </div>
-
-              <!-- Coming soon notice -->
-              <div
-                class="rounded-lg bg-yellow-50 border border-yellow-200 px-4 py-3"
-              >
-                <p class="text-sm text-yellow-700 font-medium">
-                  Edicion de perfil disponible proxima mente (Sprint 2)
-                </p>
               </div>
 
               <div class="flex gap-3 pt-2">
@@ -601,7 +605,9 @@ onMounted(() => {
           <template v-else>
             <!-- Current key (masked) -->
             <div
-              v-if="fiscalIntegration?.active && fiscalIntegration?.masked_key"
+              v-if="
+                fiscalIntegration?.active && fiscalIntegration?.api_key_masked
+              "
               class="mb-4 rounded-lg bg-green-50 border border-green-200 px-4 py-3 flex items-center justify-between"
             >
               <div>
@@ -609,7 +615,7 @@ onMounted(() => {
                   Clave actual
                 </p>
                 <p class="text-sm font-mono text-green-800">
-                  {{ fiscalIntegration.masked_key }}
+                  {{ fiscalIntegration.api_key_masked }}
                 </p>
               </div>
             </div>
@@ -687,10 +693,10 @@ onMounted(() => {
                   Solo el propietario puede configurar la integracion fiscal.
                 </p>
                 <p
-                  v-if="fiscalIntegration?.masked_key"
+                  v-if="fiscalIntegration?.api_key_masked"
                   class="text-sm font-mono text-foreground mt-2"
                 >
-                  Clave: {{ fiscalIntegration.masked_key }}
+                  Clave: {{ fiscalIntegration.api_key_masked }}
                 </p>
               </div>
             </template>
