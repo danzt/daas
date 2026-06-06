@@ -76,7 +76,7 @@ func (h *ShopOrderHandler) Checkout(c echo.Context) error {
 
 	lines, err := buildCheckoutLines(body.Lines)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+		return c.JSON(http.StatusBadRequest, map[string]any{
 			"error":   "invalid_param",
 			"message": err.Error(),
 		})
@@ -235,7 +235,7 @@ func (h *ShopOrderHandler) AdminList(c echo.Context) error {
 	if err != nil {
 		return WriteProblem(c, http.StatusInternalServerError, "internal-error", err.Error())
 	}
-	return c.JSON(http.StatusOK, map[string]interface{}{
+	return c.JSON(http.StatusOK, map[string]any{
 		"data":  orders,
 		"total": total,
 	})
