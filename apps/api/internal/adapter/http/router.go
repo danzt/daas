@@ -132,9 +132,10 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 	}
 	paymentMethodHandler := handler.NewPaymentMethodHandler(cfg.Pool)
 	brandingHandler := handler.NewBrandingHandler(cfg.Pool, cfg.Storage)
+	dashboardHandler := handler.NewDashboardHandler(cfg.Pool)
 
 	// Routes
-	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler, fiscalInvoiceHandler, supplierHandler, reportHandler, saleHandler, shopOrderHandler, paymentMethodHandler, brandingHandler)
+	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler, fiscalInvoiceHandler, supplierHandler, reportHandler, saleHandler, shopOrderHandler, paymentMethodHandler, brandingHandler, dashboardHandler)
 
 	// Storefront public route group — no auth required.
 	// Rate limiter runs first (fast reject), then tenant resolver activates RLS.
@@ -209,6 +210,7 @@ func registerRoutes(
 	shopOrderHandler *handler.ShopOrderHandler,
 	paymentMethodHandler *handler.PaymentMethodHandler,
 	brandingHandler *handler.BrandingHandler,
+	dashboardHandler *handler.DashboardHandler,
 ) {
 	// Health check — unauthenticated
 	e.GET("/health", healthHandler)
@@ -325,6 +327,9 @@ func registerRoutes(
 	api.DELETE("/branding/logo", brandingHandler.DeleteLogo)
 	api.POST("/branding/banner", brandingHandler.UploadBanner, middleware.BodyLimit("6M"))
 	api.DELETE("/branding/banner", brandingHandler.DeleteBanner)
+
+	// Dashboard KPIs — single combined endpoint (S10-PR1)
+	api.GET("/dashboard", dashboardHandler.Get)
 }
 
 // healthHandler responds with a simple status OK payload.

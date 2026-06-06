@@ -11,6 +11,8 @@ import {
   RefreshCw,
   TrendingUp,
   TrendingDown,
+  Store,
+  ShoppingCart,
 } from "lucide-vue-next";
 import { useAuthStore } from "~/stores/auth";
 import { useApiFetch } from "~/composables/useAuth";
@@ -30,58 +32,48 @@ definePageMeta({
 
 const store = useAuthStore();
 
-interface SalesSummary {
-  from: string;
-  to: string;
-  total_revenue: number;
-  total_invoices: number;
-  internal_count: number;
-  fiscal_count: number;
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface PeriodStats {
+  b2b_revenue: number;
+  b2c_revenue: number;
+  invoice_count: number;
 }
 
-interface InventorySnapshot {
-  total_products: number;
-  low_stock_count: number;
-  out_of_stock_count: number;
+interface PendingStats {
+  shop_orders: number;
+  sales_orders: number;
 }
 
-interface SaleOrder {
+interface InventoryStats {
+  low_stock: number;
+  out_of_stock: number;
+}
+
+interface ShopOrderSummary {
   id: string;
-  status: string;
   customer_name: string;
+  customer_email: string;
   total: number;
+  status: string;
   created_at: string;
 }
 
+interface DashboardResponse {
+  today: PeriodStats;
+  month: PeriodStats;
+  pending: PendingStats;
+  inventory: InventoryStats;
+  recent_shop_orders: ShopOrderSummary[];
+}
+
+// ─── State ────────────────────────────────────────────────────────────────────
+
 const loading = ref(false);
 const loadError = ref("");
+const data = ref<DashboardResponse | null>(null);
 
-const todaySales = ref<SalesSummary | null>(null);
-const monthSales = ref<SalesSummary | null>(null);
-const inventory = ref<InventorySnapshot | null>(null);
-const pendingOrders = ref<SaleOrder[]>([]);
-const recentOrders = ref<SaleOrder[]>([]);
-
-function todayRange() {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  return {
-    from: start.toISOString().slice(0, 10),
-    to: new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59)
-      .toISOString()
-      .slice(0, 10),
-  };
-}
-
-function monthRange() {
-  const now = new Date();
-  return {
-    from: new Date(now.getFullYear(), now.getMonth(), 1)
-      .toISOString()
-      .slice(0, 10),
-    to: new Date().toISOString().slice(0, 10),
-  };
-}
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmtCurrency(n: number) {
   return new Intl.NumberFormat("es-VE", {
@@ -97,7 +89,9 @@ function fmtDate(d: string) {
   });
 }
 
-const STATUS_CONFIG: Record<string, { label: string; class: string }> = {
+// ─── Status badge config ──────────────────────────────────────────────────────
+
+const B2B_STATUS: Record<string, { label: string; class: string }> = {
   draft: { label: "Borrador", class: "bg-secondary text-secondary-foreground" },
   confirmed: {
     label: "Confirmada",
@@ -114,27 +108,38 @@ const STATUS_CONFIG: Record<string, { label: string; class: string }> = {
   },
 };
 
+const SHOP_STATUS: Record<string, { label: string; class: string }> = {
+  pending: {
+    label: "Pendiente",
+    class: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+  },
+  paid: {
+    label: "Pagada",
+    class: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+  },
+  fulfilled: {
+    label: "Preparada",
+    class:
+      "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
+  },
+  delivered: {
+    label: "Entregada",
+    class:
+      "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+  },
+  cancelled: {
+    label: "Cancelada",
+    class: "bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300",
+  },
+};
+
+// ─── Load ─────────────────────────────────────────────────────────────────────
+
 async function load() {
   loading.value = true;
   loadError.value = "";
   try {
-    const { from: tFrom, to: tTo } = todayRange();
-    const { from: mFrom, to: mTo } = monthRange();
-    const [ts, ms, inv, orders] = await Promise.all([
-      useApiFetch<SalesSummary>(
-        `/api/v1/reports/sales?from=${tFrom}&to=${tTo}`,
-      ),
-      useApiFetch<SalesSummary>(
-        `/api/v1/reports/sales?from=${mFrom}&to=${mTo}`,
-      ),
-      useApiFetch<InventorySnapshot>("/api/v1/reports/inventory"),
-      useApiFetch<SaleOrder[]>("/api/v1/sales-orders"),
-    ]);
-    todaySales.value = ts;
-    monthSales.value = ms;
-    inventory.value = inv;
-    pendingOrders.value = orders.filter((o) => o.status === "confirmed");
-    recentOrders.value = orders.slice(0, 5);
+    data.value = await useApiFetch<DashboardResponse>("/api/v1/dashboard");
   } catch {
     loadError.value = "No se pudieron cargar los datos del dashboard";
   } finally {
@@ -142,58 +147,92 @@ async function load() {
   }
 }
 
+// ─── Computed stats cards ─────────────────────────────────────────────────────
+
 const stats = computed(() => [
   {
     icon: DollarSign,
-    description: "Ingresos hoy",
-    value: fmtCurrency(todaySales.value?.total_revenue ?? 0),
+    description: "Ingresos hoy (B2B)",
+    value: fmtCurrency(data.value?.today.b2b_revenue ?? 0),
     badge: {
-      label: `${todaySales.value?.total_invoices ?? 0} ${(todaySales.value?.total_invoices ?? 0) === 1 ? "factura" : "facturas"}`,
+      label: `${data.value?.today.invoice_count ?? 0} ${(data.value?.today.invoice_count ?? 0) === 1 ? "factura" : "facturas"}`,
       trend: "up" as const,
     },
     sub:
-      (todaySales.value?.total_invoices ?? 0) === 0
+      (data.value?.today.invoice_count ?? 0) === 0
         ? "Sin actividad de ventas hoy"
         : "Ventas registradas en el día",
   },
   {
+    icon: Store,
+    description: "Ingresos tienda hoy",
+    value: fmtCurrency(data.value?.today.b2c_revenue ?? 0),
+    badge:
+      (data.value?.today.b2c_revenue ?? 0) > 0
+        ? { label: "Tienda online", trend: "up" as const }
+        : null,
+    sub: "Órdenes pagadas / entregadas hoy",
+  },
+  {
     icon: ShoppingBag,
-    description: "Órdenes pendientes",
-    value: String(pendingOrders.value.length),
-    badge: pendingOrders.value.length
-      ? { label: "Confirmadas", trend: "up" as const }
-      : null,
+    description: "Órdenes B2B pendientes",
+    value: String(data.value?.pending.sales_orders ?? 0),
+    badge:
+      (data.value?.pending.sales_orders ?? 0) > 0
+        ? { label: "Confirmadas", trend: "up" as const }
+        : null,
     sub: "Esperando facturación",
     to: "/sales-orders?status=confirmed",
+  },
+  {
+    icon: ShoppingCart,
+    description: "Pedidos tienda",
+    value: String(data.value?.pending.shop_orders ?? 0),
+    badge:
+      (data.value?.pending.shop_orders ?? 0) > 0
+        ? { label: "Sin pagar", trend: "down" as const }
+        : null,
+    sub: "Pedidos pendientes de pago",
+    to: "/shop-orders?status=pending",
   },
   {
     icon: AlertTriangle,
     description: "Stock bajo",
     value: String(
-      (inventory.value?.low_stock_count ?? 0) +
-        (inventory.value?.out_of_stock_count ?? 0),
+      (data.value?.inventory.low_stock ?? 0) +
+        (data.value?.inventory.out_of_stock ?? 0),
     ),
     badge:
-      (inventory.value?.out_of_stock_count ?? 0) > 0
+      (data.value?.inventory.out_of_stock ?? 0) > 0
         ? { label: "Crítico", trend: "down" as const }
         : null,
-    sub: `${inventory.value?.out_of_stock_count ?? 0} sin stock · ${inventory.value?.low_stock_count ?? 0} bajo`,
+    sub: `${data.value?.inventory.out_of_stock ?? 0} sin stock · ${data.value?.inventory.low_stock ?? 0} bajo`,
     to: "/inventory",
   },
   {
     icon: FileText,
     description: "Facturas del mes",
-    value: String(monthSales.value?.total_invoices ?? 0),
-    badge: monthSales.value?.total_invoices
-      ? { label: "Acumulado", trend: "up" as const }
-      : null,
-    sub: `${monthSales.value?.internal_count ?? 0} internas · ${monthSales.value?.fiscal_count ?? 0} fiscales`,
+    value: String(data.value?.month.invoice_count ?? 0),
+    badge:
+      (data.value?.month.invoice_count ?? 0) > 0
+        ? { label: "Acumulado", trend: "up" as const }
+        : null,
+    sub: `Ingresos B2B: ${fmtCurrency(data.value?.month.b2b_revenue ?? 0)}`,
     to: "/invoices",
   },
 ]);
 
 const monthRevenue = computed(() =>
-  fmtCurrency(monthSales.value?.total_revenue ?? 0),
+  fmtCurrency(
+    (data.value?.month.b2b_revenue ?? 0) + (data.value?.month.b2c_revenue ?? 0),
+  ),
+);
+
+const monthB2BRevenue = computed(() =>
+  fmtCurrency(data.value?.month.b2b_revenue ?? 0),
+);
+const monthB2CRevenue = computed(() =>
+  fmtCurrency(data.value?.month.b2c_revenue ?? 0),
 );
 
 onMounted(load);
@@ -230,8 +269,10 @@ onMounted(load);
       {{ loadError }}
     </div>
 
-    <!-- Stats grid -->
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <!-- Stats grid — 6 cards: 2 cols mobile, 3 cols md, 6 cols xl -->
+    <div
+      class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-6"
+    >
       <component
         :is="stat.to ? 'NuxtLink' : 'div'"
         v-for="stat in stats"
@@ -239,7 +280,7 @@ onMounted(load);
         :to="stat.to"
         :class="stat.to ? 'block transition-shadow hover:shadow-md' : ''"
       >
-        <Card>
+        <Card class="h-full">
           <CardHeader>
             <CardTitle>
               <div
@@ -275,20 +316,19 @@ onMounted(load);
       </component>
     </div>
 
-    <!-- Month revenue + Inventory snapshot -->
+    <!-- Month revenue summary -->
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-3">
       <Card class="lg:col-span-2">
         <CardHeader>
-          <CardDescription>Ingresos del mes</CardDescription>
+          <CardDescription>Ingresos del mes (total)</CardDescription>
           <CardTitle class="text-4xl font-medium tabular-nums tracking-tight">
             {{ monthRevenue }}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p class="text-sm text-muted-foreground">
-            {{ monthSales?.total_invoices ?? 0 }} facturas emitidas ·
-            {{ monthSales?.internal_count ?? 0 }} internas ·
-            {{ monthSales?.fiscal_count ?? 0 }} fiscales
+            B2B {{ monthB2BRevenue }} · Tienda {{ monthB2CRevenue }} ·
+            {{ data?.month.invoice_count ?? 0 }} facturas emitidas
           </p>
         </CardContent>
       </Card>
@@ -301,21 +341,28 @@ onMounted(load);
               <Package class="size-4" />
             </div>
           </CardTitle>
-          <CardDescription>Productos activos</CardDescription>
+          <CardDescription>Inventario</CardDescription>
         </CardHeader>
         <CardContent class="flex flex-col gap-1">
           <div
             class="text-3xl font-medium tabular-nums leading-none tracking-tight"
           >
-            {{ inventory?.total_products ?? 0 }}
+            {{
+              (data?.inventory.low_stock ?? 0) +
+              (data?.inventory.out_of_stock ?? 0)
+            }}
           </div>
-          <p class="text-sm text-muted-foreground">Catálogo total del tenant</p>
+          <p class="text-sm text-muted-foreground">
+            {{ data?.inventory.out_of_stock ?? 0 }} sin stock ·
+            {{ data?.inventory.low_stock ?? 0 }} bajo mínimo
+          </p>
         </CardContent>
       </Card>
     </div>
 
-    <!-- Pending + Recent rows -->
+    <!-- B2B pending + Recent shop orders -->
     <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <!-- B2B: confirmed, not yet invoiced -->
       <Card>
         <CardHeader class="flex flex-row items-center justify-between">
           <div>
@@ -331,106 +378,89 @@ onMounted(load);
           </NuxtLink>
         </CardHeader>
         <CardContent class="px-0">
-          <div
-            v-if="loading && !pendingOrders.length"
-            class="px-4 py-8 flex justify-center"
-          >
+          <div v-if="loading && !data" class="px-4 py-8 flex justify-center">
             <Loader2 class="w-5 h-5 animate-spin text-muted-foreground" />
           </div>
           <div
-            v-else-if="pendingOrders.length === 0"
+            v-else-if="(data?.pending.sales_orders ?? 0) === 0"
             class="px-4 py-8 text-center text-sm text-muted-foreground"
           >
             Sin órdenes pendientes
           </div>
-          <ul v-else class="divide-y">
-            <li
-              v-for="order in pendingOrders.slice(0, 5)"
-              :key="order.id"
-              class="flex items-center justify-between px-4 py-3 hover:bg-accent/40 transition-colors"
+          <div v-else class="px-4 py-6 text-center">
+            <p class="text-3xl font-semibold tabular-nums">
+              {{ data?.pending.sales_orders }}
+            </p>
+            <p class="text-sm text-muted-foreground mt-1">
+              órdenes confirmadas sin facturar
+            </p>
+            <NuxtLink
+              to="/sales-orders?status=confirmed"
+              class="mt-3 inline-flex items-center gap-1 text-xs text-primary hover:underline"
             >
-              <div>
-                <NuxtLink
-                  :to="`/sales-orders/${order.id}`"
-                  class="text-sm font-medium hover:underline"
-                >
-                  {{ order.customer_name || "Cliente anónimo" }}
-                </NuxtLink>
-                <p class="text-xs text-muted-foreground">
-                  {{ fmtDate(order.created_at) }}
-                </p>
-              </div>
-              <div class="flex items-center gap-3">
-                <span class="font-mono text-sm tabular-nums">
-                  {{ fmtCurrency(order.total) }}
-                </span>
-                <NuxtLink
-                  :to="`/sales-orders/${order.id}`"
-                  class="text-xs text-muted-foreground hover:text-foreground hover:underline"
-                >
-                  Facturar
-                </NuxtLink>
-              </div>
-            </li>
-          </ul>
+              Gestionar <ArrowRight class="size-3" />
+            </NuxtLink>
+          </div>
         </CardContent>
       </Card>
 
+      <!-- B2C: recent shop orders -->
       <Card>
         <CardHeader class="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Órdenes recientes</CardTitle>
-            <CardDescription>Últimas 5 órdenes registradas</CardDescription>
+            <CardTitle>Pedidos recientes (tienda)</CardTitle>
+            <CardDescription>Últimos 5 pedidos online</CardDescription>
           </div>
           <NuxtLink
-            to="/sales-orders"
+            to="/shop-orders"
             class="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
           >
-            Ver todas
+            Ver todos
             <ArrowRight class="size-3" />
           </NuxtLink>
         </CardHeader>
         <CardContent class="px-0">
-          <div
-            v-if="loading && !recentOrders.length"
-            class="px-4 py-8 flex justify-center"
-          >
+          <div v-if="loading && !data" class="px-4 py-8 flex justify-center">
             <Loader2 class="w-5 h-5 animate-spin text-muted-foreground" />
           </div>
           <div
-            v-else-if="recentOrders.length === 0"
+            v-else-if="!data?.recent_shop_orders.length"
             class="px-4 py-8 text-center text-sm text-muted-foreground"
           >
-            Sin órdenes aún
+            Sin pedidos aún
           </div>
           <ul v-else class="divide-y">
             <li
-              v-for="order in recentOrders"
+              v-for="order in data.recent_shop_orders"
               :key="order.id"
               class="flex items-center justify-between px-4 py-3 hover:bg-accent/40 transition-colors"
             >
-              <div>
+              <div class="min-w-0">
                 <NuxtLink
-                  :to="`/sales-orders/${order.id}`"
-                  class="text-sm font-medium hover:underline"
+                  :to="`/shop-orders/${order.id}`"
+                  class="text-sm font-medium hover:underline truncate block"
                 >
-                  {{ order.customer_name || "Cliente anónimo" }}
+                  {{
+                    order.customer_name ||
+                    order.customer_email ||
+                    "Cliente anónimo"
+                  }}
                 </NuxtLink>
                 <p class="text-xs text-muted-foreground">
                   {{ fmtDate(order.created_at) }}
                 </p>
               </div>
-              <div class="flex items-center gap-3">
+              <div class="flex items-center gap-3 shrink-0 ml-2">
                 <span class="font-mono text-sm tabular-nums">
                   {{ fmtCurrency(order.total) }}
                 </span>
                 <span
                   :class="[
                     'inline-flex items-center px-2 py-0.5 rounded-md text-xs font-medium',
-                    STATUS_CONFIG[order.status]?.class,
+                    SHOP_STATUS[order.status]?.class,
                   ]"
                 >
-                  {{ STATUS_CONFIG[order.status]?.label }}
+                  {{ SHOP_STATUS[order.status]?.label ?? order.status }}
                 </span>
               </div>
             </li>
@@ -444,7 +474,7 @@ onMounted(load);
       <NuxtLink
         v-for="action in [
           { to: '/sales-orders', icon: ShoppingBag, label: 'Nueva venta' },
-          { to: '/invoices', icon: FileText, label: 'Facturas' },
+          { to: '/shop-orders', icon: ShoppingCart, label: 'Tienda online' },
           { to: '/inventory', icon: Package, label: 'Inventario' },
           { to: '/reports', icon: ClipboardList, label: 'Reportes' },
         ]"
