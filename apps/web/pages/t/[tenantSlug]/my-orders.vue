@@ -389,9 +389,9 @@ function clearEmail() {
                 <!-- Item count -->
                 <p class="text-xs text-muted-foreground">
                   {{
-                    order.lines.length === 1
+                    (order.lines ?? []).length === 1
                       ? "1 producto"
-                      : `${order.lines.length} productos`
+                      : `${(order.lines ?? []).length} productos`
                   }}
                 </p>
               </div>
