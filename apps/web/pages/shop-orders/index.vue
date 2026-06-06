@@ -14,6 +14,7 @@ import {
   Phone,
   MapPin,
   TrendingUp,
+  Download,
 } from "lucide-vue-next";
 import { useApiFetch } from "~/composables/useAuth";
 
@@ -184,6 +185,71 @@ async function load() {
 }
 
 onMounted(load);
+
+// ─── CSV export ───────────────────────────────────────────────────────────────
+
+function exportCSV() {
+  const rows = filteredOrders.value;
+  if (!rows.length) return;
+
+  const headers = [
+    "Pedido",
+    "Fecha",
+    "Cliente",
+    "Email",
+    "Teléfono",
+    "Ciudad",
+    "Estado",
+    "Subtotal",
+    "Costo envío",
+    "Total",
+  ];
+
+  const statusLabel: Record<string, string> = {
+    pending: "Pendiente",
+    paid: "Pagada",
+    fulfilled: "Despachada",
+    delivered: "Entregada",
+    cancelled: "Cancelada",
+  };
+
+  const escape = (v: string | number | null | undefined) => {
+    const s = String(v ?? "").replace(/"/g, '""');
+    return `"${s}"`;
+  };
+
+  const lines = [
+    headers.map(escape).join(","),
+    ...rows.map((o) =>
+      [
+        shortId(o.id),
+        fmtDate(o.created_at),
+        o.customer_name,
+        o.customer_email,
+        o.customer_phone ?? "",
+        o.shipping_city ?? "",
+        statusLabel[o.status] ?? o.status,
+        o.subtotal.toFixed(2),
+        o.shipping_cost.toFixed(2),
+        o.total.toFixed(2),
+      ]
+        .map(escape)
+        .join(","),
+    ),
+  ];
+
+  const blob = new Blob(["﻿" + lines.join("\r\n")], {
+    type: "text/csv;charset=utf-8;",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const today = new Date().toISOString().slice(0, 10);
+  const suffix = statusFilter.value !== "all" ? `-${statusFilter.value}` : "";
+  a.download = `pedidos${suffix}-${today}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 </script>
 
 <template>
@@ -199,14 +265,30 @@ onMounted(load);
           Pedidos recibidos desde tu tienda pública
         </p>
       </div>
-      <button
-        type="button"
-        class="px-3 py-2 text-sm rounded-lg border hover:bg-muted transition-colors flex items-center gap-2 cursor-pointer"
-        @click="load"
-      >
-        <Loader2 v-if="loading" class="w-3.5 h-3.5 animate-spin" />
-        Actualizar
-      </button>
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          :disabled="filteredOrders.length === 0"
+          class="px-3 py-2 text-sm rounded-lg border hover:bg-muted transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          @click="exportCSV"
+        >
+          <Download class="w-3.5 h-3.5" />
+          Exportar CSV
+          <span
+            v-if="filteredOrders.length > 0"
+            class="text-xs bg-muted text-muted-foreground rounded px-1"
+            >{{ filteredOrders.length }}</span
+          >
+        </button>
+        <button
+          type="button"
+          class="px-3 py-2 text-sm rounded-lg border hover:bg-muted transition-colors flex items-center gap-2 cursor-pointer"
+          @click="load"
+        >
+          <Loader2 v-if="loading" class="w-3.5 h-3.5 animate-spin" />
+          Actualizar
+        </button>
+      </div>
     </div>
 
     <!-- KPIs -->
