@@ -1,6 +1,12 @@
 import { useAuthStore } from "~/stores/auth";
 
 export default defineNuxtRouteMiddleware((to) => {
+  // Auth is localStorage-based — only the client can read it.
+  // Running redirects on the server causes a layout switch (auth→default)
+  // on the client that leaves auth.vue's wrapper permanently wrapping the
+  // default layout content, breaking the dashboard layout.
+  if (import.meta.server) return;
+
   const store = useAuthStore();
   // Hydrate from localStorage on first navigation (client-side)
   store.initFromStorage();
