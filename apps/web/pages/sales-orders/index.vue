@@ -246,10 +246,13 @@ onMounted(load);
           · {{ counts.draft }} borrador{{ counts.draft !== 1 ? "es" : "" }}
         </p>
       </div>
-      <Button @click="openSheet">
+      <NuxtLink
+        to="/sales-orders/new"
+        class="inline-flex items-center gap-2 h-9 px-4 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200"
+      >
         <Plus class="w-4 h-4" />
         Nueva orden
-      </Button>
+      </NuxtLink>
     </div>
 
     <!-- Stats -->
