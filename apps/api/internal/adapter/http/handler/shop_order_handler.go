@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -158,6 +159,40 @@ func (h *ShopOrderHandler) CancelOrder(c echo.Context) error {
 	}
 	order.AccessToken = ""
 	return c.JSON(http.StatusOK, order)
+}
+
+// MyOrders handles GET /t/:tenantSlug/shop/v1/my-orders?email=X
+//
+// Public. Returns the order history for a customer identified by email.
+// The access_token is included in each order so the customer can navigate to
+// the order detail page. Returns an empty array when no orders are found —
+// never null.
+func (h *ShopOrderHandler) MyOrders(c echo.Context) error {
+	tenantID, err := getPublicTenantID(c)
+	if err != nil {
+		return c.JSON(http.StatusForbidden, map[string]string{"error": "tenant_context_missing"})
+	}
+
+	email := c.QueryParam("email")
+	if email == "" {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error":   "invalid_param",
+			"message": "email query parameter is required",
+		})
+	}
+	// Simple email sanity check — just requires an @.
+	if !strings.Contains(email, "@") {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error":   "invalid_param",
+			"message": "email must be a valid email address",
+		})
+	}
+
+	orders, err := h.svc.ListCustomerOrders(c.Request().Context(), tenantID, email)
+	if err != nil {
+		return WriteProblem(c, http.StatusInternalServerError, "internal-error", err.Error())
+	}
+	return c.JSON(http.StatusOK, orders)
 }
 
 // ─── Tenant admin endpoints ───────────────────────────────────────────────────

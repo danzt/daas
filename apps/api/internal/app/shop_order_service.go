@@ -308,6 +308,49 @@ func (s *ShopOrderService) ListTenantOrders(ctx context.Context, tenantID uuid.U
 	return orders, total, nil
 }
 
+// ListCustomerOrders returns up to 50 orders for a given customer email (case-insensitive)
+// across the tenant, sorted newest first. The access_token is included in the returned
+// orders so the customer can navigate to the order detail page.
+func (s *ShopOrderService) ListCustomerOrders(ctx context.Context, tenantID uuid.UUID, email string) ([]*shop.ShopOrder, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT id, tenant_id,
+		       customer_name, customer_email, COALESCE(customer_phone, ''),
+		       shipping_address, COALESCE(shipping_city, ''), COALESCE(shipping_notes, ''),
+		       subtotal, shipping_cost, total,
+		       status, COALESCE(notes, ''),
+		       paid_at, fulfilled_at, delivered_at, cancelled_at,
+		       created_at, updated_at,
+		       payment_proof_url, payment_proof_filename, payment_proof_uploaded_at,
+		       payment_method_id, payment_reference,
+		       access_token
+		FROM shop_orders
+		WHERE tenant_id = $1 AND customer_email ILIKE $2
+		ORDER BY created_at DESC
+		LIMIT 50`,
+		tenantID, email,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("list customer orders: %w", err)
+	}
+	defer rows.Close()
+
+	var orders []*shop.ShopOrder
+	for rows.Next() {
+		o, err := scanShopOrderWithToken(rows)
+		if err != nil {
+			return nil, fmt.Errorf("scan customer order: %w", err)
+		}
+		orders = append(orders, o)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("customer orders rows: %w", err)
+	}
+	if orders == nil {
+		orders = []*shop.ShopOrder{}
+	}
+	return orders, nil
+}
+
 // MarkPaid transitions pending → paid.
 // On success it asynchronously:
 //   - Sends the lifecycle email notification (existing behaviour)
@@ -537,6 +580,38 @@ func scanShopOrder(row shopOrderScanner) (*shop.ShopOrder, error) {
 		&o.CreatedAt, &o.UpdatedAt,
 		&proofURL, &proofFilename, &o.PaymentProofUploadedAt,
 		&o.PaymentMethodID, &proofRef,
+	); err != nil {
+		return nil, err
+	}
+	if proofURL != nil {
+		o.PaymentProofURL = *proofURL
+	}
+	if proofFilename != nil {
+		o.PaymentProofFilename = *proofFilename
+	}
+	if proofRef != nil {
+		o.PaymentReference = *proofRef
+	}
+	return &o, nil
+}
+
+// scanShopOrderWithToken is like scanShopOrder but also reads the access_token column.
+// Used by ListCustomerOrders which needs to return tokens to the customer.
+func scanShopOrderWithToken(row shopOrderScanner) (*shop.ShopOrder, error) {
+	var o shop.ShopOrder
+	var proofURL, proofFilename *string
+	var proofRef *string
+	if err := row.Scan(
+		&o.ID, &o.TenantID,
+		&o.CustomerName, &o.CustomerEmail, &o.CustomerPhone,
+		&o.ShippingAddress, &o.ShippingCity, &o.ShippingNotes,
+		&o.Subtotal, &o.ShippingCost, &o.Total,
+		&o.Status, &o.Notes,
+		&o.PaidAt, &o.FulfilledAt, &o.DeliveredAt, &o.CancelledAt,
+		&o.CreatedAt, &o.UpdatedAt,
+		&proofURL, &proofFilename, &o.PaymentProofUploadedAt,
+		&o.PaymentMethodID, &proofRef,
+		&o.AccessToken,
 	); err != nil {
 		return nil, err
 	}

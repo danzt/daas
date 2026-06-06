@@ -176,6 +176,9 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 		// Public tenant branding (S9-T2).
 		storefront.GET("/branding", brandingHandler.GetPublic)
 
+		// Customer order history (S9-PR4).
+		storefront.GET("/my-orders", shopOrderHandler.MyOrders)
+
 		// Payment proof upload (S8-PR2). Body limit slightly above 5MB to allow
 		// multipart framing overhead; the service enforces exact 5MB on the file itself.
 		storefront.POST("/orders/:id/payment-proof",
