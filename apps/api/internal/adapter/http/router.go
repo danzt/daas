@@ -237,6 +237,7 @@ func registerRoutes(
 
 	// Tenant
 	api.GET("/tenants/me", meHandler.GetMe)
+	api.PATCH("/tenants/me", meHandler.UpdateMe, mw.OwnerGuard())
 	api.GET("/users", userHandler.List)
 	api.POST("/users/invite", userHandler.Invite, mw.OwnerGuard())
 	api.PATCH("/users/:id", userHandler.UpdateActive, mw.OwnerGuard())

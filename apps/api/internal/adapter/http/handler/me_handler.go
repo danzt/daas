@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -60,6 +61,62 @@ func (h *MeHandler) GetMe(c echo.Context) error {
 
 	if fiscalID != nil {
 		resp.FiscalID = *fiscalID
+	}
+	resp.CreatedAt = createdAt.Format(time.RFC3339)
+
+	return c.JSON(http.StatusOK, resp)
+}
+
+// updateMeRequest is the JSON body for PATCH /api/v1/tenants/me.
+type updateMeRequest struct {
+	Name     string `json:"name"`
+	FiscalID string `json:"fiscal_id"`
+}
+
+// UpdateMe handles PATCH /api/v1/tenants/me.
+// Allows the owner to update the tenant's display name and fiscal ID.
+func (h *MeHandler) UpdateMe(c echo.Context) error {
+	tenantID, _ := c.Get(string(mw.ContextKeyTenantID)).(string)
+	if tenantID == "" {
+		return WriteProblem(c, http.StatusForbidden, "forbidden", "tenant context missing")
+	}
+
+	var req updateMeRequest
+	if err := c.Bind(&req); err != nil {
+		return WriteProblem(c, http.StatusBadRequest, "bad-request", "invalid request body")
+	}
+
+	name := strings.TrimSpace(req.Name)
+	if name == "" {
+		return WriteProblem(c, http.StatusUnprocessableEntity, "validation-error", "name is required")
+	}
+
+	// Pass nil when fiscal_id is empty so the DB column is set to NULL.
+	var fiscalIDArg any
+	if v := strings.TrimSpace(req.FiscalID); v != "" {
+		fiscalIDArg = v
+	}
+
+	var resp tenantMeResponse
+	var fiscalIDVal *string
+	var createdAt time.Time
+
+	err := h.pool.QueryRow(c.Request().Context(),
+		`UPDATE tenants
+		 SET name = $2, fiscal_id = $3
+		 WHERE id = $1
+		 RETURNING id, name, fiscal_id, country_code, status, created_at`,
+		tenantID, name, fiscalIDArg,
+	).Scan(&resp.ID, &resp.Name, &fiscalIDVal, &resp.CountryCode, &resp.Status, &createdAt)
+	if err != nil {
+		if err == pgx.ErrNoRows {
+			return WriteProblem(c, http.StatusNotFound, "tenant-not-found", "tenant not found")
+		}
+		return WriteProblem(c, http.StatusInternalServerError, "internal-error", "failed to update tenant")
+	}
+
+	if fiscalIDVal != nil {
+		resp.FiscalID = *fiscalIDVal
 	}
 	resp.CreatedAt = createdAt.Format(time.RFC3339)
 
