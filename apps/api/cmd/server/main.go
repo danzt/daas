@@ -15,6 +15,7 @@ import (
 	adapterhttp "github.com/danzt/daas/api/internal/adapter/http"
 	notifadapter "github.com/danzt/daas/api/internal/adapter/notification"
 	"github.com/danzt/daas/api/internal/adapter/storage"
+	"github.com/danzt/daas/api/internal/app"
 	"github.com/danzt/daas/api/internal/config"
 	"github.com/danzt/daas/api/internal/domain/notification"
 )
@@ -100,21 +101,35 @@ func main() {
 		log.Warn().Msg("DATABASE_URL not set — database features will be unavailable")
 	}
 
-	// Notification service. EmailAdapter activates when RESEND_API_KEY is set;
-	// otherwise we fall back to NoopAdapter so the dependency graph still
-	// compiles and dev runs don't spam real inboxes.
-	var notifSvc notification.NotificationService
+	// Email adapter — activates when RESEND_API_KEY is set.
+	var emailSvc notification.NotificationService
 	if resendKey := os.Getenv("RESEND_API_KEY"); resendKey != "" {
 		from := os.Getenv("RESEND_FROM_EMAIL")
 		if from == "" {
 			from = "noreply@daas.app"
 		}
-		notifSvc = notifadapter.NewEmailAdapter(resendKey, from)
-		log.Info().Str("from", from).Msg("notification service: EmailAdapter (Resend)")
+		emailSvc = notifadapter.NewEmailAdapter(resendKey, from)
+		log.Info().Str("from", from).Msg("notification: email channel active (Resend)")
 	} else {
-		notifSvc = notifadapter.NewNoopAdapter()
-		log.Info().Msg("notification service: NoopAdapter (RESEND_API_KEY unset)")
+		emailSvc = notifadapter.NewNoopAdapter()
+		log.Info().Msg("notification: email channel inactive (RESEND_API_KEY not set)")
 	}
+
+	// WhatsApp adapter — activates when both Meta Business credentials are set.
+	var whatsappSvc notification.NotificationService
+	waPhoneID := os.Getenv("WHATSAPP_PHONE_NUMBER_ID")
+	waToken := os.Getenv("WHATSAPP_TOKEN")
+	if waPhoneID != "" && waToken != "" {
+		whatsappSvc = notifadapter.NewWhatsAppAdapter(waPhoneID, waToken)
+		log.Info().Msg("notification: WhatsApp channel active")
+	} else {
+		whatsappSvc = notifadapter.NewNoopAdapter()
+		log.Info().Msg("notification: WhatsApp channel inactive (WHATSAPP_PHONE_NUMBER_ID/WHATSAPP_TOKEN not set)")
+	}
+
+	// Fan-out to both channels. MultiChannelNotifier routes each message to the
+	// correct adapter based on msg.Channel, running both concurrently.
+	notifSvc := app.NewMultiChannelNotifier(emailSvc, "email", whatsappSvc, "whatsapp")
 
 	// Storefront base URL used by lifecycle emails to build the customer
 	// tracking links. Defaults to localhost for dev.
