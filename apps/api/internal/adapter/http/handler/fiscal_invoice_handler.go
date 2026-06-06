@@ -28,6 +28,13 @@ func NewFiscalInvoiceHandler(pool *pgxpool.Pool) *FiscalInvoiceHandler {
 	return &FiscalInvoiceHandler{svc: app.NewFiscalInvoiceService(pool, adapter)}
 }
 
+// NewFiscalInvoiceHandlerWithService creates a FiscalInvoiceHandler from a
+// pre-built service. Use this when the service is shared with other components
+// (e.g. the FiscalRetryWorker started in main.go).
+func NewFiscalInvoiceHandlerWithService(svc *app.FiscalInvoiceService) *FiscalInvoiceHandler {
+	return &FiscalInvoiceHandler{svc: svc}
+}
+
 // Service returns the underlying FiscalInvoiceService so it can be shared
 // with other components (e.g. ShopOrderHandler auto-fiscal-invoice on MarkPaid).
 func (h *FiscalInvoiceHandler) Service() *app.FiscalInvoiceService {

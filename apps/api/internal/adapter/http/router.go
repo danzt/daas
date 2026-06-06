@@ -32,6 +32,10 @@ type RouterConfig struct {
 	// Storage is used by the payment-proof upload endpoint.
 	// When nil, the endpoint is still registered but upload calls will fail.
 	Storage storage.Storage
+	// FiscalInvoiceSvc is an optional pre-built FiscalInvoiceService.
+	// When set, the router uses it directly instead of creating its own.
+	// Pass this from main.go when sharing the service with the retry worker.
+	FiscalInvoiceSvc *app.FiscalInvoiceService
 }
 
 // NewRouter creates a new Echo instance with standard middleware configured
@@ -114,8 +118,15 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 	// Create InternalInvoiceService once — shared between InvoiceHandler and auto-invoice.
 	internalInvoiceSvc := app.NewInternalInvoiceService(cfg.Pool)
 	invoiceHandler := handler.NewInvoiceHandlerWithService(internalInvoiceSvc)
-	fiscalInvoiceHandler := handler.NewFiscalInvoiceHandler(cfg.Pool)
-	// FiscalInvoiceService shared between FiscalInvoiceHandler and auto-fiscal-invoice on MarkPaid.
+	// FiscalInvoiceHandler — use the pre-built service when provided by main.go
+	// (so the same instance is shared with the retry worker), otherwise fall back
+	// to creating a fresh one with the mock adapter.
+	var fiscalInvoiceHandler *handler.FiscalInvoiceHandler
+	if cfg.FiscalInvoiceSvc != nil {
+		fiscalInvoiceHandler = handler.NewFiscalInvoiceHandlerWithService(cfg.FiscalInvoiceSvc)
+	} else {
+		fiscalInvoiceHandler = handler.NewFiscalInvoiceHandler(cfg.Pool)
+	}
 	fiscalInvoiceSvc := fiscalInvoiceHandler.Service()
 	supplierHandler := handler.NewSupplierHandler(cfg.Pool)
 	reportHandler := handler.NewReportHandler(cfg.Pool)

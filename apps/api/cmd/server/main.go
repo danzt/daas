@@ -12,6 +12,7 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
+	fiscaladapter "github.com/danzt/daas/api/internal/adapter/fiscal"
 	adapterhttp "github.com/danzt/daas/api/internal/adapter/http"
 	notifadapter "github.com/danzt/daas/api/internal/adapter/notification"
 	"github.com/danzt/daas/api/internal/adapter/storage"
@@ -163,14 +164,24 @@ func main() {
 			Msg("storage adapter: LocalFSAdapter")
 	}
 
+	// Fiscal invoice service — shared between HTTP handler and background retry worker.
+	// Uses MockAdapter in dev; swap for a real SENIAT TCP adapter in production.
+	var fiscalInvoiceSvc *app.FiscalInvoiceService
+	if pool != nil {
+		fiscalInvoiceSvc = app.NewFiscalInvoiceService(pool, fiscaladapter.NewMockAdapter())
+		retryWorker := app.NewFiscalRetryWorker(fiscalInvoiceSvc)
+		go retryWorker.Start(ctx)
+	}
+
 	router := adapterhttp.NewRouterWithConfig(adapterhttp.RouterConfig{
-		SupabaseURL:     cfg.SupabaseURL,
-		AnonKey:         cfg.SupabaseAnonKey,
-		ServiceRoleKey:  cfg.SupabaseServiceRoleKey,
-		Pool:            pool,
-		NotificationSvc: notifSvc,
-		StorefrontURL:   storefrontURL,
-		Storage:         storageAdapter,
+		SupabaseURL:      cfg.SupabaseURL,
+		AnonKey:          cfg.SupabaseAnonKey,
+		ServiceRoleKey:   cfg.SupabaseServiceRoleKey,
+		Pool:             pool,
+		NotificationSvc:  notifSvc,
+		StorefrontURL:    storefrontURL,
+		Storage:          storageAdapter,
+		FiscalInvoiceSvc: fiscalInvoiceSvc,
 	})
 
 	addr := ":" + cfg.Port
