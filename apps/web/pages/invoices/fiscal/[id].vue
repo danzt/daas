@@ -11,8 +11,10 @@ import {
   Send,
   Ban,
   RotateCcw,
+  Download,
 } from "lucide-vue-next";
 import { useApiFetch } from "~/composables/useAuth";
+import { useAuthStore } from "~/stores/auth";
 import type { FiscalInvoice } from "~/components/invoices/FiscalInvoiceFormModal.vue";
 
 definePageMeta({
@@ -162,6 +164,32 @@ function formatCurrency(value: number) {
 function formatTaxRate(rate: number) {
   return `${(rate * 100).toFixed(0)}%`;
 }
+
+// ─── PDF download ─────────────────────────────────────────────────────────────
+const downloadingPDF = ref(false);
+
+async function downloadPDF() {
+  if (!invoice.value) return;
+  downloadingPDF.value = true;
+  try {
+    const store = useAuthStore();
+    const config = useRuntimeConfig();
+    const url = `${config.public.apiBase}/api/v1/invoices/fiscal/${invoiceId}/pdf`;
+    const resp = await fetch(url, {
+      headers: { Authorization: `Bearer ${store.accessToken}` },
+    });
+    if (!resp.ok) throw new Error("error");
+    const blob = await resp.blob();
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    const name = invoice.value.fiscal_number ?? invoiceId;
+    link.download = `factura-fiscal-${name}.pdf`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  } finally {
+    downloadingPDF.value = false;
+  }
+}
 </script>
 
 <template>
@@ -297,6 +325,20 @@ function formatTaxRate(rate: number) {
                     ? "Reintentando..."
                     : `Reintentar (${invoice.retry_count}/3)`
                 }}
+              </button>
+            </template>
+
+            <!-- Issued: PDF download -->
+            <template v-else-if="invoice.status === 'issued'">
+              <button
+                type="button"
+                :disabled="downloadingPDF"
+                class="flex items-center gap-2 h-9 px-4 border border-primary text-primary text-sm font-semibold rounded-lg hover:bg-primary/5 transition-all duration-200 cursor-pointer disabled:opacity-50"
+                @click="downloadPDF"
+              >
+                <Loader2 v-if="downloadingPDF" class="w-4 h-4 animate-spin" />
+                <Download v-else class="w-4 h-4" />
+                PDF
               </button>
             </template>
           </div>
