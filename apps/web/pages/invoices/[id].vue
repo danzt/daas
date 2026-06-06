@@ -8,8 +8,10 @@ import {
   Loader2,
   Send,
   Ban,
+  Download,
 } from "lucide-vue-next";
 import { useApiFetch } from "~/composables/useAuth";
+import { useAuthStore } from "~/stores/auth";
 import type { Invoice } from "~/components/invoices/InvoiceFormModal.vue";
 
 definePageMeta({
@@ -126,6 +128,31 @@ function formatDate(dateStr: string) {
 function formatCurrency(value: number) {
   return value.toFixed(2);
 }
+
+// ─── PDF download ─────────────────────────────────────────────────────────────
+const downloadingPDF = ref(false);
+
+async function downloadPDF() {
+  if (!invoice.value) return;
+  downloadingPDF.value = true;
+  try {
+    const store = useAuthStore();
+    const config = useRuntimeConfig();
+    const url = `${config.public.apiBase}/api/v1/invoices/internal/${invoiceId}/pdf`;
+    const resp = await fetch(url, {
+      headers: { Authorization: `Bearer ${store.accessToken}` },
+    });
+    if (!resp.ok) throw new Error("error");
+    const blob = await resp.blob();
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `factura-${invoice.value.correlative || invoiceId}.pdf`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  } finally {
+    downloadingPDF.value = false;
+  }
+}
 </script>
 
 <template>
@@ -229,6 +256,16 @@ function formatCurrency(value: number) {
             v-else-if="invoice.status === 'issued'"
             class="flex items-center gap-2 flex-shrink-0"
           >
+            <button
+              type="button"
+              :disabled="downloadingPDF"
+              class="flex items-center gap-2 h-9 px-4 border border-primary text-primary text-sm font-semibold rounded-lg hover:bg-primary/5 transition-all duration-200 cursor-pointer disabled:opacity-50"
+              @click="downloadPDF"
+            >
+              <Loader2 v-if="downloadingPDF" class="w-4 h-4 animate-spin" />
+              <Download v-else class="w-4 h-4" />
+              PDF
+            </button>
             <button
               type="button"
               class="flex items-center gap-2 h-9 px-4 border text-sm font-semibold text-muted-foreground rounded-lg hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-all duration-200 cursor-pointer"

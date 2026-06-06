@@ -147,9 +147,10 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 	paymentMethodHandler := handler.NewPaymentMethodHandler(cfg.Pool)
 	brandingHandler := handler.NewBrandingHandler(cfg.Pool, cfg.Storage)
 	dashboardHandler := handler.NewDashboardHandler(cfg.Pool)
+	pdfHandler := handler.NewPDFHandler(cfg.Pool, internalInvoiceSvc, fiscalInvoiceSvc)
 
 	// Routes
-	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler, fiscalInvoiceHandler, supplierHandler, reportHandler, saleHandler, shopOrderHandler, paymentMethodHandler, brandingHandler, dashboardHandler)
+	registerRoutes(e, authMW, cfg.Pool, tenantHandler, authHandler, userHandler, integrationHandler, meHandler, productHandler, inventoryHandler, invoiceHandler, fiscalInvoiceHandler, supplierHandler, reportHandler, saleHandler, shopOrderHandler, paymentMethodHandler, brandingHandler, dashboardHandler, pdfHandler)
 
 	// Storefront public route group — no auth required.
 	// Rate limiter runs first (fast reject), then tenant resolver activates RLS.
@@ -225,6 +226,7 @@ func registerRoutes(
 	paymentMethodHandler *handler.PaymentMethodHandler,
 	brandingHandler *handler.BrandingHandler,
 	dashboardHandler *handler.DashboardHandler,
+	pdfHandler *handler.PDFHandler,
 ) {
 	// Health check — unauthenticated
 	e.GET("/health", healthHandler)
@@ -281,6 +283,7 @@ func registerRoutes(
 	api.GET("/invoices/internal/:id", invoiceHandler.GetByID)
 	api.POST("/invoices/internal/:id/issue", invoiceHandler.Issue)
 	api.POST("/invoices/internal/:id/cancel", invoiceHandler.Cancel)
+	api.GET("/invoices/internal/:id/pdf", pdfHandler.DownloadInternal)
 
 	// Fiscal invoices (SENIAT) — same ordering convention
 	api.POST("/invoices/fiscal", fiscalInvoiceHandler.Create)
@@ -289,6 +292,7 @@ func registerRoutes(
 	api.POST("/invoices/fiscal/:id/issue", fiscalInvoiceHandler.Issue)
 	api.POST("/invoices/fiscal/:id/cancel", fiscalInvoiceHandler.Cancel)
 	api.POST("/invoices/fiscal/:id/retry", fiscalInvoiceHandler.Retry)
+	api.GET("/invoices/fiscal/:id/pdf", pdfHandler.DownloadFiscal)
 
 	// Sales Orders — action routes before /:id
 	api.POST("/sales-orders", saleHandler.CreateOrder)
