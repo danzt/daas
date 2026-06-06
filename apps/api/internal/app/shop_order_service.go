@@ -24,10 +24,11 @@ import (
 // ShopOrderService handles the public storefront order lifecycle.
 // Stock is decremented atomically at checkout via Serializable transactions.
 type ShopOrderService struct {
-	pool       *pgxpool.Pool
-	notifier   *ShopOrderNotifier      // optional — when nil, lifecycle emails are skipped
-	storage    storage.Storage         // optional — when nil, proof uploads fail gracefully
-	invoiceSvc *InternalInvoiceService // optional — when nil, auto-invoice on MarkPaid is skipped
+	pool             *pgxpool.Pool
+	notifier         *ShopOrderNotifier      // optional — when nil, lifecycle emails are skipped
+	storage          storage.Storage         // optional — when nil, proof uploads fail gracefully
+	invoiceSvc       *InternalInvoiceService // optional — when nil, auto-invoice on MarkPaid is skipped
+	fiscalInvoiceSvc *FiscalInvoiceService   // optional — when nil, fiscal auto-invoice is skipped
 }
 
 // NewShopOrderService creates a ShopOrderService backed by the given pool.
@@ -48,9 +49,15 @@ func (s *ShopOrderService) SetStorage(st storage.Storage) {
 }
 
 // SetInvoiceService wires the internal invoice service for auto-invoice on MarkPaid.
-// Optional — when nil, no invoice is generated automatically.
+// Optional — when nil, no internal invoice is generated automatically.
 func (s *ShopOrderService) SetInvoiceService(svc *InternalInvoiceService) {
 	s.invoiceSvc = svc
+}
+
+// SetFiscalInvoiceService wires the fiscal invoice service for auto-fiscal-invoice on MarkPaid.
+// Optional — when nil, no fiscal invoice is generated for fiscal product lines.
+func (s *ShopOrderService) SetFiscalInvoiceService(svc *FiscalInvoiceService) {
+	s.fiscalInvoiceSvc = svc
 }
 
 // ═══ Public checkout ═════════════════════════════════════════════════════════
@@ -450,6 +457,9 @@ func (s *ShopOrderService) MarkPaid(ctx context.Context, tenantID, orderID uuid.
 	if s.invoiceSvc != nil {
 		go s.generateAutoInvoice(tenantID, orderID, o.CustomerName, o.Notes)
 	}
+	if s.fiscalInvoiceSvc != nil {
+		go s.generateAutoFiscalInvoice(tenantID, orderID, o.CustomerName, o.Notes)
+	}
 	return o, nil
 }
 
@@ -477,6 +487,32 @@ func (s *ShopOrderService) generateAutoInvoice(tenantID, orderID uuid.UUID, cust
 		Str("invoice_id", inv.ID.String()).
 		Str("correlative", inv.Correlative).
 		Msg("auto-invoice: internal invoice created and issued")
+}
+
+// generateAutoFiscalInvoice runs the auto fiscal-invoice flow for a just-paid shop order.
+// Designed to be called as a goroutine — failures are logged, not propagated.
+func (s *ShopOrderService) generateAutoFiscalInvoice(tenantID, orderID uuid.UUID, customerName, notes string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	inv, err := s.fiscalInvoiceSvc.CreateAndIssueFromShopOrder(ctx, tenantID, orderID, customerName, notes)
+	if err != nil {
+		log.Error().
+			Err(err).
+			Str("order_id", orderID.String()).
+			Str("tenant_id", tenantID.String()).
+			Msg("auto-fiscal-invoice: failed to create fiscal invoice for paid shop order")
+		return
+	}
+	if inv == nil {
+		// No fiscal products in this order — skip is expected.
+		return
+	}
+	log.Info().
+		Str("order_id", orderID.String()).
+		Str("invoice_id", inv.ID.String()).
+		Str("status", string(inv.Status)).
+		Msg("auto-fiscal-invoice: fiscal invoice created and issued")
 }
 
 // MarkFulfilled transitions paid → fulfilled.

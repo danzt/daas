@@ -39,6 +39,11 @@ func (h *ShopOrderHandler) SetInvoiceService(svc *app.InternalInvoiceService) {
 	h.svc.SetInvoiceService(svc)
 }
 
+// SetFiscalInvoiceService wires the fiscal invoice service for auto-fiscal-invoice on MarkPaid.
+func (h *ShopOrderHandler) SetFiscalInvoiceService(svc *app.FiscalInvoiceService) {
+	h.svc.SetFiscalInvoiceService(svc)
+}
+
 // ─── Request DTOs ─────────────────────────────────────────────────────────────
 
 type checkoutLineReq struct {
