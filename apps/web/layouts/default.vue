@@ -20,8 +20,8 @@ import {
 import { useAuthStore } from "~/stores/auth";
 
 const store = useAuthStore();
-const router = useRouter();
 const route = useRoute();
+const { isNative } = usePlatform();
 
 // sidebarOpen starts false — CSS breakpoints handle position (static vs fixed),
 // so there's no position-change flash. onMounted opens it on desktop.
@@ -182,10 +182,12 @@ watch(
 );
 
 onMounted(() => {
-  // Open sidebar immediately on desktop — client-only layout, no SSR mismatch risk
-  if (window.innerWidth >= 1024) sidebarOpen.value = true;
+  // Open sidebar immediately on desktop — client-only layout, no SSR mismatch risk.
+  // In native mode the sidebar is never shown, so we skip this entirely.
+  if (!isNative.value && window.innerWidth >= 1024) sidebarOpen.value = true;
 
   const handleKeyboard = (e: KeyboardEvent) => {
+    if (isNative.value) return; // no keyboard shortcuts on mobile native
     if ((e.metaKey || e.ctrlKey) && e.key === "b") {
       e.preventDefault();
       sidebarOpen.value = !sidebarOpen.value;
@@ -203,23 +205,25 @@ onMounted(() => {
 
 <template>
   <div class="flex h-screen overflow-hidden bg-background">
-    <!-- ── Mobile backdrop (CSS hides it on lg+) ────────── -->
+    <!-- ── Mobile backdrop (hidden on native + lg+) ─────── -->
     <Transition name="fade">
       <div
-        v-if="sidebarOpen"
+        v-if="sidebarOpen && !isNative"
         class="fixed inset-0 z-30 bg-black/50 lg:hidden"
         aria-hidden="true"
         @click="sidebarOpen = false"
       />
     </Transition>
 
-    <!-- ── Sidebar ─────────────────────────────────────── -->
+    <!-- ── Sidebar (hidden on native iOS/Android) ────────── -->
     <!--
       Layout strategy (no JS isMobile — CSS handles it):
         Mobile  : always fixed + full-width drawer; translate controls show/hide
         Desktop : always static in flex flow; width controls collapse/expand
+        Native  : v-if="!isNative" → sidebar not rendered at all
     -->
     <aside
+      v-if="!isNative"
       class="flex flex-col shrink-0 border-r border-border bg-sidebar overflow-hidden transition-[width,transform] duration-200 fixed inset-y-0 left-0 z-40 w-64 shadow-xl lg:static lg:inset-auto lg:z-auto lg:shadow-none"
       :class="{
         'translate-x-0': sidebarOpen,
@@ -365,17 +369,31 @@ onMounted(() => {
       <!-- Top header -->
       <header
         class="flex h-12 shrink-0 items-center border-b border-border bg-sidebar"
+        :style="isNative ? 'padding-top: env(safe-area-inset-top)' : undefined"
       >
         <div class="flex w-full items-center justify-between px-4">
           <div class="flex items-center gap-2">
-            <button
-              type="button"
-              class="inline-flex size-7 items-center justify-center rounded-md text-foreground hover:bg-accent transition-colors"
-              @click="sidebarOpen = !sidebarOpen"
-            >
-              <PanelLeft class="size-4" />
-            </button>
-            <div class="h-4 w-px bg-border" />
+            <!-- Sidebar toggle — hidden in native mode -->
+            <template v-if="!isNative">
+              <button
+                type="button"
+                class="inline-flex size-7 items-center justify-center rounded-md text-foreground hover:bg-accent transition-colors"
+                @click="sidebarOpen = !sidebarOpen"
+              >
+                <PanelLeft class="size-4" />
+              </button>
+              <div class="h-4 w-px bg-border" />
+            </template>
+
+            <!-- Brand mark in native mode -->
+            <template v-if="isNative">
+              <Command class="size-4 shrink-0 text-primary" />
+              <span class="font-bold text-sm text-primary tracking-tight"
+                >DaaS</span
+              >
+              <div class="h-4 w-px bg-border ml-1" />
+            </template>
+
             <button
               type="button"
               class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-2.5 h-7 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
@@ -383,6 +401,7 @@ onMounted(() => {
               <Search class="size-3.5" />
               <span>Buscar…</span>
               <kbd
+                v-if="!isNative"
                 class="ml-2 hidden sm:inline-flex items-center gap-0.5 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
               >
                 <span>⌘</span>K
@@ -400,11 +419,17 @@ onMounted(() => {
         </div>
       </header>
 
-      <!-- Page content -->
-      <main class="flex-1 overflow-y-auto">
+      <!-- Page content — extra bottom padding on native for the bottom nav -->
+      <main
+        class="flex-1 overflow-y-auto"
+        :class="isNative ? 'pb-[calc(4rem+env(safe-area-inset-bottom))]' : ''"
+      >
         <slot />
       </main>
     </div>
+
+    <!-- ── Bottom navigation (native only) ──────────────── -->
+    <MobileBottomNav v-if="isNative" />
   </div>
 </template>
 
