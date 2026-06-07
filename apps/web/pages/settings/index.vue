@@ -19,6 +19,12 @@ definePageMeta({
 });
 
 const store = useAuthStore();
+const { isMobile } = useMobileMode();
+
+async function handleLogout() {
+  await store.logout();
+  await navigateTo("/auth/login");
+}
 const activeTab = ref("empresa");
 
 // ─── Tab 1: Empresa (tenant profile) ────────────────────────────────────────
@@ -201,506 +207,520 @@ onMounted(() => {
 
 <template>
   <div>
-    <!-- Header -->
-    <div class="mb-8 flex items-center gap-3">
-      <div
-        class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"
-      >
-        <Settings class="w-5 h-5 text-primary" />
-      </div>
-      <div>
-        <h1 class="text-2xl font-bold font-heading text-foreground">
-          Configuración
-        </h1>
-        <p class="text-muted-foreground text-sm">
-          Gestioná tu empresa, usuarios e integraciones
-        </p>
-      </div>
-    </div>
+    <!-- MOBILE -->
+    <MobileScreensSettings
+      v-if="isMobile"
+      :tenant-name="store.tenant?.name ?? ''"
+      :user-email="store.user?.email ?? ''"
+      :is-owner="store.isOwner"
+      @logout="handleLogout"
+    />
 
-    <!-- Tabs nav -->
-    <div class="flex border-b gap-1 mb-6">
-      <button
-        v-for="tab in [
-          { value: 'empresa', label: 'Empresa', icon: Settings },
-          { value: 'usuarios', label: 'Usuarios', icon: Users },
-          { value: 'integraciones', label: 'Integraciones', icon: Zap },
-        ]"
-        :key="tab.value"
-        type="button"
-        :class="[
-          'flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all duration-200 cursor-pointer border-b-2 -mb-px',
-          activeTab === tab.value
-            ? 'border-primary text-primary'
-            : 'border-transparent text-muted-foreground hover:text-primary hover:border-primary/40',
-        ]"
-        @click="activeTab = tab.value"
-      >
-        <component :is="tab.icon" class="w-4 h-4" />
-        {{ tab.label }}
-      </button>
-    </div>
-
-    <!-- Tab: Empresa -->
-    <div v-if="activeTab === 'empresa'">
-      <div class="rounded-xl border bg-card shadow-sm max-w-2xl">
-        <div class="px-6 py-5 border-b flex items-center justify-between">
-          <h2 class="text-lg font-bold font-heading text-foreground">
-            Perfil de empresa
-          </h2>
-          <button
-            v-if="!isEditingTenant"
-            type="button"
-            class="flex items-center gap-2 h-9 px-4 text-sm font-semibold text-primary border border-primary rounded-lg hover:bg-primary/5 transition-all duration-200 cursor-pointer"
-            @click="startEditTenant"
-          >
-            Editar
-          </button>
+    <!-- WEB -->
+    <div v-else>
+      <!-- Header -->
+      <div class="mb-8 flex items-center gap-3">
+        <div
+          class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"
+        >
+          <Settings class="w-5 h-5 text-primary" />
         </div>
-
-        <div class="px-6 py-5 space-y-4">
-          <template v-if="!isEditingTenant">
-            <!-- Read view -->
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <p
-                  class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
-                >
-                  Empresa
-                </p>
-                <p class="text-base font-medium text-foreground">
-                  {{ store.tenant?.name || "—" }}
-                </p>
-              </div>
-              <div>
-                <p
-                  class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
-                >
-                  Pais
-                </p>
-                <p class="text-base font-medium text-foreground">
-                  {{ store.tenant?.countryCode || "—" }}
-                </p>
-              </div>
-              <div>
-                <p
-                  class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
-                >
-                  ID Fiscal
-                </p>
-                <p class="text-base font-medium text-foreground">
-                  {{ store.tenant?.fiscalId || "—" }}
-                </p>
-              </div>
-            </div>
-          </template>
-
-          <template v-else>
-            <!-- Edit view -->
-            <div class="space-y-4">
-              <div>
-                <label
-                  for="edit-name"
-                  class="block text-sm font-semibold text-foreground mb-1.5"
-                >
-                  Nombre de la empresa
-                </label>
-                <input
-                  id="edit-name"
-                  v-model="tenantName"
-                  type="text"
-                  class="w-full h-11 px-4 border rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white"
-                />
-              </div>
-              <div>
-                <label
-                  for="edit-fiscal"
-                  class="block text-sm font-semibold text-foreground mb-1.5"
-                >
-                  ID Fiscal
-                </label>
-                <input
-                  id="edit-fiscal"
-                  v-model="tenantFiscalId"
-                  type="text"
-                  class="w-full h-11 px-4 border rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white"
-                />
-              </div>
-
-              <div class="flex gap-3 pt-2">
-                <button
-                  type="button"
-                  :disabled="savingTenant"
-                  class="flex items-center gap-2 h-10 px-5 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer disabled:opacity-50"
-                  @click="saveTenant"
-                >
-                  <Loader2 v-if="savingTenant" class="w-4 h-4 animate-spin" />
-                  <Save v-else class="w-4 h-4" />
-                  Guardar
-                </button>
-                <button
-                  type="button"
-                  class="flex items-center gap-2 h-10 px-4 border text-muted-foreground text-sm font-semibold rounded-lg hover:bg-muted transition-all duration-200 cursor-pointer"
-                  @click="cancelEditTenant"
-                >
-                  <X class="w-4 h-4" />
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          </template>
-        </div>
-      </div>
-    </div>
-
-    <!-- Tab: Usuarios -->
-    <div v-if="activeTab === 'usuarios'">
-      <div class="rounded-xl border bg-card shadow-sm">
-        <div class="px-6 py-5 border-b flex items-center justify-between">
-          <h2 class="text-lg font-bold font-heading text-foreground">
-            Usuarios del tenant
-          </h2>
-          <button
-            v-if="store.isOwner"
-            type="button"
-            class="flex items-center gap-2 h-10 px-4 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
-            @click="inviteDialogOpen = true"
-          >
-            <Plus class="w-4 h-4" />
-            Invitar empleado
-          </button>
-        </div>
-
-        <!-- Loading skeleton -->
-        <div v-if="loadingUsers" class="px-6 py-5 space-y-3">
-          <div
-            v-for="n in 3"
-            :key="n"
-            class="h-12 animate-pulse bg-muted rounded-lg"
-          />
-        </div>
-
-        <!-- Users table -->
-        <div v-else-if="users.length > 0" class="overflow-x-auto">
-          <table class="w-full">
-            <thead>
-              <tr class="border-b">
-                <th
-                  class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
-                >
-                  Email
-                </th>
-                <th
-                  class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
-                >
-                  Rol
-                </th>
-                <th
-                  class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
-                >
-                  Estado
-                </th>
-                <th
-                  v-if="store.isOwner"
-                  class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
-                >
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-border">
-              <tr
-                v-for="u in users"
-                :key="u.id"
-                class="hover:bg-muted/50 transition-colors duration-150"
-              >
-                <td class="px-6 py-4 text-sm font-medium text-foreground">
-                  {{ u.email }}
-                </td>
-                <td class="px-6 py-4">
-                  <span
-                    :class="[
-                      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold',
-                      u.role === 'owner'
-                        ? 'bg-primary/10 text-primary'
-                        : 'bg-muted text-muted-foreground',
-                    ]"
-                  >
-                    {{ u.role === "owner" ? "Propietario" : "Empleado" }}
-                  </span>
-                </td>
-                <td class="px-6 py-4">
-                  <span
-                    :class="[
-                      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold',
-                      u.active
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-muted text-muted-foreground',
-                    ]"
-                  >
-                    {{ u.active ? "Activo" : "Inactivo" }}
-                  </span>
-                </td>
-                <td v-if="store.isOwner" class="px-6 py-4">
-                  <div class="flex items-center gap-2">
-                    <button
-                      type="button"
-                      :disabled="togglingUserId === u.id || u.role === 'owner'"
-                      :title="u.active ? 'Desactivar' : 'Activar'"
-                      :class="[
-                        'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 cursor-pointer',
-                        u.active ? 'bg-primary' : 'bg-muted',
-                        (togglingUserId === u.id || u.role === 'owner') &&
-                          'opacity-50 cursor-not-allowed',
-                      ]"
-                      role="switch"
-                      :aria-checked="u.active"
-                      @click="toggleUserActive(u)"
-                    >
-                      <span
-                        :class="[
-                          'inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200',
-                          u.active ? 'translate-x-6' : 'translate-x-1',
-                        ]"
-                      />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Empty state -->
-        <div v-else class="px-6 py-12 text-center">
-          <Users class="w-10 h-10 text-muted-foreground/20 mx-auto mb-3" />
-          <p class="text-muted-foreground font-medium">
-            No hay usuarios registrados
+        <div>
+          <h1 class="text-2xl font-bold font-heading text-foreground">
+            Configuración
+          </h1>
+          <p class="text-muted-foreground text-sm">
+            Gestioná tu empresa, usuarios e integraciones
           </p>
         </div>
       </div>
 
-      <!-- Invite dialog -->
-      <Teleport to="body">
-        <Transition
-          enter-active-class="transition-opacity duration-200"
-          enter-from-class="opacity-0"
-          enter-to-class="opacity-100"
-          leave-active-class="transition-opacity duration-200"
-          leave-from-class="opacity-100"
-          leave-to-class="opacity-0"
+      <!-- Tabs nav -->
+      <div class="flex border-b gap-1 mb-6">
+        <button
+          v-for="tab in [
+            { value: 'empresa', label: 'Empresa', icon: Settings },
+            { value: 'usuarios', label: 'Usuarios', icon: Users },
+            { value: 'integraciones', label: 'Integraciones', icon: Zap },
+          ]"
+          :key="tab.value"
+          type="button"
+          :class="[
+            'flex items-center gap-2 px-4 py-2.5 text-sm font-semibold transition-all duration-200 cursor-pointer border-b-2 -mb-px',
+            activeTab === tab.value
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-primary hover:border-primary/40',
+          ]"
+          @click="activeTab = tab.value"
         >
-          <div
-            v-if="inviteDialogOpen"
-            class="fixed inset-0 z-50 flex items-center justify-center p-4"
-          >
-            <div
-              class="absolute inset-0 bg-black/50"
-              @click="inviteDialogOpen = false"
-            />
-            <div
-              class="relative z-10 w-full max-w-md bg-white rounded-xl shadow-xl p-6"
-            >
-              <h3 class="text-xl font-bold font-heading text-foreground mb-4">
-                Invitar empleado
-              </h3>
+          <component :is="tab.icon" class="w-4 h-4" />
+          {{ tab.label }}
+        </button>
+      </div>
 
+      <!-- Tab: Empresa -->
+      <div v-if="activeTab === 'empresa'">
+        <div class="rounded-xl border bg-card shadow-sm max-w-2xl">
+          <div class="px-6 py-5 border-b flex items-center justify-between">
+            <h2 class="text-lg font-bold font-heading text-foreground">
+              Perfil de empresa
+            </h2>
+            <button
+              v-if="!isEditingTenant"
+              type="button"
+              class="flex items-center gap-2 h-9 px-4 text-sm font-semibold text-primary border border-primary rounded-lg hover:bg-primary/5 transition-all duration-200 cursor-pointer"
+              @click="startEditTenant"
+            >
+              Editar
+            </button>
+          </div>
+
+          <div class="px-6 py-5 space-y-4">
+            <template v-if="!isEditingTenant">
+              <!-- Read view -->
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <p
+                    class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
+                  >
+                    Empresa
+                  </p>
+                  <p class="text-base font-medium text-foreground">
+                    {{ store.tenant?.name || "—" }}
+                  </p>
+                </div>
+                <div>
+                  <p
+                    class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
+                  >
+                    Pais
+                  </p>
+                  <p class="text-base font-medium text-foreground">
+                    {{ store.tenant?.countryCode || "—" }}
+                  </p>
+                </div>
+                <div>
+                  <p
+                    class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1"
+                  >
+                    ID Fiscal
+                  </p>
+                  <p class="text-base font-medium text-foreground">
+                    {{ store.tenant?.fiscalId || "—" }}
+                  </p>
+                </div>
+              </div>
+            </template>
+
+            <template v-else>
+              <!-- Edit view -->
               <div class="space-y-4">
                 <div>
                   <label
-                    for="invite-email"
+                    for="edit-name"
                     class="block text-sm font-semibold text-foreground mb-1.5"
                   >
-                    Email
+                    Nombre de la empresa
                   </label>
                   <input
-                    id="invite-email"
-                    v-model="inviteEmail"
-                    type="email"
-                    placeholder="empleado@empresa.com"
-                    class="w-full h-11 px-4 border rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground bg-white"
+                    id="edit-name"
+                    v-model="tenantName"
+                    type="text"
+                    class="w-full h-11 px-4 border rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white"
+                  />
+                </div>
+                <div>
+                  <label
+                    for="edit-fiscal"
+                    class="block text-sm font-semibold text-foreground mb-1.5"
+                  >
+                    ID Fiscal
+                  </label>
+                  <input
+                    id="edit-fiscal"
+                    v-model="tenantFiscalId"
+                    type="text"
+                    class="w-full h-11 px-4 border rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white"
                   />
                 </div>
 
-                <div
-                  v-if="inviteError"
-                  class="rounded-lg bg-red-50 border border-red-200 px-4 py-3"
-                >
-                  <p class="text-sm text-red-600">
-                    {{ inviteError }}
-                  </p>
+                <div class="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    :disabled="savingTenant"
+                    class="flex items-center gap-2 h-10 px-5 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer disabled:opacity-50"
+                    @click="saveTenant"
+                  >
+                    <Loader2 v-if="savingTenant" class="w-4 h-4 animate-spin" />
+                    <Save v-else class="w-4 h-4" />
+                    Guardar
+                  </button>
+                  <button
+                    type="button"
+                    class="flex items-center gap-2 h-10 px-4 border text-muted-foreground text-sm font-semibold rounded-lg hover:bg-muted transition-all duration-200 cursor-pointer"
+                    @click="cancelEditTenant"
+                  >
+                    <X class="w-4 h-4" />
+                    Cancelar
+                  </button>
                 </div>
               </div>
-
-              <div class="mt-6 flex justify-end gap-3">
-                <button
-                  type="button"
-                  class="h-10 px-4 border text-muted-foreground text-sm font-semibold rounded-lg hover:bg-muted transition-all duration-200 cursor-pointer"
-                  @click="
-                    inviteDialogOpen = false;
-                    inviteError = '';
-                  "
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  :disabled="inviting"
-                  class="flex items-center gap-2 h-10 px-5 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer disabled:opacity-50"
-                  @click="sendInvite"
-                >
-                  <Loader2 v-if="inviting" class="w-4 h-4 animate-spin" />
-                  <span>{{
-                    inviting ? "Enviando..." : "Enviar invitacion"
-                  }}</span>
-                </button>
-              </div>
-            </div>
+            </template>
           </div>
-        </Transition>
-      </Teleport>
-    </div>
+        </div>
+      </div>
 
-    <!-- Tab: Integraciones -->
-    <div v-if="activeTab === 'integraciones'">
-      <div class="rounded-xl border bg-card shadow-sm max-w-2xl">
-        <div class="px-6 py-5 border-b flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div
-              class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center"
+      <!-- Tab: Usuarios -->
+      <div v-if="activeTab === 'usuarios'">
+        <div class="rounded-xl border bg-card shadow-sm">
+          <div class="px-6 py-5 border-b flex items-center justify-between">
+            <h2 class="text-lg font-bold font-heading text-foreground">
+              Usuarios del tenant
+            </h2>
+            <button
+              v-if="store.isOwner"
+              type="button"
+              class="flex items-center gap-2 h-10 px-4 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
+              @click="inviteDialogOpen = true"
             >
-              <Zap class="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <h2 class="text-lg font-bold font-heading text-foreground">
-                Integracion Fiscal (SENIAT)
-              </h2>
-              <p class="text-xs text-muted-foreground">
-                Conecta con el proveedor SENIAT para emitir comprobantes
-                fiscales
-              </p>
-            </div>
+              <Plus class="w-4 h-4" />
+              Invitar empleado
+            </button>
           </div>
-          <!-- Status badge -->
-          <span
-            v-if="!loadingFiscal"
-            :class="[
-              'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold',
-              fiscalIntegration?.active
-                ? 'bg-green-100 text-green-700'
-                : 'bg-muted text-muted-foreground',
-            ]"
-          >
-            {{
-              fiscalIntegration?.active ? "Conexion activa" : "Sin configurar"
-            }}
-          </span>
+
+          <!-- Loading skeleton -->
+          <div v-if="loadingUsers" class="px-6 py-5 space-y-3">
+            <div
+              v-for="n in 3"
+              :key="n"
+              class="h-12 animate-pulse bg-muted rounded-lg"
+            />
+          </div>
+
+          <!-- Users table -->
+          <div v-else-if="users.length > 0" class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b">
+                  <th
+                    class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
+                  >
+                    Email
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
+                  >
+                    Rol
+                  </th>
+                  <th
+                    class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
+                  >
+                    Estado
+                  </th>
+                  <th
+                    v-if="store.isOwner"
+                    class="px-6 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wide"
+                  >
+                    Acciones
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                <tr
+                  v-for="u in users"
+                  :key="u.id"
+                  class="hover:bg-muted/50 transition-colors duration-150"
+                >
+                  <td class="px-6 py-4 text-sm font-medium text-foreground">
+                    {{ u.email }}
+                  </td>
+                  <td class="px-6 py-4">
+                    <span
+                      :class="[
+                        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold',
+                        u.role === 'owner'
+                          ? 'bg-primary/10 text-primary'
+                          : 'bg-muted text-muted-foreground',
+                      ]"
+                    >
+                      {{ u.role === "owner" ? "Propietario" : "Empleado" }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4">
+                    <span
+                      :class="[
+                        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold',
+                        u.active
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-muted text-muted-foreground',
+                      ]"
+                    >
+                      {{ u.active ? "Activo" : "Inactivo" }}
+                    </span>
+                  </td>
+                  <td v-if="store.isOwner" class="px-6 py-4">
+                    <div class="flex items-center gap-2">
+                      <button
+                        type="button"
+                        :disabled="
+                          togglingUserId === u.id || u.role === 'owner'
+                        "
+                        :title="u.active ? 'Desactivar' : 'Activar'"
+                        :class="[
+                          'relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 cursor-pointer',
+                          u.active ? 'bg-primary' : 'bg-muted',
+                          (togglingUserId === u.id || u.role === 'owner') &&
+                            'opacity-50 cursor-not-allowed',
+                        ]"
+                        role="switch"
+                        :aria-checked="u.active"
+                        @click="toggleUserActive(u)"
+                      >
+                        <span
+                          :class="[
+                            'inline-block h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-200',
+                            u.active ? 'translate-x-6' : 'translate-x-1',
+                          ]"
+                        />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Empty state -->
+          <div v-else class="px-6 py-12 text-center">
+            <Users class="w-10 h-10 text-muted-foreground/20 mx-auto mb-3" />
+            <p class="text-muted-foreground font-medium">
+              No hay usuarios registrados
+            </p>
+          </div>
         </div>
 
-        <div class="px-6 py-5">
-          <div v-if="loadingFiscal">
-            <div class="h-11 animate-pulse bg-muted rounded-lg" />
-          </div>
-
-          <template v-else>
-            <!-- Current key (masked) -->
+        <!-- Invite dialog -->
+        <Teleport to="body">
+          <Transition
+            enter-active-class="transition-opacity duration-200"
+            enter-from-class="opacity-0"
+            enter-to-class="opacity-100"
+            leave-active-class="transition-opacity duration-200"
+            leave-from-class="opacity-100"
+            leave-to-class="opacity-0"
+          >
             <div
-              v-if="
-                fiscalIntegration?.active && fiscalIntegration?.api_key_masked
-              "
-              class="mb-4 rounded-lg bg-green-50 border border-green-200 px-4 py-3 flex items-center justify-between"
+              v-if="inviteDialogOpen"
+              class="fixed inset-0 z-50 flex items-center justify-center p-4"
             >
-              <div>
-                <p class="text-xs font-semibold text-green-700 mb-0.5">
-                  Clave actual
-                </p>
-                <p class="text-sm font-mono text-green-800">
-                  {{ fiscalIntegration.api_key_masked }}
-                </p>
-              </div>
-            </div>
+              <div
+                class="absolute inset-0 bg-black/50"
+                @click="inviteDialogOpen = false"
+              />
+              <div
+                class="relative z-10 w-full max-w-md bg-white rounded-xl shadow-xl p-6"
+              >
+                <h3 class="text-xl font-bold font-heading text-foreground mb-4">
+                  Invitar empleado
+                </h3>
 
-            <!-- Owner can edit -->
-            <template v-if="store.isOwner">
-              <div class="space-y-3">
-                <div>
-                  <label
-                    for="api-key"
-                    class="block text-sm font-semibold text-foreground mb-1.5"
-                  >
-                    {{
-                      fiscalIntegration?.active
-                        ? "Actualizar clave de API"
-                        : "Clave de API SENIAT"
-                    }}
-                  </label>
-                  <div class="relative">
-                    <input
-                      id="api-key"
-                      v-model="apiKey"
-                      :type="showApiKey ? 'text' : 'password'"
-                      placeholder="Ingresa la clave del proveedor"
-                      class="w-full h-11 px-4 pr-11 border rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground bg-white"
-                    />
-                    <button
-                      type="button"
-                      class="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-[hsl(var(--foreground))] transition-colors duration-200 cursor-pointer"
-                      @click="showApiKey = !showApiKey"
+                <div class="space-y-4">
+                  <div>
+                    <label
+                      for="invite-email"
+                      class="block text-sm font-semibold text-foreground mb-1.5"
                     >
-                      <component
-                        :is="showApiKey ? EyeOff : Eye"
-                        class="w-4 h-4"
-                      />
-                    </button>
+                      Email
+                    </label>
+                    <input
+                      id="invite-email"
+                      v-model="inviteEmail"
+                      type="email"
+                      placeholder="empleado@empresa.com"
+                      class="w-full h-11 px-4 border rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground bg-white"
+                    />
+                  </div>
+
+                  <div
+                    v-if="inviteError"
+                    class="rounded-lg bg-red-50 border border-red-200 px-4 py-3"
+                  >
+                    <p class="text-sm text-red-600">
+                      {{ inviteError }}
+                    </p>
                   </div>
                 </div>
 
-                <div
-                  v-if="fiscalSaveError"
-                  class="rounded-lg bg-red-50 border border-red-200 px-4 py-3"
-                >
-                  <p class="text-sm text-red-600">
-                    {{ fiscalSaveError }}
-                  </p>
+                <div class="mt-6 flex justify-end gap-3">
+                  <button
+                    type="button"
+                    class="h-10 px-4 border text-muted-foreground text-sm font-semibold rounded-lg hover:bg-muted transition-all duration-200 cursor-pointer"
+                    @click="
+                      inviteDialogOpen = false;
+                      inviteError = '';
+                    "
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    :disabled="inviting"
+                    class="flex items-center gap-2 h-10 px-5 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer disabled:opacity-50"
+                    @click="sendInvite"
+                  >
+                    <Loader2 v-if="inviting" class="w-4 h-4 animate-spin" />
+                    <span>{{
+                      inviting ? "Enviando..." : "Enviar invitacion"
+                    }}</span>
+                  </button>
                 </div>
-
-                <div
-                  v-if="fiscalSaveSuccess"
-                  class="rounded-lg bg-green-50 border border-green-200 px-4 py-3"
-                >
-                  <p class="text-sm text-green-700 font-medium">
-                    Clave guardada correctamente.
-                  </p>
-                </div>
-
-                <button
-                  type="button"
-                  :disabled="savingFiscal"
-                  class="flex items-center gap-2 h-10 px-5 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer disabled:opacity-50"
-                  @click="saveFiscalKey"
-                >
-                  <Loader2 v-if="savingFiscal" class="w-4 h-4 animate-spin" />
-                  <Save v-else class="w-4 h-4" />
-                  Guardar
-                </button>
               </div>
-            </template>
+            </div>
+          </Transition>
+        </Teleport>
+      </div>
 
-            <!-- Read-only view for non-owners -->
+      <!-- Tab: Integraciones -->
+      <div v-if="activeTab === 'integraciones'">
+        <div class="rounded-xl border bg-card shadow-sm max-w-2xl">
+          <div class="px-6 py-5 border-b flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center"
+              >
+                <Zap class="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h2 class="text-lg font-bold font-heading text-foreground">
+                  Integracion Fiscal (SENIAT)
+                </h2>
+                <p class="text-xs text-muted-foreground">
+                  Conecta con el proveedor SENIAT para emitir comprobantes
+                  fiscales
+                </p>
+              </div>
+            </div>
+            <!-- Status badge -->
+            <span
+              v-if="!loadingFiscal"
+              :class="[
+                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold',
+                fiscalIntegration?.active
+                  ? 'bg-green-100 text-green-700'
+                  : 'bg-muted text-muted-foreground',
+              ]"
+            >
+              {{
+                fiscalIntegration?.active ? "Conexion activa" : "Sin configurar"
+              }}
+            </span>
+          </div>
+
+          <div class="px-6 py-5">
+            <div v-if="loadingFiscal">
+              <div class="h-11 animate-pulse bg-muted rounded-lg" />
+            </div>
+
             <template v-else>
-              <div class="rounded-lg bg-muted px-4 py-4">
-                <p class="text-sm text-muted-foreground">
-                  Solo el propietario puede configurar la integracion fiscal.
-                </p>
-                <p
-                  v-if="fiscalIntegration?.api_key_masked"
-                  class="text-sm font-mono text-foreground mt-2"
-                >
-                  Clave: {{ fiscalIntegration.api_key_masked }}
-                </p>
+              <!-- Current key (masked) -->
+              <div
+                v-if="
+                  fiscalIntegration?.active && fiscalIntegration?.api_key_masked
+                "
+                class="mb-4 rounded-lg bg-green-50 border border-green-200 px-4 py-3 flex items-center justify-between"
+              >
+                <div>
+                  <p class="text-xs font-semibold text-green-700 mb-0.5">
+                    Clave actual
+                  </p>
+                  <p class="text-sm font-mono text-green-800">
+                    {{ fiscalIntegration.api_key_masked }}
+                  </p>
+                </div>
               </div>
+
+              <!-- Owner can edit -->
+              <template v-if="store.isOwner">
+                <div class="space-y-3">
+                  <div>
+                    <label
+                      for="api-key"
+                      class="block text-sm font-semibold text-foreground mb-1.5"
+                    >
+                      {{
+                        fiscalIntegration?.active
+                          ? "Actualizar clave de API"
+                          : "Clave de API SENIAT"
+                      }}
+                    </label>
+                    <div class="relative">
+                      <input
+                        id="api-key"
+                        v-model="apiKey"
+                        :type="showApiKey ? 'text' : 'password'"
+                        placeholder="Ingresa la clave del proveedor"
+                        class="w-full h-11 px-4 pr-11 border rounded-lg text-base transition-all duration-200 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground bg-white"
+                      />
+                      <button
+                        type="button"
+                        class="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-[hsl(var(--foreground))] transition-colors duration-200 cursor-pointer"
+                        @click="showApiKey = !showApiKey"
+                      >
+                        <component
+                          :is="showApiKey ? EyeOff : Eye"
+                          class="w-4 h-4"
+                        />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div
+                    v-if="fiscalSaveError"
+                    class="rounded-lg bg-red-50 border border-red-200 px-4 py-3"
+                  >
+                    <p class="text-sm text-red-600">
+                      {{ fiscalSaveError }}
+                    </p>
+                  </div>
+
+                  <div
+                    v-if="fiscalSaveSuccess"
+                    class="rounded-lg bg-green-50 border border-green-200 px-4 py-3"
+                  >
+                    <p class="text-sm text-green-700 font-medium">
+                      Clave guardada correctamente.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    :disabled="savingFiscal"
+                    class="flex items-center gap-2 h-10 px-5 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer disabled:opacity-50"
+                    @click="saveFiscalKey"
+                  >
+                    <Loader2 v-if="savingFiscal" class="w-4 h-4 animate-spin" />
+                    <Save v-else class="w-4 h-4" />
+                    Guardar
+                  </button>
+                </div>
+              </template>
+
+              <!-- Read-only view for non-owners -->
+              <template v-else>
+                <div class="rounded-lg bg-muted px-4 py-4">
+                  <p class="text-sm text-muted-foreground">
+                    Solo el propietario puede configurar la integracion fiscal.
+                  </p>
+                  <p
+                    v-if="fiscalIntegration?.api_key_masked"
+                    class="text-sm font-mono text-foreground mt-2"
+                  >
+                    Clave: {{ fiscalIntegration.api_key_masked }}
+                  </p>
+                </div>
+              </template>
             </template>
-          </template>
+          </div>
         </div>
       </div>
     </div>

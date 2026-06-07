@@ -95,6 +95,7 @@ const fromDate = ref(thirtyDaysAgo.toISOString().slice(0, 10));
 const toDate = ref(today.toISOString().slice(0, 10));
 
 const authStore = useAuthStore();
+const { isMobile } = useMobileMode();
 const config = useRuntimeConfig();
 const route = useRoute();
 const tabFromQuery = route.query.tab as string | undefined;
@@ -201,7 +202,24 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 space-y-6">
+  <!-- MOBILE -->
+  <MobileScreensReports
+    v-if="isMobile"
+    v-model:from-date="fromDate"
+    v-model:to-date="toDate"
+    :sales="sales"
+    :inventory="inventory"
+    :purchases="purchases"
+    :loading="loading"
+    :load-error="loadError"
+    @reload="load"
+    @export-sales="exportSalesCSV"
+    @export-inventory="exportInventoryCSV"
+    @export-purchases="exportPurchasesCSV"
+  />
+
+  <!-- WEB -->
+  <div v-else class="p-4 sm:p-6 space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between flex-wrap gap-3">
       <div>
