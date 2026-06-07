@@ -366,34 +366,56 @@ onMounted(() => {
 
     <!-- ── Main area ───────────────────────────────────── -->
     <div class="flex flex-1 flex-col min-w-0 overflow-hidden">
-      <!-- Top header -->
+      <!-- ── Native header (iOS/Android) ─────────────────
+           Colored primary bar: brand + tenant + bell.
+           Fixed so content scrolls below it.
+      ─────────────────────────────────────────────────── -->
       <header
+        v-if="isNative"
+        class="fixed top-0 inset-x-0 z-40 bg-primary"
+        style="padding-top: env(safe-area-inset-top)"
+      >
+        <div class="flex h-14 items-center justify-between px-4">
+          <!-- Brand + tenant -->
+          <div class="flex items-center gap-2 min-w-0">
+            <span
+              class="font-bold text-lg text-white tracking-tight leading-none"
+              >DaaS</span
+            >
+            <span
+              v-if="tenantLabel"
+              class="text-white/60 text-sm truncate max-w-[140px] leading-none"
+              >{{ tenantLabel }}</span
+            >
+          </div>
+          <!-- Actions -->
+          <div class="flex items-center gap-1">
+            <button
+              type="button"
+              aria-label="Notificaciones"
+              class="size-10 flex items-center justify-center rounded-full text-white/80 hover:bg-white/10 active:bg-white/20 transition-colors"
+            >
+              <Bell class="size-5" />
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- ── Web header (browser / desktop) ──────────────── -->
+      <header
+        v-else
         class="flex h-12 shrink-0 items-center border-b border-border bg-sidebar"
-        :style="isNative ? 'padding-top: env(safe-area-inset-top)' : undefined"
       >
         <div class="flex w-full items-center justify-between px-4">
           <div class="flex items-center gap-2">
-            <!-- Sidebar toggle — hidden in native mode -->
-            <template v-if="!isNative">
-              <button
-                type="button"
-                class="inline-flex size-7 items-center justify-center rounded-md text-foreground hover:bg-accent transition-colors"
-                @click="sidebarOpen = !sidebarOpen"
-              >
-                <PanelLeft class="size-4" />
-              </button>
-              <div class="h-4 w-px bg-border" />
-            </template>
-
-            <!-- Brand mark in native mode -->
-            <template v-if="isNative">
-              <Command class="size-4 shrink-0 text-primary" />
-              <span class="font-bold text-sm text-primary tracking-tight"
-                >DaaS</span
-              >
-              <div class="h-4 w-px bg-border ml-1" />
-            </template>
-
+            <button
+              type="button"
+              class="inline-flex size-7 items-center justify-center rounded-md text-foreground hover:bg-accent transition-colors"
+              @click="sidebarOpen = !sidebarOpen"
+            >
+              <PanelLeft class="size-4" />
+            </button>
+            <div class="h-4 w-px bg-border" />
             <button
               type="button"
               class="inline-flex items-center gap-2 rounded-md border border-input bg-background px-2.5 h-7 text-xs text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
@@ -401,7 +423,6 @@ onMounted(() => {
               <Search class="size-3.5" />
               <span>Buscar…</span>
               <kbd
-                v-if="!isNative"
                 class="ml-2 hidden sm:inline-flex items-center gap-0.5 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground"
               >
                 <span>⌘</span>K
@@ -419,10 +440,18 @@ onMounted(() => {
         </div>
       </header>
 
-      <!-- Page content — extra bottom padding on native for the bottom nav -->
+      <!-- Page content
+           Native: padding-top for fixed header + safe area top
+                   padding-bottom for bottom nav + safe area bottom
+           Web: no extra padding needed
+      -->
       <main
         class="flex-1 overflow-y-auto"
-        :class="isNative ? 'pb-[calc(4rem+env(safe-area-inset-bottom))]' : ''"
+        :style="
+          isNative
+            ? 'padding-top: calc(3.5rem + env(safe-area-inset-top)); padding-bottom: calc(3.75rem + env(safe-area-inset-bottom))'
+            : undefined
+        "
       >
         <slot />
       </main>

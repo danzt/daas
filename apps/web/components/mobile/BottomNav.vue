@@ -13,13 +13,12 @@ interface TabItem {
   label: string;
   icon: Component;
   to: string;
-  /** Match prefix — active when route starts with this */
   match: string;
 }
 
 const tabs: TabItem[] = [
   {
-    label: "Dashboard",
+    label: "Inicio",
     icon: LayoutDashboard,
     to: "/dashboard",
     match: "/dashboard",
@@ -37,7 +36,7 @@ const tabs: TabItem[] = [
     match: "/sales-orders",
   },
   {
-    label: "Inventario",
+    label: "Stock",
     icon: Warehouse,
     to: "/inventory",
     match: "/inventory",
@@ -57,30 +56,52 @@ function isTabActive(tab: TabItem) {
 
 <template>
   <!--
-    Bottom navigation for native iOS/Android.
-    Uses env(safe-area-inset-bottom) to push above the iOS home indicator.
+    Bottom navigation — native iOS/Android premium style.
+    Active state: pill background + bold label + colored icon.
+    Inactive: muted icon + muted label.
+    safe-area-inset-bottom → clears iOS home indicator.
   -->
   <nav
-    class="fixed bottom-0 inset-x-0 z-50 flex border-t border-border bg-sidebar/95 backdrop-blur-sm"
+    class="fixed bottom-0 inset-x-0 z-50 bg-white border-t border-border"
     style="padding-bottom: env(safe-area-inset-bottom)"
   >
-    <NuxtLink
-      v-for="tab in tabs"
-      :key="tab.to"
-      :to="tab.to"
-      class="flex flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium transition-colors"
-      :class="
-        isTabActive(tab)
-          ? 'text-primary'
-          : 'text-muted-foreground hover:text-foreground'
-      "
-    >
-      <component
-        :is="tab.icon"
-        class="size-5 shrink-0"
-        :class="isTabActive(tab) ? 'stroke-[2.5]' : 'stroke-[1.75]'"
-      />
-      <span>{{ tab.label }}</span>
-    </NuxtLink>
+    <div class="flex items-end h-[60px]">
+      <NuxtLink
+        v-for="tab in tabs"
+        :key="tab.to"
+        :to="tab.to"
+        class="flex flex-1 flex-col items-center justify-center gap-[3px] py-2 relative"
+      >
+        <!-- Pill highlight behind active icon -->
+        <span
+          v-if="isTabActive(tab)"
+          class="absolute top-2 w-12 h-7 rounded-full bg-primary/10 transition-all duration-200"
+          aria-hidden="true"
+        />
+
+        <!-- Icon -->
+        <component
+          :is="tab.icon"
+          class="size-[22px] relative z-10 transition-colors duration-150"
+          :class="
+            isTabActive(tab)
+              ? 'text-primary stroke-[2.5]'
+              : 'text-muted-foreground/70 stroke-[1.75]'
+          "
+        />
+
+        <!-- Label -->
+        <span
+          class="text-[10px] relative z-10 leading-none transition-colors duration-150"
+          :class="
+            isTabActive(tab)
+              ? 'text-primary font-bold'
+              : 'text-muted-foreground/60 font-medium'
+          "
+        >
+          {{ tab.label }}
+        </span>
+      </NuxtLink>
+    </div>
   </nav>
 </template>

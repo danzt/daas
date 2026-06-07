@@ -357,10 +357,93 @@ onMounted(load);
       </button>
     </div>
 
-    <!-- Table -->
+    <!-- ── Mobile card list (xs/sm) ─────────────────────── -->
     <div
       v-else-if="!loading"
-      class="border bg-card rounded-xl overflow-hidden shadow-sm"
+      class="sm:hidden border bg-card rounded-xl overflow-hidden shadow-sm divide-y divide-border"
+    >
+      <NuxtLink
+        v-for="order in filteredOrders"
+        :key="order.id"
+        :to="`/sales-orders/${order.id}`"
+        class="flex items-stretch gap-0 active:bg-gray-50 transition-colors duration-100"
+      >
+        <!-- Left status bar -->
+        <div
+          class="w-1 shrink-0 my-1.5 rounded-r"
+          :class="{
+            'bg-gray-400': order.status === 'draft',
+            'bg-blue-500': order.status === 'confirmed',
+            'bg-primary': order.status === 'invoiced',
+            'bg-red-400': order.status === 'cancelled',
+          }"
+        />
+
+        <div class="flex flex-1 items-center gap-3 px-4 py-3.5 min-w-0">
+          <!-- Status icon -->
+          <div
+            class="no-min-tap shrink-0 w-11 h-11 rounded-2xl flex items-center justify-center"
+            :class="{
+              'bg-gray-100': order.status === 'draft',
+              'bg-blue-50': order.status === 'confirmed',
+              'bg-primary/10': order.status === 'invoiced',
+              'bg-red-50': order.status === 'cancelled',
+            }"
+          >
+            <ShoppingBag
+              class="w-5 h-5"
+              :class="{
+                'text-muted-foreground': order.status === 'draft',
+                'text-blue-600': order.status === 'confirmed',
+                'text-primary': order.status === 'invoiced',
+                'text-red-500': order.status === 'cancelled',
+              }"
+            />
+          </div>
+
+          <!-- Order info -->
+          <div class="flex-1 min-w-0">
+            <p
+              class="font-semibold text-sm text-foreground truncate leading-tight"
+            >
+              {{ order.customer_name || "Cliente anónimo" }}
+            </p>
+            <div class="flex items-center gap-1.5 mt-0.5">
+              <span
+                :class="[
+                  'inline-flex items-center px-1.5 py-px rounded text-[10px] font-bold',
+                  STATUS_CONFIG[order.status]?.class,
+                ]"
+              >
+                {{ STATUS_CONFIG[order.status]?.label }}
+              </span>
+              <span class="text-[11px] text-muted-foreground">
+                {{ fmtDate(order.created_at) }}
+              </span>
+            </div>
+            <p
+              v-if="order.notes"
+              class="text-[11px] text-muted-foreground truncate mt-0.5"
+            >
+              {{ order.notes }}
+            </p>
+          </div>
+
+          <!-- Total + chevron -->
+          <div class="flex items-center gap-1 shrink-0">
+            <span class="font-mono font-bold text-sm text-foreground">
+              {{ fmtCurrency(order.total) }}
+            </span>
+            <ChevronRight class="w-4 h-4 text-muted-foreground/50" />
+          </div>
+        </div>
+      </NuxtLink>
+    </div>
+
+    <!-- ── Desktop table (sm+) ────────────────────────── -->
+    <div
+      v-else-if="!loading"
+      class="hidden sm:block border bg-card rounded-xl overflow-hidden shadow-sm"
     >
       <div class="overflow-x-auto">
         <table class="w-full text-sm">
