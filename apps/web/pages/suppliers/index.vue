@@ -20,6 +20,8 @@ definePageMeta({
 });
 
 // ─── State ───────────────────────────────────────────────────────────────────
+const { isMobile } = useMobileMode();
+
 const suppliers = ref<Supplier[]>([]);
 const loading = ref(false);
 const loadError = ref("");
@@ -92,7 +94,20 @@ watch(showInactive, loadSuppliers);
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 space-y-6">
+  <!-- MOBILE -->
+  <MobileScreensSuppliers
+    v-if="isMobile"
+    :suppliers="suppliers"
+    :loading="loading"
+    :load-error="loadError"
+    :is-owner="true"
+    @create="openCreate"
+    @edit="openEdit"
+    @retry="loadSuppliers"
+  />
+
+  <!-- WEB -->
+  <div v-else class="p-4 sm:p-6 space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>

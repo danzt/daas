@@ -49,6 +49,8 @@ export interface SaleOrder {
 }
 
 // ─── State ───────────────────────────────────────────────────────────────────
+const { isMobile } = useMobileMode();
+
 const orders = ref<SaleOrder[]>([]);
 const products = ref<Product[]>([]);
 const loading = ref(false);
@@ -234,7 +236,16 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 space-y-6">
+  <!-- MOBILE -->
+  <MobileScreensSalesOrders
+    v-if="isMobile"
+    :orders="orders"
+    :loading="loading"
+    :load-error="loadError"
+  />
+
+  <!-- WEB -->
+  <div v-else class="p-4 sm:p-6 space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
