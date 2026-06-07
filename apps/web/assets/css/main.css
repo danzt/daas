@@ -19,6 +19,10 @@
   --primary: oklch(0.44 0.28 293);
   --primary-foreground: oklch(0.985 0 0);
 
+  /* CTA — action orange #F97316 (storefront / mobile primary action) */
+  --cta: oklch(0.7 0.188 41.4);
+  --cta-foreground: oklch(0.985 0 0);
+
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
 
@@ -107,4 +111,13 @@ a,
 /* Prevent overscroll bounce on list containers — native-app feel */
 .overflow-y-auto {
   overscroll-behavior-y: contain;
+}
+
+/* Hide scrollbars on horizontal scrollers (filter chips, KPI rows) */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

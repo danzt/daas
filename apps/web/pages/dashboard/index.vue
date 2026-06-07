@@ -31,6 +31,7 @@ definePageMeta({
 });
 
 const store = useAuthStore();
+const { isMobile } = useMobileMode();
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -239,7 +240,22 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
+  <!-- ════════════════════════════════════════════════════════════════
+       MOBILE — exclusive native screen (presentational component)
+  ═════════════════════════════════════════════════════════════════ -->
+  <MobileScreensDashboard
+    v-if="isMobile"
+    :data="data"
+    :loading="loading"
+    :load-error="loadError"
+    :tenant-name="store.tenant?.name || store.user?.email || ''"
+    @reload="load"
+  />
+
+  <!-- ════════════════════════════════════════════════════════════════
+       WEB — unchanged desktop dashboard
+  ═════════════════════════════════════════════════════════════════ -->
+  <div v-else class="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto">
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>

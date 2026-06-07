@@ -21,7 +21,9 @@ import { useAuthStore } from "~/stores/auth";
 
 const store = useAuthStore();
 const route = useRoute();
-const { isNative } = usePlatform();
+// isMobile drives the exclusive mobile experience (native app OR ?m=1 preview).
+// Web at any width is unaffected unless the preview flag is set.
+const { isMobile } = useMobileMode();
 
 // sidebarOpen starts false — CSS breakpoints handle position (static vs fixed),
 // so there's no position-change flash. onMounted opens it on desktop.
@@ -183,11 +185,11 @@ watch(
 
 onMounted(() => {
   // Open sidebar immediately on desktop — client-only layout, no SSR mismatch risk.
-  // In native mode the sidebar is never shown, so we skip this entirely.
-  if (!isNative.value && window.innerWidth >= 1024) sidebarOpen.value = true;
+  // In mobile mode the sidebar is never shown, so we skip this entirely.
+  if (!isMobile.value && window.innerWidth >= 1024) sidebarOpen.value = true;
 
   const handleKeyboard = (e: KeyboardEvent) => {
-    if (isNative.value) return; // no keyboard shortcuts on mobile native
+    if (isMobile.value) return; // no keyboard shortcuts on mobile
     if ((e.metaKey || e.ctrlKey) && e.key === "b") {
       e.preventDefault();
       sidebarOpen.value = !sidebarOpen.value;
@@ -205,25 +207,25 @@ onMounted(() => {
 
 <template>
   <div class="flex h-screen overflow-hidden bg-background">
-    <!-- ── Mobile backdrop (hidden on native + lg+) ─────── -->
+    <!-- ── Mobile backdrop (hidden in mobile mode + lg+) ─── -->
     <Transition name="fade">
       <div
-        v-if="sidebarOpen && !isNative"
+        v-if="sidebarOpen && !isMobile"
         class="fixed inset-0 z-30 bg-black/50 lg:hidden"
         aria-hidden="true"
         @click="sidebarOpen = false"
       />
     </Transition>
 
-    <!-- ── Sidebar (hidden on native iOS/Android) ────────── -->
+    <!-- ── Sidebar (NOT rendered in mobile mode) ─────────── -->
     <!--
-      Layout strategy (no JS isMobile — CSS handles it):
-        Mobile  : always fixed + full-width drawer; translate controls show/hide
-        Desktop : always static in flex flow; width controls collapse/expand
-        Native  : v-if="!isNative" → sidebar not rendered at all
+      Web layout strategy (CSS handles small-vs-large):
+        small  : fixed + full-width drawer; translate controls show/hide
+        large  : static in flex flow; width controls collapse/expand
+      Mobile  : v-if="!isMobile" → sidebar removed; bottom nav takes over
     -->
     <aside
-      v-if="!isNative"
+      v-if="!isMobile"
       class="flex flex-col shrink-0 border-r border-border bg-sidebar overflow-hidden transition-[width,transform] duration-200 fixed inset-y-0 left-0 z-40 w-64 shadow-xl lg:static lg:inset-auto lg:z-auto lg:shadow-none"
       :class="{
         'translate-x-0': sidebarOpen,
@@ -366,44 +368,9 @@ onMounted(() => {
 
     <!-- ── Main area ───────────────────────────────────── -->
     <div class="flex flex-1 flex-col min-w-0 overflow-hidden">
-      <!-- ── Native header (iOS/Android) ─────────────────
-           Colored primary bar: brand + tenant + bell.
-           Fixed so content scrolls below it.
-      ─────────────────────────────────────────────────── -->
+      <!-- ── Web header (browser / desktop) — hidden in mobile mode ── -->
       <header
-        v-if="isNative"
-        class="fixed top-0 inset-x-0 z-40 bg-primary"
-        style="padding-top: env(safe-area-inset-top)"
-      >
-        <div class="flex h-14 items-center justify-between px-4">
-          <!-- Brand + tenant -->
-          <div class="flex items-center gap-2 min-w-0">
-            <span
-              class="font-bold text-lg text-white tracking-tight leading-none"
-              >DaaS</span
-            >
-            <span
-              v-if="tenantLabel"
-              class="text-white/60 text-sm truncate max-w-[140px] leading-none"
-              >{{ tenantLabel }}</span
-            >
-          </div>
-          <!-- Actions -->
-          <div class="flex items-center gap-1">
-            <button
-              type="button"
-              aria-label="Notificaciones"
-              class="size-10 flex items-center justify-center rounded-full text-white/80 hover:bg-white/10 active:bg-white/20 transition-colors"
-            >
-              <Bell class="size-5" />
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <!-- ── Web header (browser / desktop) ──────────────── -->
-      <header
-        v-else
+        v-if="!isMobile"
         class="flex h-12 shrink-0 items-center border-b border-border bg-sidebar"
       >
         <div class="flex w-full items-center justify-between px-4">
@@ -441,24 +408,20 @@ onMounted(() => {
       </header>
 
       <!-- Page content
-           Native: padding-top for fixed header + safe area top
-                   padding-bottom for bottom nav + safe area bottom
-           Web: no extra padding needed
+           Mobile: no chrome here — each screen mounts its own MobileScreen
+                   (contextual top bar + scroll region + safe areas).
+           Web: normal scroll container.
       -->
       <main
-        class="flex-1 overflow-y-auto"
-        :style="
-          isNative
-            ? 'padding-top: calc(3.5rem + env(safe-area-inset-top)); padding-bottom: calc(3.75rem + env(safe-area-inset-bottom))'
-            : undefined
-        "
+        class="flex-1 min-h-0"
+        :class="isMobile ? 'overflow-hidden' : 'overflow-y-auto'"
       >
         <slot />
       </main>
     </div>
 
-    <!-- ── Bottom navigation (native only) ──────────────── -->
-    <MobileBottomNav v-if="isNative" />
+    <!-- ── Bottom navigation (mobile only) ──────────────── -->
+    <MobileBottomNav v-if="isMobile" />
   </div>
 </template>
 

@@ -15,6 +15,10 @@ export default {
           DEFAULT: "var(--primary)",
           foreground: "var(--primary-foreground)",
         },
+        cta: {
+          DEFAULT: "var(--cta)",
+          foreground: "var(--cta-foreground)",
+        },
         secondary: {
           DEFAULT: "var(--secondary)",
           foreground: "var(--secondary-foreground)",
