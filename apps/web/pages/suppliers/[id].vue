@@ -42,6 +42,7 @@ interface PurchaseOrder {
 }
 
 const route = useRoute();
+const { isMobile } = useMobileMode();
 const supplierId = route.params.id as string;
 
 const supplier = ref<Supplier | null>(null);
@@ -111,7 +112,19 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 space-y-6">
+  <!-- MOBILE -->
+  <MobileScreensSupplierDetail
+    v-if="isMobile"
+    :supplier="supplier"
+    :orders="orders"
+    :loading="loading"
+    :load-error="loadError"
+    @edit="formModalOpen = true"
+    @retry="load"
+  />
+
+  <!-- WEB -->
+  <div v-else class="p-4 sm:p-6 space-y-6">
     <!-- Back -->
     <div class="flex items-center gap-3">
       <NuxtLink
