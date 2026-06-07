@@ -1,5 +1,10 @@
+// NUXT_CAPACITOR=true → build estático para empaquetar con Capacitor (iOS/Android)
+// Sin esa variable → SSR normal para el deploy web
+const isCapacitorBuild = process.env.NUXT_CAPACITOR === "true";
+
 export default defineNuxtConfig({
-  devtools: { enabled: true },
+  devtools: { enabled: !isCapacitorBuild },
+  ssr: !isCapacitorBuild, // SPA puro para Capacitor, SSR para web
   modules: [
     "@pinia/nuxt",
     "@nuxtjs/tailwindcss",
@@ -25,4 +30,13 @@ export default defineNuxtConfig({
       apiBase: process.env.NUXT_PUBLIC_API_BASE || "http://localhost:8080",
     },
   },
+  // Rutas a pre-renderizar cuando NUXT_CAPACITOR=true
+  ...(isCapacitorBuild && {
+    nitro: {
+      prerender: {
+        routes: ["/"],
+        crawlLinks: true,
+      },
+    },
+  }),
 });

@@ -36,6 +36,10 @@ test-results/
 apps/api/bin/
 apps/api/*.exe
 
+# Capacitor native projects (generated — never commit)
+apps/web/ios/
+apps/web/android/
+
 # Temporary
 tmp/
 temp/
