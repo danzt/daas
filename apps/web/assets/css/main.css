@@ -85,3 +85,21 @@ code, pre, .font-mono {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ── Mobile — Touch UX ─────────────────────────────────────────────── */
+
+/* Prevent double-tap zoom on buttons/links — makes taps feel instant */
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+/* Minimum tap target (iOS HIG: 44×44pt). Skip with class .no-min-tap */
+@media (max-width: 639px) {
+  button:not(.no-min-tap),
+  [role="button"]:not(.no-min-tap) {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

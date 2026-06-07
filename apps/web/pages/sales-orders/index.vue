@@ -357,10 +357,60 @@ onMounted(load);
       </button>
     </div>
 
-    <!-- Table -->
+    <!-- ── Mobile card list (xs / sm) ──────────────────────── -->
     <div
       v-else-if="!loading"
-      class="border bg-card rounded-xl overflow-hidden shadow-sm"
+      class="sm:hidden border bg-card rounded-xl overflow-hidden shadow-sm divide-y divide-border"
+    >
+      <NuxtLink
+        v-for="order in filteredOrders"
+        :key="order.id"
+        :to="`/sales-orders/${order.id}`"
+        class="flex items-center gap-3 px-4 py-3.5 hover:bg-gray-50/50 active:bg-gray-100 transition-colors"
+      >
+        <!-- Status dot -->
+        <span
+          class="no-min-tap shrink-0 inline-flex items-center justify-center w-2.5 h-2.5 rounded-full mt-0.5"
+          :class="{
+            'bg-yellow-400': order.status === 'draft',
+            'bg-emerald-500': order.status === 'confirmed',
+            'bg-primary': order.status === 'invoiced',
+            'bg-gray-400': order.status === 'cancelled',
+          }"
+        />
+
+        <!-- Order info -->
+        <div class="flex-1 min-w-0">
+          <p class="font-semibold text-sm text-foreground truncate">
+            {{ order.customer_name || "Cliente anónimo" }}
+          </p>
+          <p class="text-[11px] text-muted-foreground mt-0.5">
+            <span
+              :class="[
+                'inline-flex items-center px-1.5 py-px rounded text-[10px] font-medium mr-1',
+                STATUS_CONFIG[order.status]?.class,
+              ]"
+            >
+              {{ STATUS_CONFIG[order.status]?.label }}
+            </span>
+            {{ fmtDate(order.created_at) }}
+          </p>
+        </div>
+
+        <!-- Total + chevron -->
+        <div class="flex items-center gap-1 shrink-0">
+          <span class="font-mono font-semibold text-sm text-foreground">
+            {{ fmtCurrency(order.total) }}
+          </span>
+          <ChevronRight class="w-4 h-4 text-muted-foreground" />
+        </div>
+      </NuxtLink>
+    </div>
+
+    <!-- ── Desktop table (sm+) ────────────────────────────── -->
+    <div
+      v-else-if="!loading"
+      class="hidden sm:block border bg-card rounded-xl overflow-hidden shadow-sm"
     >
       <div class="overflow-x-auto">
         <table class="w-full text-sm">

@@ -325,8 +325,58 @@ onMounted(fetchAll);
         </p>
       </div>
 
-      <!-- Table -->
-      <div v-else class="overflow-x-auto">
+      <!-- ── Mobile card list (xs / sm) ──────────────────────── -->
+      <div v-else class="sm:hidden divide-y divide-border">
+        <div
+          v-for="row in filteredRows"
+          :key="row.product_id"
+          class="flex items-center gap-3 px-4 py-3"
+        >
+          <!-- Stock badge -->
+          <span
+            class="no-min-tap shrink-0 inline-flex items-center justify-center w-12 h-12 rounded-xl text-sm font-bold"
+            :class="stockBadgeClass(row.quantity_on_hand)"
+          >
+            {{ row.quantity_on_hand.toFixed(0) }}
+          </span>
+
+          <!-- Product info -->
+          <div class="flex-1 min-w-0">
+            <p class="font-semibold text-sm text-foreground truncate">
+              {{ row.product?.name ?? "—" }}
+            </p>
+            <p
+              v-if="row.product?.sku"
+              class="text-[11px] text-muted-foreground font-mono"
+            >
+              {{ row.product.sku }}
+            </p>
+            <p class="text-[11px] text-muted-foreground">
+              ${{
+                row.product?.is_fiscal
+                  ? (row.product?.fiscal_price ?? 0).toFixed(2)
+                  : (row.product?.internal_price ?? 0).toFixed(2)
+              }}
+            </p>
+          </div>
+
+          <!-- Adjust button -->
+          <button
+            v-if="store.isOwner"
+            type="button"
+            class="no-min-tap shrink-0 h-10 px-3 text-xs font-semibold border border-input rounded-lg text-muted-foreground hover:bg-gray-100 transition-all duration-200 cursor-pointer"
+            @click="openAdjust(row)"
+          >
+            Ajustar
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Desktop table (sm+) ────────────────────────────── -->
+      <div
+        v-if="filteredRows.length > 0"
+        class="hidden sm:block overflow-x-auto"
+      >
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b border-border">
