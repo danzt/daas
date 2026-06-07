@@ -55,6 +55,8 @@ export interface ShopOrder {
 }
 
 // ─── State ────────────────────────────────────────────────────────────────────
+const { isMobile } = useMobileMode();
+
 const orders = ref<ShopOrder[]>([]);
 const loading = ref(false);
 const loadError = ref("");
@@ -253,7 +255,16 @@ function exportCSV() {
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 space-y-5">
+  <!-- MOBILE -->
+  <MobileScreensShopOrders
+    v-if="isMobile"
+    :orders="orders"
+    :loading="loading"
+    :load-error="loadError"
+  />
+
+  <!-- WEB -->
+  <div v-else class="p-4 sm:p-6 space-y-5">
     <!-- Header -->
     <div class="flex items-center justify-between gap-4 flex-wrap">
       <div>
