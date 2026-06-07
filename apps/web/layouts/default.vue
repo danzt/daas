@@ -24,6 +24,8 @@ const route = useRoute();
 // isMobile drives the exclusive mobile experience (native app OR ?m=1 preview).
 // Web at any width is unaffected unless the preview flag is set.
 const { isMobile } = useMobileMode();
+// Pushed detail screens (MobileScreen with a back button) hide the tab bar.
+const navHidden = useState("mobile:navHidden", () => false);
 
 // sidebarOpen starts false — CSS breakpoints handle position (static vs fixed),
 // so there's no position-change flash. onMounted opens it on desktop.
@@ -420,8 +422,8 @@ onMounted(() => {
       </main>
     </div>
 
-    <!-- ── Bottom navigation (mobile only) ──────────────── -->
-    <MobileBottomNav v-if="isMobile" />
+    <!-- ── Bottom navigation (mobile tabs; hidden on pushed details) ── -->
+    <MobileBottomNav v-if="isMobile && !navHidden" />
   </div>
 </template>
 

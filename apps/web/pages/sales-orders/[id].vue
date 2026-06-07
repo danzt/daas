@@ -42,6 +42,7 @@ interface SaleOrder {
   lines: OrderLine[];
 }
 
+const { isMobile } = useMobileMode();
 const route = useRoute();
 const orderId = route.params.id as string;
 
@@ -139,7 +140,22 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 space-y-6">
+  <!-- MOBILE -->
+  <MobileScreensSalesOrderDetail
+    v-if="isMobile"
+    :order="order"
+    :loading="loading"
+    :load-error="loadError"
+    :action-loading="actionLoading"
+    :action-error="actionError"
+    @confirm="performAction('confirm')"
+    @invoice="performAction('invoice')"
+    @cancel="performAction('cancel')"
+    @retry="load"
+  />
+
+  <!-- WEB -->
+  <div v-else class="p-4 sm:p-6 space-y-6">
     <!-- Back -->
     <div class="flex items-center gap-3">
       <NuxtLink

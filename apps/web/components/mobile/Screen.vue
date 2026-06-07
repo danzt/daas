@@ -31,6 +31,16 @@ function goBack() {
 }
 
 const isBrand = computed(() => props.variant === "brand");
+
+// Pushed detail screens (with a back button) hide the bottom tab bar,
+// matching native navigation — and freeing the bottom edge for action bars.
+const navHidden = useState("mobile:navHidden", () => false);
+onMounted(() => {
+  if (props.back) navHidden.value = true;
+});
+onBeforeUnmount(() => {
+  if (props.back) navHidden.value = false;
+});
 </script>
 
 <template>
