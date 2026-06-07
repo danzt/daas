@@ -325,8 +325,111 @@ onMounted(fetchAll);
         </p>
       </div>
 
-      <!-- Table -->
-      <div v-else class="overflow-x-auto">
+      <!-- ── Mobile card list (xs/sm) ─────────────────────── -->
+      <div v-else class="sm:hidden divide-y divide-border">
+        <div
+          v-for="row in filteredRows"
+          :key="row.product_id"
+          class="flex items-stretch gap-0 active:bg-gray-50/80 transition-colors duration-100"
+        >
+          <!-- Left severity bar -->
+          <div
+            class="w-1 shrink-0 rounded-r my-1.5"
+            :class="{
+              'bg-red-500': row.quantity_on_hand === 0,
+              'bg-orange-400':
+                row.quantity_on_hand > 0 &&
+                row.quantity_on_hand < LOW_STOCK_THRESHOLD,
+              'bg-emerald-500': row.quantity_on_hand >= LOW_STOCK_THRESHOLD,
+            }"
+          />
+
+          <div class="flex flex-1 items-center gap-3 px-4 py-3.5 min-w-0">
+            <!-- Stock bubble -->
+            <div
+              class="no-min-tap shrink-0 w-12 h-12 rounded-2xl flex flex-col items-center justify-center"
+              :class="{
+                'bg-red-50': row.quantity_on_hand === 0,
+                'bg-orange-50':
+                  row.quantity_on_hand > 0 &&
+                  row.quantity_on_hand < LOW_STOCK_THRESHOLD,
+                'bg-emerald-50': row.quantity_on_hand >= LOW_STOCK_THRESHOLD,
+              }"
+            >
+              <span
+                class="text-lg font-black leading-none"
+                :class="{
+                  'text-red-600': row.quantity_on_hand === 0,
+                  'text-orange-600':
+                    row.quantity_on_hand > 0 &&
+                    row.quantity_on_hand < LOW_STOCK_THRESHOLD,
+                  'text-emerald-700':
+                    row.quantity_on_hand >= LOW_STOCK_THRESHOLD,
+                }"
+              >
+                {{ row.quantity_on_hand.toFixed(0) }}
+              </span>
+              <span
+                class="text-[9px] font-semibold uppercase tracking-wide leading-none mt-0.5"
+                :class="{
+                  'text-red-400': row.quantity_on_hand === 0,
+                  'text-orange-400':
+                    row.quantity_on_hand > 0 &&
+                    row.quantity_on_hand < LOW_STOCK_THRESHOLD,
+                  'text-emerald-500':
+                    row.quantity_on_hand >= LOW_STOCK_THRESHOLD,
+                }"
+                >uds</span
+              >
+            </div>
+
+            <!-- Product info -->
+            <div class="flex-1 min-w-0">
+              <p
+                class="font-semibold text-sm text-foreground truncate leading-tight"
+              >
+                {{ row.product?.name ?? "—" }}
+              </p>
+              <div class="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                <span
+                  v-if="row.product?.sku"
+                  class="text-[10px] text-muted-foreground font-mono bg-muted px-1.5 py-px rounded"
+                >
+                  {{ row.product.sku }}
+                </span>
+                <span
+                  v-if="row.product?.is_fiscal"
+                  class="text-[10px] font-bold text-primary bg-primary/10 px-1.5 py-px rounded"
+                  >FISCAL</span
+                >
+              </div>
+              <p class="text-[11px] text-muted-foreground mt-0.5">
+                ${{
+                  row.product?.is_fiscal
+                    ? (row.product?.fiscal_price ?? 0).toFixed(2)
+                    : (row.product?.internal_price ?? 0).toFixed(2)
+                }}
+              </p>
+            </div>
+
+            <!-- Adjust CTA -->
+            <button
+              v-if="store.isOwner"
+              type="button"
+              class="no-min-tap shrink-0 h-9 px-3.5 text-xs font-bold border border-primary/30 text-primary rounded-xl bg-primary/5 active:bg-primary/15 transition-colors"
+              @click="openAdjust(row)"
+            >
+              Ajustar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Desktop table (sm+) ────────────────────────── -->
+      <div
+        v-if="filteredRows.length > 0"
+        class="hidden sm:block overflow-x-auto"
+      >
         <table class="w-full text-sm">
           <thead>
             <tr class="border-b border-border">
@@ -372,7 +475,6 @@ onMounted(fetchAll);
               :key="row.product_id"
               class="hover:bg-gray-50/50 transition-colors duration-150"
             >
-              <!-- Product -->
               <td class="px-6 py-4">
                 <div>
                   <p class="font-semibold text-foreground">
@@ -386,8 +488,6 @@ onMounted(fetchAll);
                   </p>
                 </div>
               </td>
-
-              <!-- Category -->
               <td class="px-4 py-4 hidden md:table-cell">
                 <span class="text-muted-foreground">
                   {{
@@ -396,8 +496,6 @@ onMounted(fetchAll);
                   }}
                 </span>
               </td>
-
-              <!-- Price -->
               <td class="px-4 py-4 hidden lg:table-cell">
                 <span class="font-medium text-foreground">
                   ${{
@@ -413,8 +511,6 @@ onMounted(fetchAll);
                   +{{ row.product?.tax_rate ?? 0 }}% IVA
                 </span>
               </td>
-
-              <!-- Stock badge -->
               <td class="px-4 py-4 text-center">
                 <span
                   class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold"
@@ -423,15 +519,11 @@ onMounted(fetchAll);
                   {{ row.quantity_on_hand.toFixed(0) }}
                 </span>
               </td>
-
-              <!-- Updated at -->
               <td
                 class="px-4 py-4 text-xs text-muted-foreground hidden lg:table-cell"
               >
                 {{ formatDate(row.last_updated_at) }}
               </td>
-
-              <!-- Actions -->
               <td v-if="store.isOwner" class="px-4 py-4 text-right">
                 <button
                   type="button"

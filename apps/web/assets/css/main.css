@@ -85,3 +85,26 @@ code, pre, .font-mono {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ── Mobile — Touch UX ─────────────────────────────────────────────── */
+
+/* Prevent 300ms tap delay on iOS — makes taps feel instant */
+button,
+a,
+[role="button"] {
+  touch-action: manipulation;
+}
+
+/* Minimum 44px tap target (iOS HIG). Override with .no-min-tap */
+@media (max-width: 639px) {
+  button:not(.no-min-tap),
+  [role="button"]:not(.no-min-tap) {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}
+
+/* Prevent overscroll bounce on list containers — native-app feel */
+.overflow-y-auto {
+  overscroll-behavior-y: contain;
+}
