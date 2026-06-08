@@ -47,6 +47,8 @@ export interface PurchaseOrder {
 }
 
 // ─── State ───────────────────────────────────────────────────────────────────
+const { isMobile } = useMobileMode();
+
 const orders = ref<PurchaseOrder[]>([]);
 const suppliers = ref<Supplier[]>([]);
 const products = ref<Product[]>([]);
@@ -239,7 +241,18 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 space-y-6">
+  <!-- MOBILE -->
+  <MobileScreensPurchaseOrders
+    v-if="isMobile"
+    :orders="orders"
+    :loading="loading"
+    :load-error="loadError"
+    @create="openForm"
+    @retry="load"
+  />
+
+  <!-- WEB -->
+  <div v-else class="p-4 sm:p-6 space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>
