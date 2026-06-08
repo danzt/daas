@@ -48,6 +48,7 @@ interface PurchaseOrder {
   supplier?: Supplier;
 }
 
+const { isMobile } = useMobileMode();
 const route = useRoute();
 const poId = route.params.id as string;
 
@@ -138,7 +139,19 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 space-y-6">
+  <MobileScreensPurchaseOrderDetail
+    v-if="isMobile"
+    :po="po"
+    :loading="loading"
+    :load-error="loadError"
+    :action-loading="actionLoading"
+    :action-error="actionError"
+    @order="performAction('order')"
+    @receive="performAction('receive')"
+    @cancel="performAction('cancel')"
+    @retry="load"
+  />
+  <div v-else class="p-4 sm:p-6 space-y-6">
     <!-- Back -->
     <div class="flex items-center gap-3">
       <NuxtLink

@@ -19,6 +19,8 @@ definePageMeta({
   middleware: "auth",
 });
 
+const { isMobile } = useMobileMode();
+
 const router = useRouter();
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -137,6 +139,44 @@ async function submitOrder() {
   }
 }
 
+async function handleMobileSubmit({
+  lines,
+  customer: c,
+}: {
+  lines: {
+    productId: string;
+    description: string;
+    unitPrice: number;
+    quantity: number;
+  }[];
+  customer: { name: string; id_type: string; id_number: string; notes: string };
+}) {
+  saving.value = true;
+  saveError.value = "";
+  try {
+    const order = await useApiFetch<{ id: string }>("/api/v1/sales-orders", {
+      method: "POST",
+      body: {
+        customer_name: c.name.trim(),
+        customer_id_type: c.id_type,
+        customer_id_number: c.id_number.trim(),
+        notes: c.notes.trim(),
+        lines: lines.map((l) => ({
+          product_id: l.productId,
+          description: l.description,
+          quantity: l.quantity,
+          unit_price: l.unitPrice,
+        })),
+      },
+    });
+    router.push(`/sales-orders/${order.id}`);
+  } catch (err: unknown) {
+    const e = err as { data?: { detail?: string } };
+    saveError.value = e?.data?.detail ?? "Error al crear la orden";
+    saving.value = false;
+  }
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fmtCurrency(n: number) {
@@ -160,7 +200,15 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="flex flex-col h-full min-h-screen bg-background">
+  <MobileScreensSalesOrderNew
+    v-if="isMobile"
+    :products="products"
+    :loading-products="loadingProducts"
+    :saving="saving"
+    :save-error="saveError"
+    @submit="handleMobileSubmit"
+  />
+  <div v-else class="flex flex-col h-full min-h-screen bg-background">
     <!-- ─── Top bar ──────────────────────────────────────────────────────────── -->
     <div
       class="flex items-center justify-between px-4 sm:px-6 py-4 border-b bg-card shadow-sm sticky top-0 z-20"
