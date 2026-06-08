@@ -26,6 +26,8 @@ definePageMeta({
 });
 
 // ─── Data ────────────────────────────────────────────────────────────────────
+const { isMobile } = useMobileMode();
+
 const invoices = ref<FiscalInvoice[]>([]);
 const products = ref<Product[]>([]);
 const loading = ref(false);
@@ -220,7 +222,20 @@ function formatCurrency(value: number) {
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 space-y-6">
+  <!-- MOBILE -->
+  <MobileScreensFiscalInvoices
+    v-if="isMobile"
+    :invoices="invoices"
+    :loading="loading"
+    :load-error="loadError"
+    :retrying-ids="[...retrying]"
+    @create="formModalOpen = true"
+    @retry="loadInvoices"
+    @retry-invoice="handleRetry"
+  />
+
+  <!-- WEB -->
+  <div v-else class="p-4 sm:p-6 space-y-6">
     <!-- Header -->
     <div class="flex items-center justify-between">
       <div>

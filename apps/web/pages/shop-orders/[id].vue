@@ -76,6 +76,7 @@ interface ShopOrder {
   payment_reference?: string;
 }
 
+const { isMobile } = useMobileMode();
 const route = useRoute();
 const orderId = route.params.id as string;
 
@@ -196,7 +197,21 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 space-y-5">
+  <MobileScreensShopOrderDetail
+    v-if="isMobile"
+    :order="order"
+    :loading="loading"
+    :load-error="loadError"
+    :action-loading="actionLoading"
+    :action-error="actionError"
+    :payment-methods="paymentMethods"
+    @mark-paid="performAction('mark-paid')"
+    @mark-fulfilled="performAction('mark-fulfilled')"
+    @mark-delivered="performAction('mark-delivered')"
+    @cancel="performAction('cancel')"
+    @retry="load"
+  />
+  <div v-else class="p-4 sm:p-6 space-y-5">
     <!-- Back -->
     <div class="flex items-center gap-3">
       <NuxtLink

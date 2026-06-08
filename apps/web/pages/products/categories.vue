@@ -19,6 +19,7 @@ definePageMeta({
 });
 
 const store = useAuthStore();
+const { isMobile } = useMobileMode();
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 const categories = ref<Category[]>([]);
@@ -151,180 +152,198 @@ onMounted(() => {
 
 <template>
   <div>
-    <!-- Page header -->
-    <div class="mb-8 flex items-center justify-between gap-4">
-      <div class="flex items-center gap-3">
-        <div
-          class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"
-        >
-          <Tag class="w-5 h-5 text-primary" />
-        </div>
-        <div>
-          <h1 class="text-2xl font-bold font-heading text-foreground">
-            Categorías
-          </h1>
-          <p class="text-muted-foreground text-sm">
-            Organizá tus productos por categorías
-          </p>
-        </div>
-      </div>
-      <div class="flex items-center gap-3">
-        <NuxtLink
-          to="/products"
-          class="h-10 px-4 flex items-center text-sm font-semibold text-muted-foreground border rounded-lg hover:bg-muted transition-all duration-200 cursor-pointer"
-        >
-          Ver productos
-        </NuxtLink>
-        <button
-          v-if="store.isOwner"
-          type="button"
-          class="flex items-center gap-2 h-10 px-5 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
-          @click="openCreate"
-        >
-          <Plus class="w-4 h-4" />
-          Nueva Categoría
-        </button>
-      </div>
-    </div>
+    <!-- MOBILE -->
+    <MobileScreensCategories
+      v-if="isMobile"
+      :categories="categories"
+      :loading="loading"
+      :load-error="loadError"
+      :is-owner="store.isOwner"
+      :deleting-id="deletingId"
+      @create="openCreate"
+      @edit="openEdit"
+      @remove="deleteCategory"
+      @retry="fetchCategories"
+    />
 
-    <!-- Content card -->
-    <div class="rounded-xl border bg-card shadow-sm">
-      <!-- Table header -->
-      <div class="px-6 py-4 border-b flex items-center justify-between">
-        <h2 class="text-base font-bold font-heading text-foreground">
-          {{ categories.length }} categoría{{
-            categories.length !== 1 ? "s" : ""
-          }}
-        </h2>
-      </div>
-
-      <!-- Loading skeleton -->
-      <div v-if="loading" class="px-6 py-5 space-y-3">
-        <div
-          v-for="n in 4"
-          :key="n"
-          class="h-12 animate-pulse bg-muted rounded-lg"
-        />
-      </div>
-
-      <!-- Error state -->
-      <div v-else-if="loadError" class="px-6 py-12 text-center">
-        <AlertTriangle class="w-10 h-10 text-destructive mx-auto mb-3" />
-        <p class="text-destructive font-medium">{{ loadError }}</p>
-        <button
-          type="button"
-          class="mt-4 h-9 px-4 border text-sm font-semibold text-muted-foreground rounded-lg hover:bg-muted cursor-pointer transition-all duration-200"
-          @click="fetchCategories"
-        >
-          Reintentar
-        </button>
-      </div>
-
-      <!-- Empty state -->
-      <div v-else-if="categories.length === 0" class="px-6 py-16 text-center">
-        <FolderOpen class="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
-        <h3 class="text-base font-semibold text-muted-foreground mb-1">
-          Sin categorías aún
-        </h3>
-        <p class="text-sm text-muted-foreground mb-5">
-          Creá tu primera categoría para organizar los productos
-        </p>
-        <button
-          v-if="store.isOwner"
-          type="button"
-          class="inline-flex items-center gap-2 h-10 px-5 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
-          @click="openCreate"
-        >
-          <Plus class="w-4 h-4" />
-          Nueva Categoría
-        </button>
-      </div>
-
-      <!-- List -->
-      <div v-else>
-        <div class="divide-y divide-border">
+    <!-- WEB -->
+    <div v-else>
+      <!-- Page header -->
+      <div class="mb-8 flex items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
           <div
-            v-for="cat in categories"
-            :key="cat.id"
-            class="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-colors duration-150"
+            class="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center"
           >
-            <div class="flex items-center gap-3">
-              <div
-                class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"
-              >
-                <Tag class="w-4 h-4 text-primary" />
-              </div>
-              <div>
-                <p class="text-sm font-semibold text-foreground">
-                  {{ cat.name }}
-                </p>
-                <p class="text-xs text-muted-foreground font-mono mt-0.5">
-                  {{ cat.id.slice(0, 8) }}...
-                </p>
-              </div>
-            </div>
+            <Tag class="w-5 h-5 text-primary" />
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold font-heading text-foreground">
+              Categorías
+            </h1>
+            <p class="text-muted-foreground text-sm">
+              Organizá tus productos por categorías
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <NuxtLink
+            to="/products"
+            class="h-10 px-4 flex items-center text-sm font-semibold text-muted-foreground border rounded-lg hover:bg-muted transition-all duration-200 cursor-pointer"
+          >
+            Ver productos
+          </NuxtLink>
+          <button
+            v-if="store.isOwner"
+            type="button"
+            class="flex items-center gap-2 h-10 px-5 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
+            @click="openCreate"
+          >
+            <Plus class="w-4 h-4" />
+            Nueva Categoría
+          </button>
+        </div>
+      </div>
 
-            <!-- Actions -->
-            <div class="flex items-center gap-2">
-              <!-- Edit -->
-              <button
-                type="button"
-                title="Editar"
-                class="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200 cursor-pointer"
-                @click="openEdit(cat)"
-              >
-                <Pencil class="w-4 h-4" />
-              </button>
+      <!-- Content card -->
+      <div class="rounded-xl border bg-card shadow-sm">
+        <!-- Table header -->
+        <div class="px-6 py-4 border-b flex items-center justify-between">
+          <h2 class="text-base font-bold font-heading text-foreground">
+            {{ categories.length }} categoría{{
+              categories.length !== 1 ? "s" : ""
+            }}
+          </h2>
+        </div>
 
-              <!-- Delete (owners only) -->
-              <template v-if="store.isOwner">
-                <!-- Confirm step -->
+        <!-- Loading skeleton -->
+        <div v-if="loading" class="px-6 py-5 space-y-3">
+          <div
+            v-for="n in 4"
+            :key="n"
+            class="h-12 animate-pulse bg-muted rounded-lg"
+          />
+        </div>
+
+        <!-- Error state -->
+        <div v-else-if="loadError" class="px-6 py-12 text-center">
+          <AlertTriangle class="w-10 h-10 text-destructive mx-auto mb-3" />
+          <p class="text-destructive font-medium">{{ loadError }}</p>
+          <button
+            type="button"
+            class="mt-4 h-9 px-4 border text-sm font-semibold text-muted-foreground rounded-lg hover:bg-muted cursor-pointer transition-all duration-200"
+            @click="fetchCategories"
+          >
+            Reintentar
+          </button>
+        </div>
+
+        <!-- Empty state -->
+        <div v-else-if="categories.length === 0" class="px-6 py-16 text-center">
+          <FolderOpen class="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
+          <h3 class="text-base font-semibold text-muted-foreground mb-1">
+            Sin categorías aún
+          </h3>
+          <p class="text-sm text-muted-foreground mb-5">
+            Creá tu primera categoría para organizar los productos
+          </p>
+          <button
+            v-if="store.isOwner"
+            type="button"
+            class="inline-flex items-center gap-2 h-10 px-5 bg-primary text-white text-sm font-semibold rounded-lg hover:opacity-90 transition-all duration-200 cursor-pointer"
+            @click="openCreate"
+          >
+            <Plus class="w-4 h-4" />
+            Nueva Categoría
+          </button>
+        </div>
+
+        <!-- List -->
+        <div v-else>
+          <div class="divide-y divide-border">
+            <div
+              v-for="cat in categories"
+              :key="cat.id"
+              class="flex items-center justify-between px-6 py-4 hover:bg-muted/50 transition-colors duration-150"
+            >
+              <div class="flex items-center gap-3">
                 <div
-                  v-if="confirmDeleteId === cat.id"
-                  class="flex items-center gap-1.5"
+                  class="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0"
                 >
-                  <span class="text-xs text-destructive font-semibold"
-                    >¿Confirmás?</span
-                  >
-                  <button
-                    type="button"
-                    :disabled="deletingId === cat.id"
-                    class="h-7 px-2.5 bg-red-500 text-white text-xs font-semibold rounded-md hover:bg-red-600 cursor-pointer disabled:opacity-50 transition-all duration-200"
-                    @click="deleteCategory(cat.id)"
-                  >
-                    <Loader2
-                      v-if="deletingId === cat.id"
-                      class="w-3 h-3 animate-spin"
-                    />
-                    <span v-else>Sí</span>
-                  </button>
-                  <button
-                    type="button"
-                    class="h-7 px-2.5 border text-muted-foreground text-xs font-semibold rounded-md hover:bg-muted cursor-pointer transition-all duration-200"
-                    @click="confirmDeleteId = null"
-                  >
-                    No
-                  </button>
+                  <Tag class="w-4 h-4 text-primary" />
                 </div>
+                <div>
+                  <p class="text-sm font-semibold text-foreground">
+                    {{ cat.name }}
+                  </p>
+                  <p class="text-xs text-muted-foreground font-mono mt-0.5">
+                    {{ cat.id.slice(0, 8) }}...
+                  </p>
+                </div>
+              </div>
 
-                <!-- Delete icon -->
+              <!-- Actions -->
+              <div class="flex items-center gap-2">
+                <!-- Edit -->
                 <button
-                  v-else
                   type="button"
-                  title="Eliminar"
-                  class="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-all duration-200 cursor-pointer"
-                  @click="confirmDeleteId = cat.id"
+                  title="Editar"
+                  class="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-primary hover:bg-primary/10 transition-all duration-200 cursor-pointer"
+                  @click="openEdit(cat)"
                 >
-                  <Trash2 class="w-4 h-4" />
+                  <Pencil class="w-4 h-4" />
                 </button>
-              </template>
+
+                <!-- Delete (owners only) -->
+                <template v-if="store.isOwner">
+                  <!-- Confirm step -->
+                  <div
+                    v-if="confirmDeleteId === cat.id"
+                    class="flex items-center gap-1.5"
+                  >
+                    <span class="text-xs text-destructive font-semibold"
+                      >¿Confirmás?</span
+                    >
+                    <button
+                      type="button"
+                      :disabled="deletingId === cat.id"
+                      class="h-7 px-2.5 bg-red-500 text-white text-xs font-semibold rounded-md hover:bg-red-600 cursor-pointer disabled:opacity-50 transition-all duration-200"
+                      @click="deleteCategory(cat.id)"
+                    >
+                      <Loader2
+                        v-if="deletingId === cat.id"
+                        class="w-3 h-3 animate-spin"
+                      />
+                      <span v-else>Sí</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="h-7 px-2.5 border text-muted-foreground text-xs font-semibold rounded-md hover:bg-muted cursor-pointer transition-all duration-200"
+                      @click="confirmDeleteId = null"
+                    >
+                      No
+                    </button>
+                  </div>
+
+                  <!-- Delete icon -->
+                  <button
+                    v-else
+                    type="button"
+                    title="Eliminar"
+                    class="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-50 transition-all duration-200 cursor-pointer"
+                    @click="confirmDeleteId = cat.id"
+                  >
+                    <Trash2 class="w-4 h-4" />
+                  </button>
+                </template>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
+    <!-- /WEB -->
 
-    <!-- Create / Edit dialog -->
+    <!-- Create / Edit dialog (shared) -->
     <Teleport to="body">
       <Transition
         enter-active-class="transition-opacity duration-200"

@@ -22,6 +22,7 @@ definePageMeta({
   middleware: "auth",
 });
 
+const { isMobile } = useMobileMode();
 const route = useRoute();
 const router = useRouter();
 const invoiceId = route.params.id as string;
@@ -193,7 +194,28 @@ async function downloadPDF() {
 </script>
 
 <template>
-  <div class="p-4 sm:p-6 space-y-6">
+  <MobileScreensFiscalInvoiceDetail
+    v-if="isMobile"
+    :invoice="invoice"
+    :loading="loading"
+    :load-error="loadError"
+    :issuing="issuing"
+    :retrying="retrying"
+    :cancelling="cancelling"
+    :downloading-p-d-f="downloadingPDF"
+    :action-error="actionError"
+    @issue="handleIssue"
+    @retry="handleRetry"
+    @cancel="
+      (notes) => {
+        cancelNotes = notes;
+        handleCancel();
+      }
+    "
+    @download-pdf="downloadPDF"
+    @retry-load="loadInvoice"
+  />
+  <div v-else class="p-4 sm:p-6 space-y-6">
     <button
       type="button"
       class="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
