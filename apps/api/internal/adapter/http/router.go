@@ -164,10 +164,12 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 		rateLimiter := mw.NewRateLimiter()
 		pathResolver := mw.NewPathResolver(cfg.Pool)
 		publicTenantMW := mw.NewPublicTenantMiddleware(pathResolver, cfg.Pool)
+		storefrontFeatureMW := mw.NewStorefrontFeatureMiddleware(cfg.Pool)
 
 		storefront := e.Group("/t/:tenantSlug/shop/v1")
 		storefront.Use(rateLimiter.Handle())
 		storefront.Use(publicTenantMW.Handle())
+		storefront.Use(storefrontFeatureMW.Handle())
 
 		// Smoke-check healthz endpoint — verifies the middleware chain is wired
 		// correctly without requiring the full catalog handler (S6-T8).

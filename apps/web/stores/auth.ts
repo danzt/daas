@@ -25,6 +25,8 @@ export interface Tenant {
   name: string;
   countryCode: string;
   fiscalId?: string;
+  slug: string;
+  features: { storefront: boolean; fiscal_invoicing: boolean };
 }
 
 export interface RegisterPayload {
@@ -102,6 +104,8 @@ export const useAuthStore = defineStore("auth", () => {
         name: string;
         country_code: string;
         fiscal_id?: string;
+        slug: string;
+        features?: { storefront: boolean; fiscal_invoicing: boolean };
       }>(`${config.public.apiBase}/api/v1/tenants/me`, {
         headers: { Authorization: `Bearer ${accessToken.value}` },
       });
@@ -110,6 +114,11 @@ export const useAuthStore = defineStore("auth", () => {
         name: data.name,
         countryCode: data.country_code,
         fiscalId: data.fiscal_id,
+        slug: data.slug,
+        features: data.features ?? {
+          storefront: false,
+          fiscal_invoicing: false,
+        },
       };
     } catch (err: unknown) {
       const status =
