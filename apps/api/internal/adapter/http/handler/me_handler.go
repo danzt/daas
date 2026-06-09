@@ -127,9 +127,9 @@ func (h *MeHandler) UpdateMe(c echo.Context) error {
 		`UPDATE tenants
 		 SET name = $2, fiscal_id = $3
 		 WHERE id = $1
-		 RETURNING id, name, fiscal_id, country_code, status, created_at`,
+		 RETURNING id, name, fiscal_id, country_code, status, created_at, slug`,
 		tenantID, name, fiscalIDArg,
-	).Scan(&resp.ID, &resp.Name, &fiscalIDVal, &resp.CountryCode, &resp.Status, &createdAt)
+	).Scan(&resp.ID, &resp.Name, &fiscalIDVal, &resp.CountryCode, &resp.Status, &createdAt, &resp.Slug)
 	if err != nil {
 		if err == pgx.ErrNoRows {
 			return WriteProblem(c, http.StatusNotFound, "tenant-not-found", "tenant not found")
@@ -141,6 +141,26 @@ func (h *MeHandler) UpdateMe(c echo.Context) error {
 		resp.FiscalID = *fiscalIDVal
 	}
 	resp.CreatedAt = createdAt.Format(time.RFC3339)
+
+	features := map[string]bool{
+		"storefront":       false,
+		"fiscal_invoicing": false,
+	}
+	rows, err := h.pool.Query(c.Request().Context(),
+		`SELECT feature, enabled FROM tenant_features WHERE tenant_id=$1`,
+		tenantID,
+	)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var feat string
+			var featEnabled bool
+			if scanErr := rows.Scan(&feat, &featEnabled); scanErr == nil {
+				features[feat] = featEnabled
+			}
+		}
+	}
+	resp.Features = features
 
 	return c.JSON(http.StatusOK, resp)
 }
