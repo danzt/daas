@@ -171,27 +171,29 @@ useSeoMeta({
             </div>
 
             <div class="flex items-end justify-between gap-3 mt-auto flex-wrap">
-              <div class="inline-flex items-center border rounded-lg">
+              <div
+                class="inline-flex items-center border rounded-xl overflow-hidden"
+              >
                 <button
                   type="button"
                   :disabled="item.qty <= 1"
-                  class="w-8 h-8 flex items-center justify-center hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  class="w-10 h-10 flex items-center justify-center hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:bg-muted"
                   aria-label="Disminuir cantidad"
                   @click="cartStore.updateQty(item.productId, item.qty - 1)"
                 >
-                  <Minus class="w-3 h-3" />
+                  <Minus class="w-3.5 h-3.5" />
                 </button>
-                <span class="w-9 text-center text-sm font-semibold">{{
+                <span class="w-10 text-center text-sm font-bold tabular-nums">{{
                   item.qty
                 }}</span>
                 <button
                   type="button"
                   :disabled="!!item.stock_qty && item.qty >= item.stock_qty"
-                  class="w-8 h-8 flex items-center justify-center hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                  class="w-10 h-10 flex items-center justify-center hover:bg-muted disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer active:bg-muted"
                   aria-label="Aumentar cantidad"
                   @click="cartStore.updateQty(item.productId, item.qty + 1)"
                 >
-                  <Plus class="w-3 h-3" />
+                  <Plus class="w-3.5 h-3.5" />
                 </button>
               </div>
 
@@ -332,22 +334,16 @@ useSeoMeta({
     <!-- Sticky mobile checkout bar -->
     <div
       v-if="!cartStore.isEmpty"
-      class="fixed bottom-0 inset-x-0 lg:hidden bg-card border-t shadow-lg z-30 px-4 py-3 safe-bottom"
+      class="fixed bottom-0 inset-x-0 lg:hidden bg-card/95 backdrop-blur border-t shadow-lg z-30 px-4 pt-3"
+      style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom))"
     >
-      <div class="flex items-center gap-3">
-        <div class="flex-1">
-          <p class="text-[11px] text-muted-foreground">Total</p>
-          <p class="text-lg font-bold font-mono text-foreground">
-            {{ fmt(total) }}
-          </p>
-        </div>
-        <NuxtLink
-          :to="`/t/${tenantSlug}/checkout`"
-          class="flex-1 px-4 py-3 rounded-xl bg-primary text-white text-sm font-bold flex items-center justify-center gap-1.5 cursor-pointer"
-        >
-          Comprar
-        </NuxtLink>
-      </div>
+      <NuxtLink
+        :to="`/t/${tenantSlug}/checkout`"
+        class="flex h-14 w-full items-center justify-between rounded-2xl bg-primary px-5 text-primary-foreground shadow-md shadow-primary/25"
+      >
+        <span class="text-sm font-bold">Finalizar compra</span>
+        <span class="font-mono font-bold">{{ fmt(total) }}</span>
+      </NuxtLink>
     </div>
   </div>
 </template>

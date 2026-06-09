@@ -234,7 +234,7 @@ onMounted(load);
 </script>
 
 <template>
-  <div class="bg-background">
+  <div class="bg-background pb-24 sm:pb-0">
     <!-- ── Hero Search ──────────────────────────────────────────────────── -->
     <div
       class="border-b relative overflow-hidden"
@@ -255,11 +255,11 @@ onMounted(load);
         <div class="absolute inset-0 bg-foreground/50" />
       </div>
 
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12 relative z-10">
-        <div class="text-center mb-6">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 py-5 sm:py-12 relative z-10">
+        <div class="text-center mb-4 sm:mb-6">
           <h1
             :class="[
-              'text-2xl sm:text-4xl font-bold font-heading mb-2',
+              'text-xl sm:text-4xl font-bold font-heading mb-1 sm:mb-2',
               brandingBannerURL ? 'text-white' : 'text-foreground',
             ]"
           >
@@ -267,7 +267,7 @@ onMounted(load);
           </h1>
           <p
             :class="[
-              'text-sm sm:text-base',
+              'text-xs sm:text-base hidden sm:block',
               brandingBannerURL ? 'text-white/80' : 'text-muted-foreground',
             ]"
           >
@@ -336,6 +336,42 @@ onMounted(load);
             Devoluciones gratis
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- ── Category chips (mobile) ──────────────────────────────────────── -->
+    <div
+      v-if="categories.length > 0"
+      class="lg:hidden border-b bg-card sticky top-16 z-20"
+    >
+      <div class="flex gap-2 overflow-x-auto px-4 py-2.5 no-scrollbar">
+        <button
+          type="button"
+          :class="[
+            'shrink-0 h-8 px-3.5 rounded-full text-sm font-semibold transition-colors',
+            selectedCategory === null
+              ? 'bg-primary text-white'
+              : 'bg-muted text-muted-foreground hover:bg-accent',
+          ]"
+          @click="selectedCategory = null"
+        >
+          Todos
+        </button>
+        <button
+          v-for="cat in categories"
+          :key="cat.name"
+          type="button"
+          :class="[
+            'shrink-0 h-8 px-3.5 rounded-full text-sm font-semibold transition-colors',
+            selectedCategory === cat.name
+              ? 'bg-primary text-white'
+              : 'bg-muted text-muted-foreground hover:bg-accent',
+          ]"
+          @click="selectedCategory = cat.name"
+        >
+          {{ cat.name }}
+          <span class="ml-1 opacity-60 text-xs">{{ cat.count }}</span>
+        </button>
       </div>
     </div>
 
@@ -733,7 +769,7 @@ onMounted(load);
                 <button
                   type="button"
                   :disabled="product.stock_qty === 0"
-                  class="w-full mt-2 px-3 py-2 rounded-lg bg-primary/10 hover:bg-primary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed text-primary text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:hover:bg-primary/10 disabled:hover:text-primary"
+                  class="w-full mt-2 h-10 rounded-xl bg-primary/10 hover:bg-primary hover:text-white disabled:opacity-50 disabled:cursor-not-allowed text-primary text-sm font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:hover:bg-primary/10 disabled:hover:text-primary active:scale-95"
                   :title="
                     product.stock_qty === 0
                       ? 'Producto agotado'
@@ -741,7 +777,7 @@ onMounted(load);
                   "
                   @click.prevent.stop="addToCart(product)"
                 >
-                  <ShoppingCart class="w-3.5 h-3.5" />
+                  <ShoppingCart class="w-4 h-4" />
                   Agregar
                 </button>
               </div>

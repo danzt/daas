@@ -503,26 +503,22 @@ async function submitCheckout() {
 
       <!-- Sticky mobile submit bar -->
       <div
-        class="fixed bottom-0 inset-x-0 lg:hidden bg-card border-t shadow-lg z-30 px-4 py-3 safe-bottom"
+        class="fixed bottom-0 inset-x-0 lg:hidden bg-card/95 backdrop-blur border-t shadow-lg z-30 px-4 pt-3"
+        style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom))"
       >
-        <div class="flex items-center gap-3">
-          <div class="flex-1">
-            <p class="text-[11px] text-muted-foreground">Total</p>
-            <p class="text-lg font-bold font-mono text-foreground">
-              {{ fmt(total) }}
-            </p>
+        <button
+          type="submit"
+          :disabled="submitting"
+          class="flex h-14 w-full items-center justify-between rounded-2xl bg-primary px-5 text-primary-foreground shadow-md shadow-primary/25 disabled:opacity-50 disabled:cursor-not-allowed"
+          @click.prevent="submitCheckout"
+        >
+          <div class="flex items-center gap-2 text-sm font-bold">
+            <Loader2 v-if="submitting" class="size-4 animate-spin" />
+            <Lock v-else class="size-4" />
+            {{ submitting ? "Procesando..." : "Confirmar pedido" }}
           </div>
-          <button
-            type="submit"
-            :disabled="submitting"
-            class="flex-1 px-4 py-3 rounded-xl bg-primary text-white text-sm font-bold flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-            @click.prevent="submitCheckout"
-          >
-            <Loader2 v-if="submitting" class="w-4 h-4 animate-spin" />
-            <Lock v-else class="w-4 h-4" />
-            {{ submitting ? "..." : "Confirmar" }}
-          </button>
-        </div>
+          <span class="font-mono font-bold">{{ fmt(total) }}</span>
+        </button>
       </div>
     </form>
   </div>

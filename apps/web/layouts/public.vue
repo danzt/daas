@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { Package, ShoppingCart, Check } from "lucide-vue-next";
+import { Package, ShoppingCart, Check, ChevronRight } from "lucide-vue-next";
 import { useCartStore } from "~/stores/cart";
 import { useBranding } from "~/composables/useBranding";
+import { useFormatPrice } from "~/composables/useFormatPrice";
 
 const route = useRoute();
 const cartStore = useCartStore();
@@ -24,6 +25,8 @@ useHead(
     ],
   })),
 );
+
+const { format: fmt } = useFormatPrice("VE");
 
 // Hydrate cart + fetch branding on client mount.
 onMounted(() => {
@@ -121,6 +124,42 @@ watch(
         Powered by <span class="font-semibold text-primary">DaaS</span>
       </div>
     </footer>
+
+    <!-- Mobile sticky cart bar — appears when cart has items -->
+    <Transition
+      enter-active-class="transition-transform duration-300 ease-out"
+      enter-from-class="translate-y-full"
+      enter-to-class="translate-y-0"
+      leave-active-class="transition-transform duration-200 ease-in"
+      leave-from-class="translate-y-0"
+      leave-to-class="translate-y-full"
+    >
+      <div
+        v-if="cartStore.totalItems > 0"
+        class="fixed bottom-0 inset-x-0 z-40 sm:hidden border-t border-border bg-card/95 backdrop-blur px-4 pt-3"
+        style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom))"
+      >
+        <NuxtLink
+          :to="`/t/${tenantSlug}/cart`"
+          class="flex h-14 w-full items-center justify-between rounded-2xl bg-primary px-4 text-primary-foreground shadow-lg shadow-primary/25"
+        >
+          <div class="flex items-center gap-2.5">
+            <span
+              class="flex size-7 items-center justify-center rounded-full bg-white/20 text-xs font-bold"
+            >
+              {{ cartStore.totalItems }}
+            </span>
+            <span class="text-sm font-semibold">Ver carrito</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="font-mono font-bold">{{
+              fmt(cartStore.subtotal)
+            }}</span>
+            <ChevronRight class="size-4 opacity-70" />
+          </div>
+        </NuxtLink>
+      </div>
+    </Transition>
 
     <!-- Toast: "Agregado al carrito" -->
     <Teleport to="body">

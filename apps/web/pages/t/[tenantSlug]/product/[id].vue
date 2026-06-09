@@ -789,23 +789,32 @@ function buyNow() {
 
       <!-- ─── Sticky mobile CTA ─────────────────────────────────── -->
       <div
-        class="fixed bottom-0 inset-x-0 lg:hidden bg-card border-t shadow-lg z-30 px-4 py-3 safe-bottom"
+        class="fixed bottom-0 inset-x-0 lg:hidden bg-card/95 backdrop-blur border-t shadow-lg z-30 px-4 pt-3"
+        style="padding-bottom: calc(0.75rem + env(safe-area-inset-bottom))"
       >
         <div class="flex items-center gap-3">
-          <div class="flex-1">
+          <div class="flex-1 min-w-0">
             <p class="text-xs text-muted-foreground">Precio</p>
-            <p class="text-base font-bold font-mono text-foreground">
+            <p class="text-base font-bold font-mono text-foreground truncate">
               {{ fmt(effectivePrice(product)) }}
             </p>
           </div>
           <button
             type="button"
             :disabled="product.stock_qty === 0"
-            class="flex-1 px-4 py-3 rounded-xl bg-primary text-white text-sm font-bold flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            class="h-12 flex-1 rounded-2xl bg-primary text-white text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-transform cursor-pointer shadow-md shadow-primary/25"
             @click="addToCart"
           >
             <ShoppingCart class="w-4 h-4" />
-            Agregar
+            {{ product.stock_qty === 0 ? "Agotado" : "Agregar al carrito" }}
+          </button>
+          <button
+            type="button"
+            :disabled="product.stock_qty === 0"
+            class="h-12 px-4 rounded-2xl bg-amber-500 text-white text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed active:scale-95 transition-transform cursor-pointer"
+            @click="buyNow"
+          >
+            Comprar
           </button>
         </div>
       </div>
