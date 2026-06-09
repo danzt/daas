@@ -5,14 +5,17 @@ import { Capacitor } from "@capacitor/core";
  * EXCLUSIVE mobile design?".
  *
  * Production trigger: the app is running inside Capacitor (iOS/Android).
- * Preview trigger (dev only): `?m=1` in the URL, persisted to localStorage,
+ * Preview trigger (DEV ONLY): `?m=1` in the URL, persisted to localStorage,
  *   so the mobile design can be inspected in a desktop browser at phone
- *   width without compiling to a device. Disable with `?m=0`.
+ *   width. Disable with `?m=0`.
  *
- * SSR-safe: always returns false on the server (no window/Capacitor),
- * the client re-evaluates on mount. Web at any width is NEVER affected
- * unless the preview flag is explicitly set — so the web app is safe by
- * construction.
+ * The preview override is guarded by `import.meta.dev`, so it is compiled
+ * out of production builds entirely. A stray `?m=1` (or a stale localStorage
+ * flag) can NEVER flip the real web app into mobile mode for users — in
+ * production, isMobile === isNative.
+ *
+ * SSR-safe: always returns false on the server; the client re-evaluates on
+ * mount.
  */
 
 const PREVIEW_KEY = "daas:mobile-preview";
@@ -22,6 +25,10 @@ const previewOverride = ref(false);
 let initialized = false;
 
 function initPreview() {
+  // Development-only affordance. In production builds this whole block is
+  // tree-shaken away (import.meta.dev === false), so previewOverride stays
+  // false and the web app is never affected by the ?m flag.
+  if (!import.meta.dev) return;
   if (initialized || import.meta.server) return;
   initialized = true;
 
