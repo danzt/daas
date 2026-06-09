@@ -16,7 +16,7 @@ import {
   PanelLeft,
   CreditCard,
   Palette,
-  ExternalLink,
+  Store,
 } from "lucide-vue-next";
 import { useAuthStore } from "~/stores/auth";
 
@@ -336,14 +336,14 @@ onMounted(() => {
         </div>
 
         <!-- Ver mi tienda — only shown when storefront feature is enabled -->
-        <div v-if="storefrontEnabled && store.tenant?.slug" class="px-2 mb-2">
+        <div v-if="storefrontEnabled && store.tenant?.slug" class="mb-2">
           <a
-            :href="`/t/${store.tenant.slug}/shop/v1`"
+            :href="`/t/${store.tenant.slug}`"
             target="_blank"
             rel="noopener noreferrer"
             class="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors text-foreground hover:bg-accent"
           >
-            <ExternalLink class="size-4 shrink-0" />
+            <Store class="size-4 shrink-0" />
             <span v-if="sidebarOpen" class="truncate">Ver mi tienda</span>
           </a>
         </div>
