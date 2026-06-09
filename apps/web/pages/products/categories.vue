@@ -167,7 +167,7 @@ onMounted(() => {
     />
 
     <!-- WEB -->
-    <div v-else>
+    <div v-else class="p-4 sm:p-6">
       <!-- Page header -->
       <div class="mb-8 flex items-center justify-between gap-4">
         <div class="flex items-center gap-3">
