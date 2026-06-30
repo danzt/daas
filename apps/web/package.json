@@ -12,9 +12,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "cap:sync": "NUXT_CAPACITOR=true nuxt generate && npx cap sync",
-    "cap:ios": "NUXT_CAPACITOR=true nuxt generate && npx cap sync ios && npx cap open ios",
-    "cap:android": "NUXT_CAPACITOR=true nuxt generate && npx cap sync android && npx cap open android"
+    "cap:sync": "NUXT_PUBLIC_API_BASE=https://daas-l36f.onrender.com NUXT_CAPACITOR=true nuxt generate && npx cap sync",
+    "cap:ios": "NUXT_PUBLIC_API_BASE=https://daas-l36f.onrender.com NUXT_CAPACITOR=true nuxt generate && npx cap sync ios && npx cap open ios",
+    "cap:android": "NUXT_PUBLIC_API_BASE=https://daas-l36f.onrender.com NUXT_CAPACITOR=true nuxt generate && npx cap sync android && npx cap open android"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.0",
