@@ -238,6 +238,8 @@ func registerRoutes(
 	auth.POST("/register", tenantHandler.Register)
 	auth.POST("/login", authHandler.Login)
 	auth.POST("/logout", authHandler.Logout)
+	auth.POST("/recover", authHandler.RequestPasswordReset)
+	auth.PUT("/password", authHandler.UpdatePassword)
 
 	// Protected routes — require valid JWT + tenant context
 	// TenantMiddleware is optional here when pool is nil (dev/test without DB).
