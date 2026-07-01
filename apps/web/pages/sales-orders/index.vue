@@ -453,7 +453,7 @@ onMounted(load);
 
     <!-- ── Desktop table (sm+) ────────────────────────── -->
     <div
-      v-else-if="!loading"
+      v-if="!loading && filteredOrders.length > 0"
       class="hidden sm:block border bg-card rounded-xl overflow-hidden shadow-sm"
     >
       <div class="overflow-x-auto">
