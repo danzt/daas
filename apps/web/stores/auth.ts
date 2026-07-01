@@ -190,6 +190,33 @@ export const useAuthStore = defineStore("auth", () => {
     await login(payload.email, payload.password);
   }
 
+  // Sends a password-recovery email via Supabase. redirect_to points back to
+  // the app's /auth/update-password page; Supabase validates it against its
+  // allow list. Always resolves — the API never reveals if the email exists.
+  async function requestPasswordReset(email: string): Promise<void> {
+    const config = useRuntimeConfig();
+    const redirectTo = import.meta.client
+      ? `${window.location.origin}/auth/update-password`
+      : "";
+    await $fetch(`${config.public.apiBase}/api/v1/auth/recover`, {
+      method: "POST",
+      body: { email, redirect_to: redirectTo },
+    });
+  }
+
+  // Sets a new password using the recovery access_token from the email link.
+  async function updatePassword(
+    accessToken: string,
+    password: string,
+  ): Promise<void> {
+    const config = useRuntimeConfig();
+    await $fetch(`${config.public.apiBase}/api/v1/auth/password`, {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${accessToken}` },
+      body: { password },
+    });
+  }
+
   function setTenant(data: Tenant): void {
     tenant.value = data;
   }
@@ -204,6 +231,8 @@ export const useAuthStore = defineStore("auth", () => {
     login,
     logout,
     register,
+    requestPasswordReset,
+    updatePassword,
     setTenant,
     fetchTenant,
     initFromStorage,

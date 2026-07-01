@@ -161,6 +161,14 @@ async function handleSubmit() {
           <p v-if="passwordError" class="text-xs text-red-500 mt-1">
             {{ passwordError }}
           </p>
+          <div class="mt-1.5 text-right">
+            <NuxtLink
+              to="/auth/forgot-password"
+              class="text-xs font-semibold text-primary hover:underline cursor-pointer"
+            >
+              ¿Olvidaste tu contraseña?
+            </NuxtLink>
+          </div>
         </div>
 
         <!-- Error message (API) -->
