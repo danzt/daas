@@ -1,4 +1,4 @@
-.PHONY: build run test lint migrate-up migrate-down migrate-create tidy sqlc-generate
+.PHONY: build run test lint migrate-up migrate-down migrate-create tidy sqlc-generate seed
 
 # Binary output path
 BIN := bin/api
@@ -47,3 +47,9 @@ migrate-create:
 ## sqlc-generate: generate Go code from SQL queries
 sqlc-generate:
 	sqlc generate
+
+## seed: reset + repopulate demo data (catálogo + transacciones) del tenant demo
+## Mantiene tenant/usuarios/métodos de pago/features. Idempotente.
+## Usage: make seed DATABASE_URL=postgres://...
+seed:
+	psql "$(DATABASE_URL)" -f seed/demo_seed.sql

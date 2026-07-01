@@ -30,6 +30,23 @@ export default defineNuxtConfig({
       apiBase: process.env.NUXT_PUBLIC_API_BASE || "http://localhost:8080",
     },
   },
+  // Rutas admin (detrás de login, sin valor SEO) → render client-only.
+  // En cold load el server NO debe pintar el shell del dashboard: el auth
+  // middleware es client-only (token en localStorage) y redirige a /auth/login
+  // recién al hidratar. Sin esto, el primer paint muestra el layout default
+  // mal posicionado hasta recargar. El storefront /t/** y /auth/** siguen con SSR.
+  routeRules: {
+    "/": { ssr: false },
+    "/dashboard/**": { ssr: false },
+    "/products/**": { ssr: false },
+    "/inventory/**": { ssr: false },
+    "/sales-orders/**": { ssr: false },
+    "/shop-orders/**": { ssr: false },
+    "/invoices/**": { ssr: false },
+    "/suppliers/**": { ssr: false },
+    "/reports/**": { ssr: false },
+    "/settings/**": { ssr: false },
+  },
   // Rutas a pre-renderizar cuando NUXT_CAPACITOR=true
   ...(isCapacitorBuild && {
     nitro: {
