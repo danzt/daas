@@ -70,6 +70,16 @@ interface SupplierSpend {
   order_count: number;
 }
 
+interface PurchaseInvoiceEntry {
+  date: string;
+  number: string;
+  supplier_name: string;
+  supplier_rif: string;
+  tax_base: number;
+  tax_amount: number;
+  total: number;
+}
+
 interface PurchaseSummary {
   from: string;
   to: string;
@@ -77,6 +87,9 @@ interface PurchaseSummary {
   total_orders: number;
   received_orders: number;
   by_supplier: SupplierSpend[];
+  total_tax_base: number;
+  total_tax_credit: number;
+  invoices: PurchaseInvoiceEntry[];
 }
 
 // ─── State ───────────────────────────────────────────────────────────────────
@@ -621,7 +634,7 @@ onMounted(load);
           </button>
         </div>
         <!-- Summary bar -->
-        <div class="grid grid-cols-3 gap-4">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div class="border bg-card rounded-xl p-4 text-center">
             <p class="text-sm text-muted-foreground">Total gastado</p>
             <p class="text-xl font-bold text-foreground font-mono mt-1">
@@ -638,6 +651,14 @@ onMounted(load);
             <p class="text-sm text-muted-foreground">Recibidas</p>
             <p class="text-xl font-bold text-emerald-600 mt-1">
               {{ purchases.received_orders }}
+            </p>
+          </div>
+          <div
+            class="border border-primary/30 bg-primary/5 rounded-xl p-4 text-center"
+          >
+            <p class="text-sm text-muted-foreground">Crédito fiscal (IVA)</p>
+            <p class="text-xl font-bold text-primary font-mono mt-1">
+              {{ fmtCurrency(purchases.total_tax_credit) }}
             </p>
           </div>
         </div>
@@ -723,6 +744,129 @@ onMounted(load);
                   </td>
                 </tr>
               </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Libro de compras -->
+        <div class="border bg-card rounded-xl overflow-hidden">
+          <div
+            class="px-6 py-4 border-b border-border flex items-center justify-between gap-3"
+          >
+            <div>
+              <h3 class="font-semibold text-foreground">Libro de compras</h3>
+              <p class="text-xs text-muted-foreground mt-0.5">
+                Facturas de proveedor del período con su crédito fiscal
+              </p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-muted-foreground">Crédito fiscal total</p>
+              <p class="font-mono font-bold text-primary">
+                {{ fmtCurrency(purchases.total_tax_credit) }}
+              </p>
+            </div>
+          </div>
+          <div
+            v-if="purchases.invoices.length === 0"
+            class="text-center py-10 text-muted-foreground text-sm"
+          >
+            Sin facturas de compra registradas en el período
+          </div>
+          <div v-else class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-border bg-muted/30">
+                  <th
+                    class="px-4 py-3 text-left font-medium text-muted-foreground"
+                  >
+                    Fecha
+                  </th>
+                  <th
+                    class="px-4 py-3 text-left font-medium text-muted-foreground"
+                  >
+                    N° factura
+                  </th>
+                  <th
+                    class="px-4 py-3 text-left font-medium text-muted-foreground hidden md:table-cell"
+                  >
+                    Proveedor
+                  </th>
+                  <th
+                    class="px-4 py-3 text-right font-medium text-muted-foreground hidden lg:table-cell"
+                  >
+                    Base
+                  </th>
+                  <th
+                    class="px-4 py-3 text-right font-medium text-muted-foreground"
+                  >
+                    IVA (crédito)
+                  </th>
+                  <th
+                    class="px-4 py-3 text-right font-medium text-muted-foreground"
+                  >
+                    Total
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-border">
+                <tr
+                  v-for="(inv, idx) in purchases.invoices"
+                  :key="idx"
+                  class="hover:bg-muted/20 transition-colors"
+                >
+                  <td class="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                    {{ fmtDate(inv.date) }}
+                  </td>
+                  <td class="px-4 py-3 font-mono font-medium text-foreground">
+                    {{ inv.number }}
+                  </td>
+                  <td class="px-4 py-3 text-foreground hidden md:table-cell">
+                    {{ inv.supplier_name }}
+                    <span
+                      v-if="inv.supplier_rif"
+                      class="text-xs text-muted-foreground font-mono"
+                      >· {{ inv.supplier_rif }}</span
+                    >
+                  </td>
+                  <td
+                    class="px-4 py-3 text-right font-mono text-muted-foreground hidden lg:table-cell"
+                  >
+                    {{ fmtCurrency(inv.tax_base) }}
+                  </td>
+                  <td
+                    class="px-4 py-3 text-right font-mono font-semibold text-primary"
+                  >
+                    {{ fmtCurrency(inv.tax_amount) }}
+                  </td>
+                  <td
+                    class="px-4 py-3 text-right font-mono font-semibold text-foreground"
+                  >
+                    {{ fmtCurrency(inv.total) }}
+                  </td>
+                </tr>
+              </tbody>
+              <tfoot>
+                <tr class="border-t-2 border-border bg-muted/20 font-semibold">
+                  <td class="px-4 py-3 text-foreground" colspan="3">
+                    Totales del período
+                  </td>
+                  <td
+                    class="px-4 py-3 text-right font-mono text-foreground hidden lg:table-cell"
+                  >
+                    {{ fmtCurrency(purchases.total_tax_base) }}
+                  </td>
+                  <td class="px-4 py-3 text-right font-mono text-primary">
+                    {{ fmtCurrency(purchases.total_tax_credit) }}
+                  </td>
+                  <td class="px-4 py-3 text-right font-mono text-foreground">
+                    {{
+                      fmtCurrency(
+                        purchases.total_tax_base + purchases.total_tax_credit,
+                      )
+                    }}
+                  </td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         </div>

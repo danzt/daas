@@ -7,6 +7,7 @@ import {
   TrendingUp,
   Boxes,
   ShoppingCart,
+  Receipt,
 } from "lucide-vue-next";
 
 interface ProductRevenue {
@@ -33,11 +34,24 @@ interface SupplierSpend {
   total_spend: number;
   order_count: number;
 }
+interface PurchaseInvoiceEntry {
+  date: string;
+  number: string;
+  supplier_name: string;
+  supplier_rif: string;
+  tax_base: number;
+  tax_amount: number;
+  total: number;
+}
+
 interface PurchaseSummary {
   total_spend: number;
   total_orders: number;
   received_orders: number;
   by_supplier: SupplierSpend[];
+  total_tax_base: number;
+  total_tax_credit: number;
+  invoices: PurchaseInvoiceEntry[];
 }
 
 defineProps<{
@@ -70,6 +84,13 @@ function fmt(n: number) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(n);
+}
+
+function fmtDate(d: string) {
+  return new Date(d).toLocaleDateString("es-VE", {
+    day: "2-digit",
+    month: "short",
+  });
 }
 </script>
 
@@ -238,6 +259,14 @@ function fmt(n: number) {
               >{{ purchases?.received_orders ?? 0 }} recibidas</span
             >
           </div>
+          <div
+            class="mt-3 flex items-center justify-between border-t border-white/15 pt-3"
+          >
+            <span class="text-sm text-white/60">Crédito fiscal (IVA)</span>
+            <span class="font-mono text-lg font-black tabular-nums">{{
+              fmt(purchases?.total_tax_credit ?? 0)
+            }}</span>
+          </div>
         </div>
 
         <MobileSectionHeader title="Por proveedor" class="px-0 pt-5" />
@@ -270,6 +299,44 @@ function fmt(n: number) {
         </div>
         <p v-else class="px-1 py-6 text-center text-sm text-muted-foreground">
           Sin compras en el período
+        </p>
+
+        <!-- Libro de compras -->
+        <MobileSectionHeader title="Libro de compras" class="px-0 pt-5" />
+        <div
+          v-if="purchases?.invoices?.length"
+          class="overflow-hidden rounded-2xl border border-border bg-white"
+        >
+          <div
+            v-for="(inv, idx) in purchases.invoices"
+            :key="idx"
+            class="flex items-center gap-3 border-b border-border px-4 py-3 last:border-0"
+          >
+            <div
+              class="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"
+            >
+              <Receipt class="size-4" />
+            </div>
+            <div class="min-w-0 flex-1">
+              <p
+                class="truncate font-mono text-sm font-semibold text-foreground"
+              >
+                {{ inv.number }}
+              </p>
+              <p class="truncate text-[11px] text-muted-foreground">
+                {{ fmtDate(inv.date) }} · {{ inv.supplier_name }}
+              </p>
+            </div>
+            <div class="text-right">
+              <p class="font-mono text-sm font-bold tabular-nums text-primary">
+                {{ fmt(inv.tax_amount) }}
+              </p>
+              <p class="text-[10px] text-muted-foreground">IVA</p>
+            </div>
+          </div>
+        </div>
+        <p v-else class="px-1 py-6 text-center text-sm text-muted-foreground">
+          Sin facturas de compra en el período
         </p>
 
         <button

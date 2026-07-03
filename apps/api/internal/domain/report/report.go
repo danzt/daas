@@ -71,6 +71,12 @@ type PurchaseSummary struct {
 	TotalOrders    int             `json:"total_orders"`
 	ReceivedOrders int             `json:"received_orders"`
 	BySupplier     []SupplierSpend `json:"by_supplier"`
+
+	// Libro de compras: facturas de proveedor registradas en el período, con
+	// su crédito fiscal (IVA). Base para declarar las compras ante el fisco.
+	TotalTaxBase   float64                `json:"total_tax_base"`
+	TotalTaxCredit float64                `json:"total_tax_credit"`
+	Invoices       []PurchaseInvoiceEntry `json:"invoices"`
 }
 
 // SupplierSpend is spending aggregated per supplier.
@@ -79,4 +85,16 @@ type SupplierSpend struct {
 	SupplierName string  `json:"supplier_name"`
 	TotalSpend   float64 `json:"total_spend"`
 	OrderCount   int     `json:"order_count"`
+}
+
+// PurchaseInvoiceEntry is one line of the libro de compras — a supplier invoice
+// registered on a purchase order.
+type PurchaseInvoiceEntry struct {
+	Date         time.Time `json:"date"`
+	Number       string    `json:"number"`
+	SupplierName string    `json:"supplier_name"`
+	SupplierRIF  string    `json:"supplier_rif"`
+	TaxBase      float64   `json:"tax_base"`
+	TaxAmount    float64   `json:"tax_amount"`
+	Total        float64   `json:"total"`
 }

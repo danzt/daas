@@ -223,5 +223,44 @@ func (s *ReportService) PurchaseReport(ctx context.Context, tenantID uuid.UUID, 
 		return nil, err
 	}
 
+	// Libro de compras — facturas de proveedor registradas en el período, con su
+	// crédito fiscal (IVA). Se filtra por la fecha de la factura cuando existe.
+	sum.Invoices = []report.PurchaseInvoiceEntry{}
+	invRows, err := s.pool.Query(ctx,
+		`SELECT COALESCE(po.supplier_invoice_date, po.created_at::date) AS d,
+		        po.supplier_invoice_number,
+		        COALESCE(s.name,'—'), COALESCE(s.rif,''),
+		        COALESCE(po.supplier_invoice_tax_base,0),
+		        COALESCE(po.supplier_invoice_tax_amount,0)
+		 FROM purchase_orders po
+		 LEFT JOIN suppliers s ON s.id = po.supplier_id
+		 WHERE po.tenant_id=$1
+		   AND po.supplier_invoice_number IS NOT NULL
+		   AND po.status != 'cancelled'
+		   AND COALESCE(po.supplier_invoice_date, po.created_at::date) >= $2::date
+		   AND COALESCE(po.supplier_invoice_date, po.created_at::date) <= $3::date
+		 ORDER BY d DESC`,
+		tenantID, dr.From, dr.To,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer invRows.Close()
+	for invRows.Next() {
+		var e report.PurchaseInvoiceEntry
+		var d time.Time
+		if err := invRows.Scan(&d, &e.Number, &e.SupplierName, &e.SupplierRIF, &e.TaxBase, &e.TaxAmount); err != nil {
+			return nil, err
+		}
+		e.Date = d
+		e.Total = e.TaxBase + e.TaxAmount
+		sum.TotalTaxBase += e.TaxBase
+		sum.TotalTaxCredit += e.TaxAmount
+		sum.Invoices = append(sum.Invoices, e)
+	}
+	if err := invRows.Err(); err != nil {
+		return nil, err
+	}
+
 	return sum, nil
 }
