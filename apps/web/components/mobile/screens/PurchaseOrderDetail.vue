@@ -6,6 +6,9 @@ import {
   Package,
   Loader2,
   AlertTriangle,
+  Receipt,
+  Save,
+  Pencil,
 } from "lucide-vue-next";
 
 interface POLine {
@@ -32,6 +35,17 @@ interface PurchaseOrder {
   created_at: string;
   lines: POLine[];
   supplier?: Supplier;
+  supplier_invoice_number: string;
+  supplier_invoice_date: string | null;
+  supplier_invoice_tax_base: number;
+  supplier_invoice_tax_amount: number;
+}
+
+interface InvoicePayload {
+  invoice_number: string;
+  invoice_date: string;
+  tax_base: number;
+  tax_amount: number;
 }
 
 const props = defineProps<{
@@ -40,6 +54,8 @@ const props = defineProps<{
   loadError: string;
   actionLoading: boolean;
   actionError: string;
+  savingInvoice: boolean;
+  invoiceError: string;
 }>();
 
 const emit = defineEmits<{
@@ -47,9 +63,48 @@ const emit = defineEmits<{
   receive: [];
   cancel: [];
   retry: [];
+  saveInvoice: [payload: InvoicePayload];
 }>();
 
 const confirmingCancel = ref(false);
+
+// ─── Factura del proveedor (Fase 1) ─────────────────────────────────────────
+const editingInvoice = ref(false);
+const invoiceForm = reactive({
+  invoice_number: "",
+  invoice_date: "",
+  tax_base: 0,
+  tax_amount: 0,
+});
+const invoiceTotal = computed(
+  () => Number(invoiceForm.tax_base || 0) + Number(invoiceForm.tax_amount || 0),
+);
+
+function openInvoiceForm() {
+  invoiceForm.invoice_number = props.po?.supplier_invoice_number ?? "";
+  invoiceForm.invoice_date =
+    props.po?.supplier_invoice_date?.slice(0, 10) ?? "";
+  invoiceForm.tax_base = props.po?.supplier_invoice_tax_base ?? 0;
+  invoiceForm.tax_amount = props.po?.supplier_invoice_tax_amount ?? 0;
+  editingInvoice.value = true;
+}
+
+function submitInvoice() {
+  emit("saveInvoice", {
+    invoice_number: invoiceForm.invoice_number.trim(),
+    invoice_date: invoiceForm.invoice_date || "",
+    tax_base: Number(invoiceForm.tax_base) || 0,
+    tax_amount: Number(invoiceForm.tax_amount) || 0,
+  });
+}
+
+// El page hace la llamada API; cuando termina sin error, cerramos el form.
+watch(
+  () => props.savingInvoice,
+  (now, prev) => {
+    if (prev && !now && !props.invoiceError) editingInvoice.value = false;
+  },
+);
 
 const STATUS: Record<string, { label: string; chip: string; icon: Component }> =
   {
@@ -226,6 +281,167 @@ const hasActionBar = computed(
           <span class="font-mono text-lg font-black tabular-nums text-primary">
             {{ fmtCurrency(po.total) }}
           </span>
+        </div>
+      </div>
+
+      <!-- Factura del proveedor (Fase 1) -->
+      <MobileSectionHeader title="Factura del proveedor" class="pt-5" />
+      <div class="border-y border-border bg-white px-4 py-4">
+        <!-- Error -->
+        <div
+          v-if="invoiceError && editingInvoice"
+          class="mb-3 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
+          {{ invoiceError }}
+        </div>
+
+        <!-- Vista: factura registrada -->
+        <div
+          v-if="!editingInvoice && po.supplier_invoice_number"
+          class="space-y-3"
+        >
+          <div class="grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <p class="text-[11px] text-muted-foreground">N° de factura</p>
+              <p class="font-mono font-semibold text-foreground">
+                {{ po.supplier_invoice_number }}
+              </p>
+            </div>
+            <div>
+              <p class="text-[11px] text-muted-foreground">Fecha</p>
+              <p class="font-medium text-foreground">
+                {{ fmtDate(po.supplier_invoice_date) }}
+              </p>
+            </div>
+            <div>
+              <p class="text-[11px] text-muted-foreground">Base imponible</p>
+              <p class="font-mono font-medium text-foreground">
+                {{ fmtCurrency(po.supplier_invoice_tax_base) }}
+              </p>
+            </div>
+            <div>
+              <p class="text-[11px] text-muted-foreground">IVA (crédito)</p>
+              <p class="font-mono font-semibold text-primary">
+                {{ fmtCurrency(po.supplier_invoice_tax_amount) }}
+              </p>
+            </div>
+          </div>
+          <button
+            v-if="po.status !== 'cancelled'"
+            type="button"
+            class="flex items-center gap-1.5 text-sm font-semibold text-primary active:opacity-70"
+            @click="openInvoiceForm"
+          >
+            <Pencil class="size-3.5" /> Editar factura
+          </button>
+        </div>
+
+        <!-- Vista: sin factura -->
+        <div
+          v-else-if="!editingInvoice"
+          class="flex flex-col items-start gap-3"
+        >
+          <p class="text-sm text-muted-foreground">
+            Registrá la factura del proveedor para declarar esta compra (crédito
+            fiscal).
+          </p>
+          <button
+            v-if="po.status !== 'cancelled'"
+            type="button"
+            class="no-min-tap flex h-11 items-center gap-2 rounded-2xl bg-primary px-5 text-sm font-bold text-white active:opacity-90"
+            @click="openInvoiceForm"
+          >
+            <Receipt class="size-4" /> Registrar factura
+          </button>
+        </div>
+
+        <!-- Formulario -->
+        <div v-else class="space-y-3">
+          <div>
+            <label
+              class="mb-1 block text-[11px] font-semibold text-muted-foreground"
+              >N° de factura *</label
+            >
+            <input
+              v-model="invoiceForm.invoice_number"
+              placeholder="Ej. 00-00012345"
+              class="h-11 w-full rounded-xl border border-border bg-white px-3 text-sm focus:border-primary focus:outline-none"
+            />
+          </div>
+          <div>
+            <label
+              class="mb-1 block text-[11px] font-semibold text-muted-foreground"
+              >Fecha de la factura</label
+            >
+            <input
+              v-model="invoiceForm.invoice_date"
+              type="date"
+              class="h-11 w-full rounded-xl border border-border bg-white px-3 text-sm focus:border-primary focus:outline-none"
+            />
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label
+                class="mb-1 block text-[11px] font-semibold text-muted-foreground"
+                >Base imponible</label
+              >
+              <input
+                v-model="invoiceForm.tax_base"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                step="any"
+                class="h-11 w-full rounded-xl border border-border bg-white px-3 font-mono text-sm focus:border-primary focus:outline-none"
+              />
+            </div>
+            <div>
+              <label
+                class="mb-1 block text-[11px] font-semibold text-muted-foreground"
+                >IVA (crédito)</label
+              >
+              <input
+                v-model="invoiceForm.tax_amount"
+                type="number"
+                inputmode="decimal"
+                min="0"
+                step="any"
+                class="h-11 w-full rounded-xl border border-border bg-white px-3 font-mono text-sm focus:border-primary focus:outline-none"
+              />
+            </div>
+          </div>
+          <div
+            class="flex items-center justify-between rounded-xl bg-primary/5 px-3 py-2.5"
+          >
+            <span class="text-sm font-medium text-foreground"
+              >Total factura</span
+            >
+            <span class="font-mono font-bold text-primary">{{
+              fmtCurrency(invoiceTotal)
+            }}</span>
+          </div>
+          <div class="flex gap-2 pt-1">
+            <button
+              type="button"
+              :disabled="savingInvoice"
+              class="no-min-tap h-12 flex-1 rounded-2xl bg-primary text-sm font-bold text-white active:opacity-90 disabled:opacity-50"
+              @click="submitInvoice"
+            >
+              <Loader2
+                v-if="savingInvoice"
+                class="mx-auto size-5 animate-spin"
+              />
+              <span v-else class="flex items-center justify-center gap-2">
+                <Save class="size-4" /> Guardar
+              </span>
+            </button>
+            <button
+              type="button"
+              class="no-min-tap h-12 rounded-2xl border border-border px-5 text-sm font-bold text-muted-foreground active:bg-accent"
+              @click="editingInvoice = false"
+            >
+              Cancelar
+            </button>
+          </div>
         </div>
       </div>
 

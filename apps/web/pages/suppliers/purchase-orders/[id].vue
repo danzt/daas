@@ -167,8 +167,16 @@ function openInvoiceForm() {
   editingInvoice.value = true;
 }
 
-async function saveInvoice() {
-  if (!invoiceForm.invoice_number.trim()) {
+interface InvoicePayload {
+  invoice_number: string;
+  invoice_date: string;
+  tax_base: number;
+  tax_amount: number;
+}
+
+// Núcleo compartido web + mobile: hace la llamada al API.
+async function persistInvoice(payload: InvoicePayload) {
+  if (!payload.invoice_number.trim()) {
     invoiceError.value = "El número de factura es obligatorio";
     return;
   }
@@ -177,15 +185,7 @@ async function saveInvoice() {
   try {
     po.value = await useApiFetch<PurchaseOrder>(
       `/api/v1/purchase-orders/${poId}/invoice`,
-      {
-        method: "PUT",
-        body: {
-          invoice_number: invoiceForm.invoice_number.trim(),
-          invoice_date: invoiceForm.invoice_date || "",
-          tax_base: Number(invoiceForm.tax_base) || 0,
-          tax_amount: Number(invoiceForm.tax_amount) || 0,
-        },
-      },
+      { method: "PUT", body: payload },
     );
     editingInvoice.value = false;
   } catch (err: unknown) {
@@ -194,6 +194,16 @@ async function saveInvoice() {
   } finally {
     savingInvoice.value = false;
   }
+}
+
+// Wrapper para la vista web (arma el payload desde invoiceForm).
+function saveInvoice() {
+  persistInvoice({
+    invoice_number: invoiceForm.invoice_number.trim(),
+    invoice_date: invoiceForm.invoice_date || "",
+    tax_base: Number(invoiceForm.tax_base) || 0,
+    tax_amount: Number(invoiceForm.tax_amount) || 0,
+  });
 }
 
 onMounted(load);
@@ -207,10 +217,13 @@ onMounted(load);
     :load-error="loadError"
     :action-loading="actionLoading"
     :action-error="actionError"
+    :saving-invoice="savingInvoice"
+    :invoice-error="invoiceError"
     @order="performAction('order')"
     @receive="performAction('receive')"
     @cancel="performAction('cancel')"
     @retry="load"
+    @save-invoice="persistInvoice"
   />
   <div v-else class="p-4 sm:p-6 space-y-6">
     <!-- Back -->
