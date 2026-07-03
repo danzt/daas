@@ -328,6 +328,7 @@ func registerRoutes(
 	api.POST("/purchase-orders/:id/order", supplierHandler.OrderPO)
 	api.POST("/purchase-orders/:id/receive", supplierHandler.ReceivePO)
 	api.POST("/purchase-orders/:id/cancel", supplierHandler.CancelPO)
+	api.PUT("/purchase-orders/:id/invoice", supplierHandler.SetPurchaseInvoice)
 
 	// Shop Orders — tenant admin lifecycle (S7-PR2)
 	api.GET("/shop-orders", shopOrderHandler.AdminList)
