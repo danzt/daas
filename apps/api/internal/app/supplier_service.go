@@ -56,7 +56,7 @@ func (s *SupplierService) CreateSupplier(ctx context.Context, tenantID uuid.UUID
 }
 
 func (s *SupplierService) ListSuppliers(ctx context.Context, tenantID uuid.UUID, activeOnly bool) ([]*supplier.Supplier, error) {
-	query := `SELECT id, tenant_id, name, rif, contact_name, email, phone, address, notes, active, created_at, updated_at
+	query := `SELECT id, tenant_id, name, rif, contact_name, email, phone, address, COALESCE(notes,''), active, created_at, updated_at
 	          FROM suppliers WHERE tenant_id=$1`
 	if activeOnly {
 		query += " AND active=true"
@@ -80,7 +80,7 @@ func (s *SupplierService) ListSuppliers(ctx context.Context, tenantID uuid.UUID,
 
 func (s *SupplierService) GetSupplier(ctx context.Context, tenantID, supplierID uuid.UUID) (*supplier.Supplier, error) {
 	sup, err := scanSupplier(s.pool.QueryRow(ctx,
-		`SELECT id, tenant_id, name, rif, contact_name, email, phone, address, notes, active, created_at, updated_at
+		`SELECT id, tenant_id, name, rif, contact_name, email, phone, address, COALESCE(notes,''), active, created_at, updated_at
 		 FROM suppliers WHERE id=$1 AND tenant_id=$2`,
 		supplierID, tenantID,
 	))
@@ -219,7 +219,7 @@ func (s *SupplierService) CreatePO(ctx context.Context, tenantID uuid.UUID, crea
 }
 
 func (s *SupplierService) ListPOs(ctx context.Context, tenantID uuid.UUID, supplierID *uuid.UUID, status *supplier.POStatus) ([]*supplier.PurchaseOrder, error) {
-	query := `SELECT id, tenant_id, supplier_id, status, notes, total, ordered_at, received_at, created_by, created_at, updated_at
+	query := `SELECT id, tenant_id, supplier_id, status, COALESCE(notes,''), total, ordered_at, received_at, created_by, created_at, updated_at
 	          FROM purchase_orders WHERE tenant_id=$1`
 	args := []any{tenantID}
 	idx := 2
@@ -257,7 +257,7 @@ func (s *SupplierService) ListPOs(ctx context.Context, tenantID uuid.UUID, suppl
 			ids = append(ids, id)
 		}
 		sRows, err := s.pool.Query(ctx,
-			`SELECT id, tenant_id, name, rif, contact_name, email, phone, address, notes, active, created_at, updated_at
+			`SELECT id, tenant_id, name, rif, contact_name, email, phone, address, COALESCE(notes,''), active, created_at, updated_at
 			 FROM suppliers WHERE tenant_id=$1 AND id = ANY($2)`,
 			tenantID, ids,
 		)
@@ -284,7 +284,7 @@ func (s *SupplierService) ListPOs(ctx context.Context, tenantID uuid.UUID, suppl
 
 func (s *SupplierService) GetPO(ctx context.Context, tenantID, poID uuid.UUID) (*supplier.PurchaseOrder, error) {
 	po, err := scanPO(s.pool.QueryRow(ctx,
-		`SELECT id, tenant_id, supplier_id, status, notes, total, ordered_at, received_at, created_by, created_at, updated_at
+		`SELECT id, tenant_id, supplier_id, status, COALESCE(notes,''), total, ordered_at, received_at, created_by, created_at, updated_at
 		 FROM purchase_orders WHERE id=$1 AND tenant_id=$2`,
 		poID, tenantID,
 	))
