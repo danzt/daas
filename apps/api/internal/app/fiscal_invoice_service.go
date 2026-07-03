@@ -350,7 +350,7 @@ func (s *FiscalInvoiceService) GetByID(ctx context.Context, tenantID, invoiceID 
 		`SELECT id, tenant_id, fiscal_number, machine_serial, report_z_number,
 		        customer_name, customer_id_type, customer_id_number,
 		        subtotal_base, tax_amount, total,
-		        status, fail_reason, retry_count, notes,
+		        status, fail_reason, retry_count, COALESCE(notes,''),
 		        issued_at, created_by, created_at, updated_at
 		 FROM fiscal_invoices
 		 WHERE id=$1 AND tenant_id=$2`,
@@ -375,7 +375,7 @@ func (s *FiscalInvoiceService) List(ctx context.Context, tenantID uuid.UUID, f F
 	query := `SELECT id, tenant_id, fiscal_number, machine_serial, report_z_number,
 	                 customer_name, customer_id_type, customer_id_number,
 	                 subtotal_base, tax_amount, total,
-	                 status, fail_reason, retry_count, notes,
+	                 status, fail_reason, retry_count, COALESCE(notes,''),
 	                 issued_at, created_by, created_at, updated_at
 	          FROM fiscal_invoices
 	          WHERE tenant_id=$1`
@@ -725,7 +725,7 @@ func (s *FiscalInvoiceService) loadFiscalForUpdate(ctx context.Context, tx pgx.T
 		`SELECT id, tenant_id, fiscal_number, machine_serial, report_z_number,
 		        customer_name, customer_id_type, customer_id_number,
 		        subtotal_base, tax_amount, total,
-		        status, fail_reason, retry_count, notes,
+		        status, fail_reason, retry_count, COALESCE(notes,''),
 		        issued_at, created_by, created_at, updated_at
 		 FROM fiscal_invoices
 		 WHERE id=$1 AND tenant_id=$2
