@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -270,6 +272,51 @@ func (h *SupplierHandler) CancelPO(c echo.Context) error {
 	return c.JSON(http.StatusOK, po)
 }
 
+// setPurchaseInvoiceReq is the body for PUT /purchase-orders/:id/invoice.
+type setPurchaseInvoiceReq struct {
+	InvoiceNumber string  `json:"invoice_number"`
+	InvoiceDate   string  `json:"invoice_date"` // "YYYY-MM-DD" (optional)
+	TaxBase       float64 `json:"tax_base"`
+	TaxAmount     float64 `json:"tax_amount"`
+}
+
+// SetPurchaseInvoice records the supplier's invoice on a purchase order.
+func (h *SupplierHandler) SetPurchaseInvoice(c echo.Context) error {
+	tenantID, err := getTenantID(c)
+	if err != nil {
+		return WriteProblem(c, http.StatusForbidden, "forbidden", "tenant context missing")
+	}
+	poID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return WriteProblem(c, http.StatusBadRequest, "bad-request", "invalid po id")
+	}
+	var req setPurchaseInvoiceReq
+	if err := c.Bind(&req); err != nil {
+		return WriteProblem(c, http.StatusBadRequest, "bad-request", "invalid request body")
+	}
+
+	var invoiceDate *time.Time
+	if s := strings.TrimSpace(req.InvoiceDate); s != "" {
+		d, perr := time.Parse("2006-01-02", s)
+		if perr != nil {
+			return WriteProblem(c, http.StatusUnprocessableEntity, "validation-error",
+				"invoice_date must be YYYY-MM-DD")
+		}
+		invoiceDate = &d
+	}
+
+	po, err := h.svc.SetPurchaseInvoice(c.Request().Context(), tenantID, poID, supplier.SetPurchaseInvoiceRequest{
+		InvoiceNumber: strings.TrimSpace(req.InvoiceNumber),
+		InvoiceDate:   invoiceDate,
+		TaxBase:       req.TaxBase,
+		TaxAmount:     req.TaxAmount,
+	})
+	if err != nil {
+		return mapSupplierError(c, err)
+	}
+	return c.JSON(http.StatusOK, po)
+}
+
 // ─── Private helpers ──────────────────────────────────────────────────────────
 
 func buildPOLines(raw []createPOLineReq) ([]supplier.CreatePOLineRequest, error) {
@@ -298,7 +345,8 @@ func mapSupplierError(c echo.Context, err error) error {
 		errors.Is(err, supplier.ErrPOAlreadyReceived),
 		errors.Is(err, supplier.ErrPOAlreadyCancelled),
 		errors.Is(err, supplier.ErrPONotOrdered),
-		errors.Is(err, supplier.ErrPONotDraft):
+		errors.Is(err, supplier.ErrPONotDraft),
+		errors.Is(err, supplier.ErrInvoiceNumberRequired):
 		return WriteProblem(c, http.StatusUnprocessableEntity, "unprocessable", err.Error())
 	default:
 		return WriteProblem(c, http.StatusInternalServerError, "internal-error", err.Error())

@@ -202,6 +202,14 @@ CROSS JOIN LATERAL (
 UPDATE purchase_orders po SET total = COALESCE((SELECT sum(subtotal) FROM purchase_order_lines WHERE po_id=po.id),0)
 WHERE po.tenant_id = (SELECT tenant_id FROM _ctx);
 
+-- Factura del proveedor para las OC recibidas (Fase 1: declarar la compra).
+UPDATE purchase_orders po SET
+  supplier_invoice_number     = 'FAC-' || lpad((10000 + floor(random()*89999))::text, 5, '0'),
+  supplier_invoice_date       = po.received_at::date,
+  supplier_invoice_tax_base   = round(po.total, 2),
+  supplier_invoice_tax_amount = round(po.total * 0.16, 2)
+WHERE po.tenant_id = (SELECT tenant_id FROM _ctx) AND po.status = 'received';
+
 -- ============================== MOVIMIENTOS DE INVENTARIO ==============================
 -- Apertura (uno por producto)
 INSERT INTO inventory_movements (id, tenant_id, product_id, type, quantity, unit_cost, reference_type, reference_id, notes, created_by, created_at)

@@ -5,6 +5,7 @@ package supplier
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -85,6 +86,31 @@ type PurchaseOrder struct {
 	UpdatedAt  time.Time  `json:"updated_at"`
 	Lines      []POLine   `json:"lines"`
 	Supplier   *Supplier  `json:"supplier,omitempty"` // optional, populated on demand
+
+	// Factura de compra del proveedor (Fase 1). Se registra al recibir la
+	// mercadería, para poder declarar la compra (crédito fiscal IVA).
+	SupplierInvoiceNumber    string     `json:"supplier_invoice_number"`
+	SupplierInvoiceDate      *time.Time `json:"supplier_invoice_date"`
+	SupplierInvoiceTaxBase   float64    `json:"supplier_invoice_tax_base"`
+	SupplierInvoiceTaxAmount float64    `json:"supplier_invoice_tax_amount"`
+}
+
+// SetPurchaseInvoiceRequest registers the supplier's invoice on a purchase order.
+type SetPurchaseInvoiceRequest struct {
+	InvoiceNumber string
+	InvoiceDate   *time.Time
+	TaxBase       float64
+	TaxAmount     float64
+}
+
+func (r *SetPurchaseInvoiceRequest) Validate() error {
+	if strings.TrimSpace(r.InvoiceNumber) == "" {
+		return ErrInvoiceNumberRequired
+	}
+	if r.TaxBase < 0 || r.TaxAmount < 0 {
+		return fmt.Errorf("tax_base and tax_amount must be non-negative")
+	}
+	return nil
 }
 
 // POLine is a single product line in a purchase order.
@@ -135,13 +161,14 @@ func (r *CreatePORequest) Validate() error {
 // ─── Domain errors ────────────────────────────────────────────────────────────
 
 var (
-	ErrSupplierNotFound     = errors.New("supplier not found")
-	ErrSupplierNameRequired = errors.New("supplier name is required")
-	ErrPONotFound           = errors.New("purchase order not found")
-	ErrEmptyPO              = errors.New("purchase order must have at least one line")
-	ErrPOAlreadyOrdered     = errors.New("purchase order is already ordered")
-	ErrPOAlreadyReceived    = errors.New("purchase order is already received")
-	ErrPOAlreadyCancelled   = errors.New("purchase order is already cancelled")
-	ErrPONotOrdered         = errors.New("purchase order is not in ordered status")
-	ErrPONotDraft           = errors.New("purchase order is not in draft status")
+	ErrSupplierNotFound      = errors.New("supplier not found")
+	ErrSupplierNameRequired  = errors.New("supplier name is required")
+	ErrPONotFound            = errors.New("purchase order not found")
+	ErrEmptyPO               = errors.New("purchase order must have at least one line")
+	ErrPOAlreadyOrdered      = errors.New("purchase order is already ordered")
+	ErrPOAlreadyReceived     = errors.New("purchase order is already received")
+	ErrPOAlreadyCancelled    = errors.New("purchase order is already cancelled")
+	ErrPONotOrdered          = errors.New("purchase order is not in ordered status")
+	ErrPONotDraft            = errors.New("purchase order is not in draft status")
+	ErrInvoiceNumberRequired = errors.New("supplier invoice number is required")
 )

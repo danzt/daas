@@ -219,7 +219,8 @@ func (s *SupplierService) CreatePO(ctx context.Context, tenantID uuid.UUID, crea
 }
 
 func (s *SupplierService) ListPOs(ctx context.Context, tenantID uuid.UUID, supplierID *uuid.UUID, status *supplier.POStatus) ([]*supplier.PurchaseOrder, error) {
-	query := `SELECT id, tenant_id, supplier_id, status, COALESCE(notes,''), total, ordered_at, received_at, created_by, created_at, updated_at
+	query := `SELECT id, tenant_id, supplier_id, status, COALESCE(notes,''), total, ordered_at, received_at, created_by, created_at, updated_at,
+	                 COALESCE(supplier_invoice_number,''), supplier_invoice_date, COALESCE(supplier_invoice_tax_base,0), COALESCE(supplier_invoice_tax_amount,0)
 	          FROM purchase_orders WHERE tenant_id=$1`
 	args := []any{tenantID}
 	idx := 2
@@ -424,6 +425,37 @@ func (s *SupplierService) CancelPO(ctx context.Context, tenantID, poID uuid.UUID
 	return s.GetPO(ctx, tenantID, poID)
 }
 
+// SetPurchaseInvoice records the supplier's invoice data (número, fecha, base,
+// IVA) on a purchase order so the purchase can be declared to the tax authority.
+// Allowed on any non-cancelled PO — the invoice usually arrives with the goods.
+func (s *SupplierService) SetPurchaseInvoice(ctx context.Context, tenantID, poID uuid.UUID, req supplier.SetPurchaseInvoiceRequest) (*supplier.PurchaseOrder, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	po, err := s.GetPO(ctx, tenantID, poID)
+	if err != nil {
+		return nil, err
+	}
+	if po.Status == supplier.POStatusCancelled {
+		return nil, supplier.ErrPOAlreadyCancelled
+	}
+
+	_, err = s.pool.Exec(ctx,
+		`UPDATE purchase_orders
+		 SET supplier_invoice_number = $2,
+		     supplier_invoice_date = $3,
+		     supplier_invoice_tax_base = $4,
+		     supplier_invoice_tax_amount = $5,
+		     updated_at = NOW()
+		 WHERE id = $1 AND tenant_id = $6`,
+		poID, req.InvoiceNumber, req.InvoiceDate, req.TaxBase, req.TaxAmount, tenantID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("set purchase invoice: %w", err)
+	}
+	return s.GetPO(ctx, tenantID, poID)
+}
+
 // ─── Private helpers ──────────────────────────────────────────────────────────
 
 func (s *SupplierService) resolveSupplierUserID(ctx context.Context, tenantID uuid.UUID, supabaseUID string) (uuid.UUID, error) {
@@ -481,6 +513,8 @@ func scanPO(row supplierScanner) (*supplier.PurchaseOrder, error) {
 	if err := row.Scan(
 		&po.ID, &po.TenantID, &po.SupplierID, &po.Status, &po.Notes, &po.Total,
 		&po.OrderedAt, &po.ReceivedAt, &po.CreatedBy, &po.CreatedAt, &po.UpdatedAt,
+		&po.SupplierInvoiceNumber, &po.SupplierInvoiceDate,
+		&po.SupplierInvoiceTaxBase, &po.SupplierInvoiceTaxAmount,
 	); err != nil {
 		return nil, err
 	}
