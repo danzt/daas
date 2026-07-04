@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -291,6 +292,34 @@ func (h *SupplierHandler) DeletePortalCatalogItem(c echo.Context) error {
 		return mapSupplierError(c, err)
 	}
 	return c.JSON(http.StatusOK, map[string]string{"message": "eliminado"})
+}
+
+// ImportPortalCatalogExcel handles POST /api/v1/supplier-portal/:token/catalog/import-excel.
+// Recibe un .xlsx (multipart, campo "file") y carga el catálogo en masa.
+func (h *SupplierHandler) ImportPortalCatalogExcel(c echo.Context) error {
+	sup, errResp := h.resolvePortal(c)
+	if sup == nil {
+		return errResp
+	}
+	fh, err := c.FormFile("file")
+	if err != nil {
+		return WriteProblem(c, http.StatusBadRequest, "bad-request", "subí un archivo Excel (.xlsx)")
+	}
+	src, err := fh.Open()
+	if err != nil {
+		return WriteProblem(c, http.StatusBadRequest, "bad-request", "no se pudo abrir el archivo")
+	}
+	defer func() { _ = src.Close() }()
+	data, err := io.ReadAll(src)
+	if err != nil {
+		return WriteProblem(c, http.StatusInternalServerError, "internal-error", "no se pudo leer el archivo")
+	}
+
+	imported, skipped, err := h.svc.ImportCatalogExcel(c.Request().Context(), sup.TenantID, sup.ID, data)
+	if err != nil {
+		return WriteProblem(c, http.StatusUnprocessableEntity, "invalid-file", err.Error())
+	}
+	return c.JSON(http.StatusOK, map[string]int{"imported": imported, "skipped": skipped})
 }
 
 // ─── Purchase Order handlers ──────────────────────────────────────────────────
