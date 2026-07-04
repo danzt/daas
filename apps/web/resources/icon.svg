@@ -1,0 +1,14 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Fondo: violeta primary, flat, sin gradientes -->
+  <rect width="1024" height="1024" rx="224" fill="#7C3AED"/>
+
+  <!-- Marca: caja de inventario, flat, geometría simple, legible en chico -->
+  <rect x="242" y="242" width="540" height="540" rx="72" fill="#FFFFFF"/>
+
+  <!-- Cinta en cruz, color de marca -->
+  <rect x="472" y="242" width="80" height="540" fill="#7C3AED"/>
+  <rect x="242" y="472" width="540" height="80" fill="#7C3AED"/>
+
+  <!-- Acento CTA: esquina superior derecha, pop de color -->
+  <circle cx="782" cy="242" r="88" fill="#F97316"/>
+</svg>
