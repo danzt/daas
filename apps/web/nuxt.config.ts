@@ -5,6 +5,42 @@ const isCapacitorBuild = process.env.NUXT_CAPACITOR === "true";
 export default defineNuxtConfig({
   devtools: { enabled: !isCapacitorBuild },
   ssr: !isCapacitorBuild, // SPA puro para Capacitor, SSR para web
+  app: {
+    head: {
+      title: "Gestión de inventario",
+      titleTemplate: "%s · DaaS",
+      meta: [
+        {
+          name: "description",
+          content:
+            "Gestión de inventario multi-país con facturación fiscal y no fiscal.",
+        },
+        { name: "theme-color", content: "#7C3AED" },
+      ],
+      link: [
+        { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+        {
+          rel: "icon",
+          type: "image/png",
+          sizes: "32x32",
+          href: "/favicon-32x32.png",
+        },
+        {
+          rel: "icon",
+          type: "image/png",
+          sizes: "16x16",
+          href: "/favicon-16x16.png",
+        },
+        { rel: "icon", type: "image/x-icon", href: "/favicon.ico" },
+        {
+          rel: "apple-touch-icon",
+          sizes: "180x180",
+          href: "/apple-touch-icon.png",
+        },
+        { rel: "manifest", href: "/site.webmanifest" },
+      ],
+    },
+  },
   modules: [
     "@pinia/nuxt",
     "@nuxtjs/tailwindcss",
