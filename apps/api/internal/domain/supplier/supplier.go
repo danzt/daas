@@ -46,6 +46,26 @@ type CatalogItem struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
+// CreateCatalogItemRequest is the input for adding a catalog item from the portal.
+type CreateCatalogItemRequest struct {
+	Name        string
+	SKU         string
+	Cost        float64
+	Unit        string
+	Barcode     string
+	Description string
+}
+
+func (r *CreateCatalogItemRequest) Validate() error {
+	if strings.TrimSpace(r.Name) == "" {
+		return ErrCatalogNameRequired
+	}
+	if r.Cost < 0 {
+		return fmt.Errorf("cost must be non-negative")
+	}
+	return nil
+}
+
 // CreateSupplierRequest is the input for creating a supplier.
 type CreateSupplierRequest struct {
 	Name        string
@@ -188,4 +208,6 @@ var (
 	ErrPONotOrdered          = errors.New("purchase order is not in ordered status")
 	ErrPONotDraft            = errors.New("purchase order is not in draft status")
 	ErrInvoiceNumberRequired = errors.New("supplier invoice number is required")
+	ErrCatalogNameRequired   = errors.New("catalog item name is required")
+	ErrCatalogItemNotFound   = errors.New("catalog item not found")
 )

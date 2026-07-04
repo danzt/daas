@@ -171,6 +171,85 @@ func (h *SupplierHandler) RevokePortalToken(c echo.Context) error {
 	return c.JSON(http.StatusOK, sup)
 }
 
+// ─── Portal público del proveedor (Fase 2b) — sin auth, resuelto por token ───
+
+type portalInfoResponse struct {
+	SupplierName string                 `json:"supplier_name"`
+	StoreName    string                 `json:"store_name"`
+	Catalog      []supplier.CatalogItem `json:"catalog"`
+}
+
+type addCatalogItemReq struct {
+	Name        string  `json:"name"`
+	SKU         string  `json:"sku"`
+	Cost        float64 `json:"cost"`
+	Unit        string  `json:"unit"`
+	Barcode     string  `json:"barcode"`
+	Description string  `json:"description"`
+}
+
+// resolvePortal valida el token y devuelve el proveedor. 404 si no existe.
+func (h *SupplierHandler) resolvePortal(c echo.Context) (*supplier.Supplier, error) {
+	sup, err := h.svc.SupplierByToken(c.Request().Context(), c.Param("token"))
+	if err != nil {
+		return nil, WriteProblem(c, http.StatusNotFound, "not-found", "portal no encontrado")
+	}
+	return sup, nil
+}
+
+// GetPortal handles GET /api/v1/supplier-portal/:token.
+func (h *SupplierHandler) GetPortal(c echo.Context) error {
+	sup, errResp := h.resolvePortal(c)
+	if sup == nil {
+		return errResp
+	}
+	catalog, err := h.svc.ListCatalog(c.Request().Context(), sup.ID)
+	if err != nil {
+		return mapSupplierError(c, err)
+	}
+	return c.JSON(http.StatusOK, portalInfoResponse{
+		SupplierName: sup.Name,
+		StoreName:    h.svc.StoreName(c.Request().Context(), sup.TenantID),
+		Catalog:      catalog,
+	})
+}
+
+// AddPortalCatalogItem handles POST /api/v1/supplier-portal/:token/catalog.
+func (h *SupplierHandler) AddPortalCatalogItem(c echo.Context) error {
+	sup, errResp := h.resolvePortal(c)
+	if sup == nil {
+		return errResp
+	}
+	var body addCatalogItemReq
+	if err := c.Bind(&body); err != nil {
+		return WriteProblem(c, http.StatusBadRequest, "bad-request", "invalid body")
+	}
+	item, err := h.svc.AddCatalogItem(c.Request().Context(), sup.TenantID, sup.ID, supplier.CreateCatalogItemRequest{
+		Name: body.Name, SKU: body.SKU, Cost: body.Cost,
+		Unit: body.Unit, Barcode: body.Barcode, Description: body.Description,
+	})
+	if err != nil {
+		return mapSupplierError(c, err)
+	}
+	return c.JSON(http.StatusCreated, item)
+}
+
+// DeletePortalCatalogItem handles DELETE /api/v1/supplier-portal/:token/catalog/:itemId.
+func (h *SupplierHandler) DeletePortalCatalogItem(c echo.Context) error {
+	sup, errResp := h.resolvePortal(c)
+	if sup == nil {
+		return errResp
+	}
+	itemID, err := uuid.Parse(c.Param("itemId"))
+	if err != nil {
+		return WriteProblem(c, http.StatusBadRequest, "bad-request", "invalid item id")
+	}
+	if err := h.svc.DeleteCatalogItem(c.Request().Context(), sup.ID, itemID); err != nil {
+		return mapSupplierError(c, err)
+	}
+	return c.JSON(http.StatusOK, map[string]string{"message": "eliminado"})
+}
+
 // ─── Purchase Order handlers ──────────────────────────────────────────────────
 
 func (h *SupplierHandler) CreatePO(c echo.Context) error {
@@ -371,7 +450,8 @@ func buildPOLines(raw []createPOLineReq) ([]supplier.CreatePOLineRequest, error)
 func mapSupplierError(c echo.Context, err error) error {
 	switch {
 	case errors.Is(err, supplier.ErrSupplierNotFound),
-		errors.Is(err, supplier.ErrPONotFound):
+		errors.Is(err, supplier.ErrPONotFound),
+		errors.Is(err, supplier.ErrCatalogItemNotFound):
 		return WriteProblem(c, http.StatusNotFound, "not-found", err.Error())
 	case errors.Is(err, supplier.ErrSupplierNameRequired),
 		errors.Is(err, supplier.ErrEmptyPO),
@@ -380,7 +460,8 @@ func mapSupplierError(c echo.Context, err error) error {
 		errors.Is(err, supplier.ErrPOAlreadyCancelled),
 		errors.Is(err, supplier.ErrPONotOrdered),
 		errors.Is(err, supplier.ErrPONotDraft),
-		errors.Is(err, supplier.ErrInvoiceNumberRequired):
+		errors.Is(err, supplier.ErrInvoiceNumberRequired),
+		errors.Is(err, supplier.ErrCatalogNameRequired):
 		return WriteProblem(c, http.StatusUnprocessableEntity, "unprocessable", err.Error())
 	default:
 		return WriteProblem(c, http.StatusInternalServerError, "internal-error", err.Error())

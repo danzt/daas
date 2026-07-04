@@ -179,6 +179,92 @@ func randomToken(n int) (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
+// ═══ Portal público del proveedor (Fase 2b) ══════════════════════════════════
+
+// SupplierByToken resuelve el proveedor a partir del token del portal público.
+func (s *SupplierService) SupplierByToken(ctx context.Context, token string) (*supplier.Supplier, error) {
+	if token == "" {
+		return nil, supplier.ErrSupplierNotFound
+	}
+	sup, err := scanSupplier(s.pool.QueryRow(ctx,
+		`SELECT id, tenant_id, name, rif, contact_name, email, phone, address, COALESCE(notes,''), active, created_at, updated_at, COALESCE(portal_token,'')
+		 FROM suppliers WHERE portal_token=$1`, token))
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, supplier.ErrSupplierNotFound
+		}
+		return nil, fmt.Errorf("supplier by token: %w", err)
+	}
+	return sup, nil
+}
+
+// StoreName devuelve el nombre visible de la tienda (branding o razón social).
+func (s *SupplierService) StoreName(ctx context.Context, tenantID uuid.UUID) string {
+	var name string
+	var brand *string
+	if err := s.pool.QueryRow(ctx,
+		`SELECT name, branding_store_name FROM tenants WHERE id=$1`, tenantID,
+	).Scan(&name, &brand); err != nil {
+		return "la tienda"
+	}
+	if brand != nil && *brand != "" {
+		return *brand
+	}
+	return name
+}
+
+// ListCatalog lista el catálogo cargado por el proveedor.
+func (s *SupplierService) ListCatalog(ctx context.Context, supplierID uuid.UUID) ([]supplier.CatalogItem, error) {
+	rows, err := s.pool.Query(ctx,
+		`SELECT id, supplier_id, name, COALESCE(sku,''), COALESCE(cost,0), COALESCE(unit,''), COALESCE(barcode,''), COALESCE(description,''), created_at, updated_at
+		 FROM supplier_catalog_items WHERE supplier_id=$1 ORDER BY created_at DESC`, supplierID)
+	if err != nil {
+		return nil, fmt.Errorf("list catalog: %w", err)
+	}
+	defer rows.Close()
+	items := []supplier.CatalogItem{}
+	for rows.Next() {
+		var it supplier.CatalogItem
+		if err := rows.Scan(&it.ID, &it.SupplierID, &it.Name, &it.SKU, &it.Cost,
+			&it.Unit, &it.Barcode, &it.Description, &it.CreatedAt, &it.UpdatedAt); err != nil {
+			return nil, err
+		}
+		items = append(items, it)
+	}
+	return items, rows.Err()
+}
+
+// AddCatalogItem agrega un producto al catálogo del proveedor.
+func (s *SupplierService) AddCatalogItem(ctx context.Context, tenantID, supplierID uuid.UUID, req supplier.CreateCatalogItemRequest) (*supplier.CatalogItem, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	var it supplier.CatalogItem
+	err := s.pool.QueryRow(ctx,
+		`INSERT INTO supplier_catalog_items (tenant_id, supplier_id, name, sku, cost, unit, barcode, description)
+		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+		 RETURNING id, supplier_id, name, COALESCE(sku,''), COALESCE(cost,0), COALESCE(unit,''), COALESCE(barcode,''), COALESCE(description,''), created_at, updated_at`,
+		tenantID, supplierID, req.Name, req.SKU, req.Cost, req.Unit, req.Barcode, req.Description,
+	).Scan(&it.ID, &it.SupplierID, &it.Name, &it.SKU, &it.Cost, &it.Unit, &it.Barcode, &it.Description, &it.CreatedAt, &it.UpdatedAt)
+	if err != nil {
+		return nil, fmt.Errorf("add catalog item: %w", err)
+	}
+	return &it, nil
+}
+
+// DeleteCatalogItem elimina un producto del catálogo (scopeado al proveedor).
+func (s *SupplierService) DeleteCatalogItem(ctx context.Context, supplierID, itemID uuid.UUID) error {
+	tag, err := s.pool.Exec(ctx,
+		`DELETE FROM supplier_catalog_items WHERE id=$1 AND supplier_id=$2`, itemID, supplierID)
+	if err != nil {
+		return fmt.Errorf("delete catalog item: %w", err)
+	}
+	if tag.RowsAffected() == 0 {
+		return supplier.ErrCatalogItemNotFound
+	}
+	return nil
+}
+
 // ═══ Purchase Orders ══════════════════════════════════════════════════════════
 
 func (s *SupplierService) CreatePO(ctx context.Context, tenantID uuid.UUID, createdBySupabaseUID string, req supplier.CreatePORequest) (*supplier.PurchaseOrder, error) {
