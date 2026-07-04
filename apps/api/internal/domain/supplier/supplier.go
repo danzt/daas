@@ -27,6 +27,23 @@ type Supplier struct {
 	Active      bool      `json:"active"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
+	// PortalToken es el token del link público del proveedor. Vacío = sin link.
+	PortalToken string `json:"portal_token"`
+}
+
+// CatalogItem is one product in a supplier's own catalog (loaded from the
+// supplier portal). Separate from the tenant's products — se importa selectivo.
+type CatalogItem struct {
+	ID          uuid.UUID `json:"id"`
+	SupplierID  uuid.UUID `json:"supplier_id"`
+	Name        string    `json:"name"`
+	SKU         string    `json:"sku"`
+	Cost        float64   `json:"cost"`
+	Unit        string    `json:"unit"`
+	Barcode     string    `json:"barcode"`
+	Description string    `json:"description"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 // CreateSupplierRequest is the input for creating a supplier.

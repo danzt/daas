@@ -137,6 +137,40 @@ func (h *SupplierHandler) UpdateSupplier(c echo.Context) error {
 	return c.JSON(http.StatusOK, sup)
 }
 
+// GeneratePortalToken handles POST /suppliers/:id/portal-token.
+func (h *SupplierHandler) GeneratePortalToken(c echo.Context) error {
+	tenantID, err := getTenantID(c)
+	if err != nil {
+		return WriteProblem(c, http.StatusForbidden, "forbidden", "tenant context missing")
+	}
+	supplierID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return WriteProblem(c, http.StatusBadRequest, "bad-request", "invalid supplier id")
+	}
+	sup, err := h.svc.GeneratePortalToken(c.Request().Context(), tenantID, supplierID)
+	if err != nil {
+		return mapSupplierError(c, err)
+	}
+	return c.JSON(http.StatusOK, sup)
+}
+
+// RevokePortalToken handles DELETE /suppliers/:id/portal-token.
+func (h *SupplierHandler) RevokePortalToken(c echo.Context) error {
+	tenantID, err := getTenantID(c)
+	if err != nil {
+		return WriteProblem(c, http.StatusForbidden, "forbidden", "tenant context missing")
+	}
+	supplierID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return WriteProblem(c, http.StatusBadRequest, "bad-request", "invalid supplier id")
+	}
+	sup, err := h.svc.RevokePortalToken(c.Request().Context(), tenantID, supplierID)
+	if err != nil {
+		return mapSupplierError(c, err)
+	}
+	return c.JSON(http.StatusOK, sup)
+}
+
 // ─── Purchase Order handlers ──────────────────────────────────────────────────
 
 func (h *SupplierHandler) CreatePO(c echo.Context) error {
