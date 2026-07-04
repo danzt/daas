@@ -330,6 +330,8 @@ func registerRoutes(
 	api.PUT("/suppliers/:id", supplierHandler.UpdateSupplier)
 	api.POST("/suppliers/:id/portal-token", supplierHandler.GeneratePortalToken)
 	api.DELETE("/suppliers/:id/portal-token", supplierHandler.RevokePortalToken)
+	api.GET("/suppliers/:id/catalog", supplierHandler.GetSupplierCatalog)
+	api.POST("/suppliers/:id/catalog/:itemId/import", supplierHandler.ImportCatalogItem)
 
 	// Purchase Orders
 	api.GET("/purchase-orders", supplierHandler.ListPOs)

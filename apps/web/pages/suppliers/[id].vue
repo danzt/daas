@@ -14,6 +14,8 @@ import {
   Copy,
   Check,
   Trash2,
+  Package,
+  PackagePlus,
 } from "lucide-vue-next";
 import { useApiFetch } from "~/composables/useAuth";
 import SupplierFormModal from "~/components/suppliers/SupplierFormModal.vue";
@@ -45,15 +47,31 @@ interface PurchaseOrder {
   lines: POLine[];
 }
 
+interface CatalogItem {
+  id: string;
+  name: string;
+  sku: string;
+  cost: number;
+  unit: string;
+  barcode: string;
+  description: string;
+}
+
 const route = useRoute();
 const { isMobile } = useMobileMode();
 const supplierId = route.params.id as string;
 
 const supplier = ref<Supplier | null>(null);
 const orders = ref<PurchaseOrder[]>([]);
+const catalog = ref<CatalogItem[]>([]);
 const loading = ref(false);
 const loadError = ref("");
 const formModalOpen = ref(false);
+
+// Import del catálogo del proveedor (Fase 2c)
+const importingId = ref<string | null>(null);
+const importMsg = ref("");
+const importError = ref("");
 
 const STATUS_CONFIG: Record<string, { label: string; class: string }> = {
   draft: { label: "Borrador", class: "bg-muted text-muted-foreground" },
@@ -92,14 +110,16 @@ async function load() {
   loading.value = true;
   loadError.value = "";
   try {
-    const [sup, pos] = await Promise.all([
+    const [sup, pos, cat] = await Promise.all([
       useApiFetch<Supplier>(`/api/v1/suppliers/${supplierId}`),
       useApiFetch<PurchaseOrder[]>(
         `/api/v1/purchase-orders?supplier_id=${supplierId}`,
       ),
+      useApiFetch<CatalogItem[]>(`/api/v1/suppliers/${supplierId}/catalog`),
     ]);
     supplier.value = sup;
     orders.value = pos;
+    catalog.value = cat;
   } catch {
     loadError.value = "No se pudo cargar la información del proveedor";
   } finally {
@@ -110,6 +130,25 @@ async function load() {
 function onSaved(updated: Supplier) {
   supplier.value = updated;
   formModalOpen.value = false;
+}
+
+async function importItem(item: CatalogItem) {
+  importingId.value = item.id;
+  importError.value = "";
+  importMsg.value = "";
+  try {
+    await useApiFetch(
+      `/api/v1/suppliers/${supplierId}/catalog/${item.id}/import`,
+      { method: "POST" },
+    );
+    catalog.value = catalog.value.filter((i) => i.id !== item.id);
+    importMsg.value = `"${item.name}" se agregó a tus productos`;
+  } catch (err: unknown) {
+    const e = err as { data?: { detail?: string } };
+    importError.value = e?.data?.detail ?? "No se pudo importar el producto";
+  } finally {
+    importingId.value = null;
+  }
 }
 
 // ─── Portal del proveedor (Fase 2a) ──────────────────────────────────────────
@@ -354,6 +393,72 @@ onMounted(load);
           <Link2 v-else class="w-4 h-4" />
           Generar link del portal
         </button>
+      </div>
+
+      <!-- Catálogo del proveedor (Fase 2c) -->
+      <div v-if="catalog.length" class="border bg-card rounded-xl p-6">
+        <div class="flex items-center gap-2 mb-1">
+          <Package class="w-4 h-4 text-primary" />
+          <h3 class="font-semibold text-foreground">
+            Catálogo del proveedor ({{ catalog.length }})
+          </h3>
+        </div>
+        <p class="text-sm text-muted-foreground">
+          Productos que el proveedor cargó por su portal. Importá los que
+          quieras a tu catálogo (se crean como no-fiscal con el costo; ajustás
+          precio y demás después).
+        </p>
+
+        <div
+          v-if="importMsg"
+          class="mt-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-sm rounded-lg px-4 py-2.5"
+        >
+          {{ importMsg }}
+        </div>
+        <div
+          v-if="importError"
+          class="mt-3 bg-destructive/10 border border-destructive/30 text-destructive text-sm rounded-lg px-4 py-2.5"
+        >
+          {{ importError }}
+        </div>
+
+        <div class="mt-4 divide-y divide-border border-y border-border">
+          <div
+            v-for="item in catalog"
+            :key="item.id"
+            class="flex items-center gap-3 py-3"
+          >
+            <div
+              class="flex size-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+            >
+              <Package class="w-4 h-4" />
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-medium text-foreground">
+                {{ item.name }}
+              </p>
+              <p class="text-xs text-muted-foreground">
+                <span v-if="item.sku" class="font-mono">{{ item.sku }}</span>
+                <span v-if="item.unit"> · {{ item.unit }}</span>
+                <span v-if="item.cost">
+                  · costo {{ fmtCurrency(item.cost) }}</span
+                >
+              </p>
+            </div>
+            <button
+              :disabled="importingId === item.id"
+              class="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg bg-primary text-white hover:opacity-90 transition-opacity disabled:opacity-50 shrink-0"
+              @click="importItem(item)"
+            >
+              <Loader2
+                v-if="importingId === item.id"
+                class="w-3.5 h-3.5 animate-spin"
+              />
+              <PackagePlus v-else class="w-3.5 h-3.5" />
+              Importar
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Purchase orders -->

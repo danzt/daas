@@ -210,4 +210,6 @@ var (
 	ErrInvoiceNumberRequired = errors.New("supplier invoice number is required")
 	ErrCatalogNameRequired   = errors.New("catalog item name is required")
 	ErrCatalogItemNotFound   = errors.New("catalog item not found")
+	ErrCatalogItemNoCost     = errors.New("el producto del catálogo no tiene costo; asignalo antes de importar")
+	ErrProductSKUExists      = errors.New("ya existe un producto con ese SKU")
 )

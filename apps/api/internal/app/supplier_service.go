@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/danzt/daas/api/internal/domain/supplier"
@@ -263,6 +264,43 @@ func (s *SupplierService) DeleteCatalogItem(ctx context.Context, supplierID, ite
 		return supplier.ErrCatalogItemNotFound
 	}
 	return nil
+}
+
+// ImportCatalogItem crea un producto del tenant a partir de un ítem del catálogo
+// del proveedor. Importa como NO-fiscal con internal_price = costo (el owner
+// ajusta el precio de venta / flag fiscal después). Import selectivo.
+func (s *SupplierService) ImportCatalogItem(ctx context.Context, tenantID, supplierID, itemID uuid.UUID) (uuid.UUID, string, error) {
+	var name, sku, barcode string
+	var cost float64
+	err := s.pool.QueryRow(ctx,
+		`SELECT name, COALESCE(sku,''), COALESCE(barcode,''), COALESCE(cost,0)
+		 FROM supplier_catalog_items WHERE id=$1 AND supplier_id=$2 AND tenant_id=$3`,
+		itemID, supplierID, tenantID,
+	).Scan(&name, &sku, &barcode, &cost)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return uuid.Nil, "", supplier.ErrCatalogItemNotFound
+		}
+		return uuid.Nil, "", fmt.Errorf("load catalog item: %w", err)
+	}
+	if cost <= 0 {
+		return uuid.Nil, "", supplier.ErrCatalogItemNoCost
+	}
+
+	var pid uuid.UUID
+	err = s.pool.QueryRow(ctx,
+		`INSERT INTO products (tenant_id, name, sku, barcode, is_fiscal, internal_price, active)
+		 VALUES ($1, $2, $3, $4, false, $5, true) RETURNING id`,
+		tenantID, nullableString(name), nullableString(sku), nullableString(barcode), cost,
+	).Scan(&pid)
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return uuid.Nil, "", supplier.ErrProductSKUExists
+		}
+		return uuid.Nil, "", fmt.Errorf("import to products: %w", err)
+	}
+	return pid, name, nil
 }
 
 // ═══ Purchase Orders ══════════════════════════════════════════════════════════
