@@ -171,6 +171,49 @@ func (h *SupplierHandler) RevokePortalToken(c echo.Context) error {
 	return c.JSON(http.StatusOK, sup)
 }
 
+// GetSupplierCatalog handles GET /suppliers/:id/catalog (authed, panel).
+// Lista el catálogo que el proveedor cargó desde su portal.
+func (h *SupplierHandler) GetSupplierCatalog(c echo.Context) error {
+	tenantID, err := getTenantID(c)
+	if err != nil {
+		return WriteProblem(c, http.StatusForbidden, "forbidden", "tenant context missing")
+	}
+	supplierID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return WriteProblem(c, http.StatusBadRequest, "bad-request", "invalid supplier id")
+	}
+	if _, err := h.svc.GetSupplier(c.Request().Context(), tenantID, supplierID); err != nil {
+		return mapSupplierError(c, err)
+	}
+	catalog, err := h.svc.ListCatalog(c.Request().Context(), supplierID)
+	if err != nil {
+		return mapSupplierError(c, err)
+	}
+	return c.JSON(http.StatusOK, catalog)
+}
+
+// ImportCatalogItem handles POST /suppliers/:id/catalog/:itemId/import (authed).
+// Crea un producto del tenant a partir de un ítem del catálogo del proveedor.
+func (h *SupplierHandler) ImportCatalogItem(c echo.Context) error {
+	tenantID, err := getTenantID(c)
+	if err != nil {
+		return WriteProblem(c, http.StatusForbidden, "forbidden", "tenant context missing")
+	}
+	supplierID, err := uuid.Parse(c.Param("id"))
+	if err != nil {
+		return WriteProblem(c, http.StatusBadRequest, "bad-request", "invalid supplier id")
+	}
+	itemID, err := uuid.Parse(c.Param("itemId"))
+	if err != nil {
+		return WriteProblem(c, http.StatusBadRequest, "bad-request", "invalid item id")
+	}
+	pid, name, err := h.svc.ImportCatalogItem(c.Request().Context(), tenantID, supplierID, itemID)
+	if err != nil {
+		return mapSupplierError(c, err)
+	}
+	return c.JSON(http.StatusCreated, map[string]string{"product_id": pid.String(), "name": name})
+}
+
 // ─── Portal público del proveedor (Fase 2b) — sin auth, resuelto por token ───
 
 type portalInfoResponse struct {
@@ -461,7 +504,9 @@ func mapSupplierError(c echo.Context, err error) error {
 		errors.Is(err, supplier.ErrPONotOrdered),
 		errors.Is(err, supplier.ErrPONotDraft),
 		errors.Is(err, supplier.ErrInvoiceNumberRequired),
-		errors.Is(err, supplier.ErrCatalogNameRequired):
+		errors.Is(err, supplier.ErrCatalogNameRequired),
+		errors.Is(err, supplier.ErrCatalogItemNoCost),
+		errors.Is(err, supplier.ErrProductSKUExists):
 		return WriteProblem(c, http.StatusUnprocessableEntity, "unprocessable", err.Error())
 	default:
 		return WriteProblem(c, http.StatusInternalServerError, "internal-error", err.Error())
