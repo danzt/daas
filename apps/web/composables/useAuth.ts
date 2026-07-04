@@ -29,7 +29,7 @@ export function useApiFetch<T>(
     baseURL: config.public.apiBase,
     headers,
     ...options,
-    onResponseError({ response }) {
+    onResponseError({ response }: { response: { status: number } }) {
       if (response.status === 401 && !import.meta.server) {
         // Token rejected — clear auth state and redirect to login
         store.accessToken = null;

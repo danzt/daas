@@ -694,7 +694,7 @@ onMounted(load);
                     {{
                       pmLabel(
                         paymentMethods.find(
-                          (m) => m.id === order.payment_method_id,
+                          (m) => m.id === order?.payment_method_id,
                         ) ?? paymentMethods[0],
                       )
                     }}
