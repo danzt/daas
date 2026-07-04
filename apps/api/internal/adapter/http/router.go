@@ -203,6 +203,14 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 			shopOrderHandler.UploadPaymentProof,
 			middleware.BodyLimit("6M"),
 		)
+
+		// Portal público del proveedor (Fase 2b) — sin login, autenticado por el
+		// token del link. Rate-limited igual que el storefront.
+		portal := e.Group("/api/v1/supplier-portal/:token")
+		portal.Use(rateLimiter.Handle())
+		portal.GET("", supplierHandler.GetPortal)
+		portal.POST("/catalog", supplierHandler.AddPortalCatalogItem)
+		portal.DELETE("/catalog/:itemId", supplierHandler.DeletePortalCatalogItem)
 	}
 
 	return e
