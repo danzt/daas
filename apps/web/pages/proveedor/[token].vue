@@ -6,6 +6,7 @@ import {
   Trash2,
   Store,
   AlertTriangle,
+  FileSpreadsheet,
 } from "lucide-vue-next";
 
 // Página pública — sin login, sin layout del panel.
@@ -109,6 +110,39 @@ function fmt(n: number) {
   }).format(n);
 }
 
+// ─── Carga por Excel (Fase 3) ────────────────────────────────────────────────
+const uploading = ref(false);
+const uploadMsg = ref("");
+const uploadError = ref("");
+
+async function onFile(e: Event) {
+  const input = e.target as HTMLInputElement;
+  const file = input.files?.[0];
+  if (!file) return;
+  uploading.value = true;
+  uploadMsg.value = "";
+  uploadError.value = "";
+  try {
+    const fd = new FormData();
+    fd.append("file", file);
+    const res = await $fetch<{ imported: number; skipped: number }>(
+      `${base}/catalog/import-excel`,
+      { method: "POST", body: fd },
+    );
+    uploadMsg.value =
+      `Se cargaron ${res.imported} producto(s)` +
+      (res.skipped ? `, ${res.skipped} fila(s) salteada(s).` : ".");
+    await load();
+  } catch (err: unknown) {
+    const e2 = err as { data?: { detail?: string } };
+    uploadError.value =
+      e2?.data?.detail ?? "No se pudo procesar el Excel. Revisá el formato.";
+  } finally {
+    uploading.value = false;
+    input.value = ""; // permitir re-subir el mismo archivo
+  }
+}
+
 onMounted(load);
 </script>
 
@@ -153,10 +187,59 @@ onMounted(load);
           </div>
         </div>
 
+        <!-- Carga por Excel (Fase 3) -->
+        <div
+          class="mb-4 rounded-2xl border border-border bg-white p-5 shadow-sm"
+        >
+          <div class="flex items-center gap-2">
+            <FileSpreadsheet class="size-4 text-primary" />
+            <h2 class="text-sm font-bold text-foreground">
+              Subir catálogo por Excel
+            </h2>
+          </div>
+          <p class="mt-1 text-xs text-muted-foreground">
+            Cargá muchos productos de una. Columnas (la primera fila es el
+            encabezado):
+            <span class="font-medium text-foreground"
+              >nombre · sku · costo · unidad · código de barras ·
+              descripción</span
+            >.
+          </p>
+
+          <div
+            v-if="uploadMsg"
+            class="mt-3 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700"
+          >
+            {{ uploadMsg }}
+          </div>
+          <div
+            v-if="uploadError"
+            class="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600"
+          >
+            {{ uploadError }}
+          </div>
+
+          <label
+            class="mt-4 flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 text-sm font-bold text-primary hover:bg-primary/10"
+            :class="uploading && 'pointer-events-none opacity-60'"
+          >
+            <Loader2 v-if="uploading" class="size-5 animate-spin" />
+            <FileSpreadsheet v-else class="size-5" />
+            {{ uploading ? "Procesando..." : "Elegir archivo .xlsx" }}
+            <input
+              type="file"
+              accept=".xlsx"
+              class="hidden"
+              :disabled="uploading"
+              @change="onFile"
+            />
+          </label>
+        </div>
+
         <!-- Alta de producto -->
         <div class="rounded-2xl border border-border bg-white p-5 shadow-sm">
           <h2 class="mb-4 text-sm font-bold text-foreground">
-            Agregar producto
+            …o agregar uno por uno
           </h2>
 
           <div

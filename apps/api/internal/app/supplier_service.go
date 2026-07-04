@@ -1,17 +1,21 @@
 package app
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/xuri/excelize/v2"
 
 	"github.com/danzt/daas/api/internal/domain/supplier"
 )
@@ -264,6 +268,68 @@ func (s *SupplierService) DeleteCatalogItem(ctx context.Context, supplierID, ite
 		return supplier.ErrCatalogItemNotFound
 	}
 	return nil
+}
+
+// ImportCatalogExcel parsea un .xlsx y crea ítems de catálogo en masa.
+// Columnas esperadas (fila 1 = encabezado, se ignora):
+// nombre | sku | costo | unidad | codigo_barras | descripcion
+// Devuelve (importados, salteados, error). Filas sin nombre se saltean.
+func (s *SupplierService) ImportCatalogExcel(ctx context.Context, tenantID, supplierID uuid.UUID, data []byte) (int, int, error) {
+	f, err := excelize.OpenReader(bytes.NewReader(data))
+	if err != nil {
+		return 0, 0, fmt.Errorf("no se pudo leer el archivo (¿es un .xlsx válido?): %w", err)
+	}
+	defer func() { _ = f.Close() }()
+
+	sheets := f.GetSheetList()
+	if len(sheets) == 0 {
+		return 0, 0, errors.New("el archivo no tiene hojas")
+	}
+	rows, err := f.GetRows(sheets[0])
+	if err != nil {
+		return 0, 0, fmt.Errorf("no se pudieron leer las filas: %w", err)
+	}
+
+	imported, skipped := 0, 0
+	for i, row := range rows {
+		if i == 0 {
+			continue // encabezado
+		}
+		name := strings.TrimSpace(cellAt(row, 0))
+		if name == "" {
+			skipped++
+			continue
+		}
+		_, err := s.pool.Exec(ctx,
+			`INSERT INTO supplier_catalog_items (tenant_id, supplier_id, name, sku, cost, unit, barcode, description)
+			 VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+			tenantID, supplierID, name, cellAt(row, 1), parseCost(cellAt(row, 2)),
+			cellAt(row, 3), cellAt(row, 4), cellAt(row, 5))
+		if err != nil {
+			skipped++
+			continue
+		}
+		imported++
+	}
+	return imported, skipped, nil
+}
+
+// cellAt devuelve la celda en el índice, o "" si la fila es más corta.
+func cellAt(row []string, idx int) string {
+	if idx < len(row) {
+		return strings.TrimSpace(row[idx])
+	}
+	return ""
+}
+
+// parseCost interpreta el costo aceptando coma o punto decimal.
+func parseCost(s string) float64 {
+	s = strings.ReplaceAll(strings.TrimSpace(s), ",", ".")
+	v, err := strconv.ParseFloat(s, 64)
+	if err != nil || v < 0 {
+		return 0
+	}
+	return v
 }
 
 // ImportCatalogItem crea un producto del tenant a partir de un ítem del catálogo

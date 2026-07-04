@@ -211,6 +211,8 @@ func NewRouterWithConfig(cfg RouterConfig) *echo.Echo { //nolint:funlen,cyclop
 		portal.GET("", supplierHandler.GetPortal)
 		portal.POST("/catalog", supplierHandler.AddPortalCatalogItem)
 		portal.DELETE("/catalog/:itemId", supplierHandler.DeletePortalCatalogItem)
+		portal.POST("/catalog/import-excel", supplierHandler.ImportPortalCatalogExcel,
+			middleware.BodyLimit("5M"))
 	}
 
 	return e
