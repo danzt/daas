@@ -10,6 +10,10 @@ import {
   ShoppingCart,
   Loader2,
   ChevronRight,
+  Link2,
+  Copy,
+  Check,
+  Trash2,
 } from "lucide-vue-next";
 import { useApiFetch } from "~/composables/useAuth";
 import SupplierFormModal from "~/components/suppliers/SupplierFormModal.vue";
@@ -106,6 +110,54 @@ async function load() {
 function onSaved(updated: Supplier) {
   supplier.value = updated;
   formModalOpen.value = false;
+}
+
+// ─── Portal del proveedor (Fase 2a) ──────────────────────────────────────────
+const portalBusy = ref(false);
+const portalError = ref("");
+const copied = ref(false);
+
+const portalUrl = computed(() =>
+  supplier.value?.portal_token && import.meta.client
+    ? `${window.location.origin}/proveedor/${supplier.value.portal_token}`
+    : "",
+);
+
+async function generatePortalToken() {
+  portalBusy.value = true;
+  portalError.value = "";
+  try {
+    supplier.value = await useApiFetch<Supplier>(
+      `/api/v1/suppliers/${supplierId}/portal-token`,
+      { method: "POST" },
+    );
+  } catch {
+    portalError.value = "No se pudo generar el link";
+  } finally {
+    portalBusy.value = false;
+  }
+}
+
+async function revokePortalToken() {
+  portalBusy.value = true;
+  portalError.value = "";
+  try {
+    supplier.value = await useApiFetch<Supplier>(
+      `/api/v1/suppliers/${supplierId}/portal-token`,
+      { method: "DELETE" },
+    );
+  } catch {
+    portalError.value = "No se pudo revocar el link";
+  } finally {
+    portalBusy.value = false;
+  }
+}
+
+async function copyPortalUrl() {
+  if (!portalUrl.value) return;
+  await navigator.clipboard.writeText(portalUrl.value);
+  copied.value = true;
+  setTimeout(() => (copied.value = false), 1800);
 }
 
 onMounted(load);
@@ -235,6 +287,73 @@ onMounted(load);
           <FileText class="w-4 h-4 inline mr-1" />
           {{ supplier.notes }}
         </div>
+      </div>
+
+      <!-- Portal del proveedor (Fase 2a) -->
+      <div class="border bg-card rounded-xl p-6">
+        <div class="flex items-center gap-2 mb-1">
+          <Link2 class="w-4 h-4 text-primary" />
+          <h3 class="font-semibold text-foreground">Portal del proveedor</h3>
+        </div>
+        <p class="text-sm text-muted-foreground">
+          Un link público (sin login) para que el proveedor cargue su catálogo
+          de productos.
+        </p>
+
+        <div
+          v-if="portalError"
+          class="mt-3 bg-destructive/10 border border-destructive/30 text-destructive text-sm rounded-lg px-4 py-2.5"
+        >
+          {{ portalError }}
+        </div>
+
+        <!-- Con link -->
+        <div v-if="supplier.portal_token" class="mt-4 space-y-3">
+          <div class="flex items-center gap-2">
+            <input
+              :value="portalUrl"
+              readonly
+              class="flex-1 h-10 px-3 rounded-lg border border-input bg-muted/40 text-sm font-mono text-foreground focus:outline-none"
+            />
+            <button
+              class="flex items-center gap-1.5 h-10 px-3 rounded-lg bg-primary text-white text-sm font-medium hover:opacity-90 transition-opacity shrink-0"
+              @click="copyPortalUrl"
+            >
+              <component :is="copied ? Check : Copy" class="w-4 h-4" />
+              {{ copied ? "Copiado" : "Copiar" }}
+            </button>
+          </div>
+          <div class="flex items-center gap-3">
+            <button
+              :disabled="portalBusy"
+              class="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
+              @click="generatePortalToken"
+            >
+              <Loader2 v-if="portalBusy" class="w-3.5 h-3.5 animate-spin" />
+              Regenerar link
+            </button>
+            <button
+              :disabled="portalBusy"
+              class="flex items-center gap-1.5 text-sm text-destructive hover:underline disabled:opacity-50"
+              @click="revokePortalToken"
+            >
+              <Trash2 class="w-3.5 h-3.5" />
+              Revocar
+            </button>
+          </div>
+        </div>
+
+        <!-- Sin link -->
+        <button
+          v-else
+          :disabled="portalBusy"
+          class="mt-4 flex items-center gap-2 px-4 py-2 text-sm rounded-lg bg-primary text-white hover:opacity-90 transition-opacity disabled:opacity-50"
+          @click="generatePortalToken"
+        >
+          <Loader2 v-if="portalBusy" class="w-4 h-4 animate-spin" />
+          <Link2 v-else class="w-4 h-4" />
+          Generar link del portal
+        </button>
       </div>
 
       <!-- Purchase orders -->

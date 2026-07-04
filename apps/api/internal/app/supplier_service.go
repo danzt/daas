@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"time"
@@ -56,7 +58,7 @@ func (s *SupplierService) CreateSupplier(ctx context.Context, tenantID uuid.UUID
 }
 
 func (s *SupplierService) ListSuppliers(ctx context.Context, tenantID uuid.UUID, activeOnly bool) ([]*supplier.Supplier, error) {
-	query := `SELECT id, tenant_id, name, rif, contact_name, email, phone, address, COALESCE(notes,''), active, created_at, updated_at
+	query := `SELECT id, tenant_id, name, rif, contact_name, email, phone, address, COALESCE(notes,''), active, created_at, updated_at, COALESCE(portal_token,'')
 	          FROM suppliers WHERE tenant_id=$1`
 	if activeOnly {
 		query += " AND active=true"
@@ -80,7 +82,7 @@ func (s *SupplierService) ListSuppliers(ctx context.Context, tenantID uuid.UUID,
 
 func (s *SupplierService) GetSupplier(ctx context.Context, tenantID, supplierID uuid.UUID) (*supplier.Supplier, error) {
 	sup, err := scanSupplier(s.pool.QueryRow(ctx,
-		`SELECT id, tenant_id, name, rif, contact_name, email, phone, address, COALESCE(notes,''), active, created_at, updated_at
+		`SELECT id, tenant_id, name, rif, contact_name, email, phone, address, COALESCE(notes,''), active, created_at, updated_at, COALESCE(portal_token,'')
 		 FROM suppliers WHERE id=$1 AND tenant_id=$2`,
 		supplierID, tenantID,
 	))
@@ -134,6 +136,47 @@ func (s *SupplierService) UpdateSupplier(ctx context.Context, tenantID, supplier
 	}
 	sup.UpdatedAt = time.Now().UTC()
 	return sup, nil
+}
+
+// GeneratePortalToken crea (o rota) el token del link público del proveedor.
+func (s *SupplierService) GeneratePortalToken(ctx context.Context, tenantID, supplierID uuid.UUID) (*supplier.Supplier, error) {
+	if _, err := s.GetSupplier(ctx, tenantID, supplierID); err != nil {
+		return nil, err
+	}
+	token, err := randomToken(24)
+	if err != nil {
+		return nil, fmt.Errorf("generate token: %w", err)
+	}
+	if _, err := s.pool.Exec(ctx,
+		`UPDATE suppliers SET portal_token=$1, updated_at=NOW() WHERE id=$2 AND tenant_id=$3`,
+		token, supplierID, tenantID,
+	); err != nil {
+		return nil, fmt.Errorf("set portal token: %w", err)
+	}
+	return s.GetSupplier(ctx, tenantID, supplierID)
+}
+
+// RevokePortalToken desactiva el link público del proveedor.
+func (s *SupplierService) RevokePortalToken(ctx context.Context, tenantID, supplierID uuid.UUID) (*supplier.Supplier, error) {
+	if _, err := s.GetSupplier(ctx, tenantID, supplierID); err != nil {
+		return nil, err
+	}
+	if _, err := s.pool.Exec(ctx,
+		`UPDATE suppliers SET portal_token=NULL, updated_at=NOW() WHERE id=$1 AND tenant_id=$2`,
+		supplierID, tenantID,
+	); err != nil {
+		return nil, fmt.Errorf("revoke portal token: %w", err)
+	}
+	return s.GetSupplier(ctx, tenantID, supplierID)
+}
+
+// randomToken devuelve un token hex aleatorio de n bytes (2n caracteres).
+func randomToken(n int) (string, error) {
+	b := make([]byte, n)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
 }
 
 // ═══ Purchase Orders ══════════════════════════════════════════════════════════
@@ -258,7 +301,7 @@ func (s *SupplierService) ListPOs(ctx context.Context, tenantID uuid.UUID, suppl
 			ids = append(ids, id)
 		}
 		sRows, err := s.pool.Query(ctx,
-			`SELECT id, tenant_id, name, rif, contact_name, email, phone, address, COALESCE(notes,''), active, created_at, updated_at
+			`SELECT id, tenant_id, name, rif, contact_name, email, phone, address, COALESCE(notes,''), active, created_at, updated_at, COALESCE(portal_token,'')
 			 FROM suppliers WHERE tenant_id=$1 AND id = ANY($2)`,
 			tenantID, ids,
 		)
@@ -501,7 +544,7 @@ func scanSupplier(row supplierScanner) (*supplier.Supplier, error) {
 	if err := row.Scan(
 		&s.ID, &s.TenantID, &s.Name, &s.RIF, &s.ContactName,
 		&s.Email, &s.Phone, &s.Address, &s.Notes, &s.Active,
-		&s.CreatedAt, &s.UpdatedAt,
+		&s.CreatedAt, &s.UpdatedAt, &s.PortalToken,
 	); err != nil {
 		return nil, err
 	}

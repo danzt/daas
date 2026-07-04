@@ -14,6 +14,7 @@ export interface Supplier {
   active: boolean;
   created_at: string;
   updated_at: string;
+  portal_token?: string;
 }
 
 const props = defineProps<{
