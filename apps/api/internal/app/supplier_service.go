@@ -518,7 +518,8 @@ func (s *SupplierService) ListPOs(ctx context.Context, tenantID uuid.UUID, suppl
 
 func (s *SupplierService) GetPO(ctx context.Context, tenantID, poID uuid.UUID) (*supplier.PurchaseOrder, error) {
 	po, err := scanPO(s.pool.QueryRow(ctx,
-		`SELECT id, tenant_id, supplier_id, status, COALESCE(notes,''), total, ordered_at, received_at, created_by, created_at, updated_at
+		`SELECT id, tenant_id, supplier_id, status, COALESCE(notes,''), total, ordered_at, received_at, created_by, created_at, updated_at,
+		        COALESCE(supplier_invoice_number,''), supplier_invoice_date, COALESCE(supplier_invoice_tax_base,0), COALESCE(supplier_invoice_tax_amount,0)
 		 FROM purchase_orders WHERE id=$1 AND tenant_id=$2`,
 		poID, tenantID,
 	))
