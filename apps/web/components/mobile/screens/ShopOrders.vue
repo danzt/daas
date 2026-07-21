@@ -33,7 +33,7 @@ const STATUS: Record<
 > = {
   pending: {
     label: "Pendiente",
-    chip: "bg-amber-100 text-amber-700",
+    chip: "bg-amber-50 text-amber-700",
     bubble: "bg-amber-50",
     fg: "text-amber-600",
     icon: Clock,

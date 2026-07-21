@@ -262,7 +262,7 @@ watch(showInactive, loadSuppliers);
                   :class="[
                     'inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium',
                     sup.active
-                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
                       : 'bg-muted text-muted-foreground',
                   ]"
                 >

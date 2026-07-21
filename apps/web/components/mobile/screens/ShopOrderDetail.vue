@@ -83,7 +83,7 @@ const STATUS: Record<string, { label: string; chip: string; icon: Component }> =
   {
     pending: {
       label: "Pendiente de pago",
-      chip: "bg-amber-100 text-amber-700",
+      chip: "bg-amber-50 text-amber-700",
       icon: Clock,
     },
     paid: {
