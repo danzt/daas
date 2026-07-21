@@ -683,7 +683,7 @@ onMounted(load);
 
                 <span
                   v-if="product.stock_qty > 0 && product.stock_qty <= 5"
-                  class="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-[10px] font-semibold shadow-sm"
+                  class="absolute top-2 right-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 text-[10px] font-semibold shadow-sm"
                 >
                   <Sparkles class="w-2.5 h-2.5" />
                   ¡Pocos!

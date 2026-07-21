@@ -124,7 +124,7 @@ const STATUS_CONFIG: Record<string, { label: string; class: string }> = {
   received: {
     label: "Recibida",
     class:
-      "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+      "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300",
   },
   cancelled: {
     label: "Cancelada",

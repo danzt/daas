@@ -125,8 +125,7 @@ const STATUS_CONFIG: Record<
 > = {
   pending: {
     label: "Pendiente de pago",
-    class:
-      "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+    class: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
     icon: Clock,
   },
   paid: {

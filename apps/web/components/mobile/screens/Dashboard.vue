@@ -71,7 +71,7 @@ function fmtDate(d: string) {
 }
 
 const SHOP_STATUS: Record<string, { label: string; class: string }> = {
-  pending: { label: "Pendiente", class: "bg-amber-100 text-amber-700" },
+  pending: { label: "Pendiente", class: "bg-amber-50 text-amber-700" },
   paid: { label: "Pagada", class: "bg-blue-100 text-blue-700" },
   fulfilled: { label: "Preparada", class: "bg-purple-100 text-purple-700" },
   delivered: { label: "Entregada", class: "bg-emerald-100 text-emerald-700" },

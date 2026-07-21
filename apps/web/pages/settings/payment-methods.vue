@@ -62,7 +62,7 @@ const TYPE_ICONS: Record<string, typeof Smartphone> = {
 const TYPE_COLORS: Record<string, string> = {
   pago_movil: "bg-blue-100 text-blue-700",
   transfer_bank: "bg-violet-100 text-violet-700",
-  zelle: "bg-yellow-100 text-yellow-700",
+  zelle: "bg-yellow-50 text-yellow-700",
   paypal: "bg-sky-100 text-sky-700",
   usdt: "bg-emerald-100 text-emerald-700",
   cash: "bg-green-100 text-green-700",
